@@ -37,13 +37,10 @@ const formatFecha = (fechaStr) => {
 const formatDateTime = (isoStr) => {
   if (!isoStr) return { fecha: "", hora: "" };
   const dt = new Date(isoStr);
-  const d  = String(dt.getDate()).padStart(2, "0");
-  const mo = String(dt.getMonth() + 1).padStart(2, "0");
-  const y  = dt.getFullYear();
-  const h  = String(dt.getHours()).padStart(2, "0");
-  const mi = String(dt.getMinutes()).padStart(2, "0");
-  const se = String(dt.getSeconds()).padStart(2, "0");
-  return { fecha: `${d}/${mo}/${y}`, hora: `${h}:${mi}:${se}` };
+  const tz = "America/Lima";
+  const fecha = dt.toLocaleDateString("es-PE", { timeZone: tz, day: "2-digit", month: "2-digit", year: "numeric" });
+  const hora  = dt.toLocaleTimeString("es-PE", { timeZone: tz, hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+  return { fecha, hora };
 };
 
 const diasTranscurridos = (inicio) => {
@@ -129,12 +126,14 @@ export default function App() {
   const [nuevaCatColor, setNuevaCatColor] = useState(COLORES_CUSTOM[0]);
 
   // Filtros historial
-  const [filtroHistCat,   setFiltroHistCat]   = useState("todas");
-  const [filtroHistFecha, setFiltroHistFecha] = useState("");
+  const [filtroHistCat,        setFiltroHistCat]        = useState("todas");
+  const [filtroHistFechaDesde, setFiltroHistFechaDesde] = useState("");
+  const [filtroHistFechaHasta, setFiltroHistFechaHasta] = useState("");
 
   // Filtros resumen
-  const [filtroResumen, setFiltroResumen] = useState("todo"); // "hoy"|"semana"|"mes"|"todo"|"fecha"
-  const [filtroFechaResumen, setFiltroFechaResumen] = useState(hoy());
+  const [filtroResumen,           setFiltroResumen]           = useState("todo");
+  const [filtroFechaResumenDesde, setFiltroFechaResumenDesde] = useState(hoy());
+  const [filtroFechaResumenHasta, setFiltroFechaResumenHasta] = useState(hoy());
 
   const categorias = [...CATEGORIAS_DEFAULT, ...categoriasExtra];
 
@@ -314,8 +313,10 @@ export default function App() {
       const mesActual = hoyStr.slice(0, 7);
       return gastos.filter(g => g.fecha.startsWith(mesActual));
     }
-    if (filtroResumen === "fecha") {
-      return gastos.filter(g => g.fecha === filtroFechaResumen);
+    if (filtroResumen === "rango") {
+      const desde = filtroFechaResumenDesde;
+      const hasta = filtroFechaResumenHasta;
+      return gastos.filter(g => (!desde || g.fecha >= desde) && (!hasta || g.fecha <= hasta));
     }
     return gastos;
   };
@@ -342,8 +343,9 @@ export default function App() {
   // ── Filtros historial ─────────────────────────────────────────────────────
   const gastosFiltradosHist = gastos.filter(g => {
     const matchCat   = filtroHistCat === "todas" || g.categoria === filtroHistCat;
-    const matchFecha = !filtroHistFecha || g.fecha === filtroHistFecha;
-    return matchCat && matchFecha;
+    const matchDesde = !filtroHistFechaDesde || g.fecha >= filtroHistFechaDesde;
+    const matchHasta = !filtroHistFechaHasta || g.fecha <= filtroHistFechaHasta;
+    return matchCat && matchDesde && matchHasta;
   });
 
   // ── Estilos ───────────────────────────────────────────────────────────────
@@ -550,17 +552,32 @@ export default function App() {
               { id: "semana", label: "7 días" },
               { id: "mes",    label: "Este mes" },
               { id: "todo",   label: "Todo" },
-              { id: "fecha",  label: "📅 Fecha" },
+              { id: "rango",  label: "📅 Rango" },
             ].map(f => (
               <button key={f.id} style={s.filterBtn(filtroResumen === f.id)} onClick={() => setFiltroResumen(f.id)}>{f.label}</button>
             ))}
           </div>
-          {filtroResumen === "fecha" && (
-            <input
-              type="date" value={filtroFechaResumen}
-              onChange={e => setFiltroFechaResumen(e.target.value)}
-              style={{ ...s.input, marginBottom: 12 }}
-            />
+          {filtroResumen === "rango" && (
+            <div style={{ ...s.card, padding: 12, marginBottom: 12 }}>
+              <div style={{ ...s.label, marginBottom: 6 }}>Del</div>
+              <input
+                type="date" value={filtroFechaResumenDesde}
+                onChange={e => setFiltroFechaResumenDesde(e.target.value)}
+                style={{ ...s.input, marginBottom: 10 }}
+              />
+              <div style={{ ...s.label, marginBottom: 6 }}>Al</div>
+              <input
+                type="date" value={filtroFechaResumenHasta}
+                onChange={e => setFiltroFechaResumenHasta(e.target.value)}
+                style={{ ...s.input, marginBottom: 6 }}
+              />
+              {(filtroFechaResumenDesde || filtroFechaResumenHasta) && (
+                <button
+                  style={{ fontSize: 12, color: "#E85A5A", background: "none", border: "none", cursor: "pointer", marginTop: 4, padding: 0 }}
+                  onClick={() => { setFiltroFechaResumenDesde(hoy()); setFiltroFechaResumenHasta(hoy()); }}
+                >× Limpiar fechas</button>
+              )}
+            </div>
           )}
 
           <div style={s.grid2}>
@@ -651,17 +668,31 @@ export default function App() {
                 <button key={c.id} style={s.filterBtn(filtroHistCat === c.id)} onClick={() => setFiltroHistCat(c.id)}>{c.label}</button>
               ))}
             </div>
-            <div style={{ ...s.label, marginBottom: 6, marginTop: 8 }}>Filtrar por fecha</div>
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <input
-                type="date" value={filtroHistFecha}
-                onChange={e => setFiltroHistFecha(e.target.value)}
-                style={{ ...s.input, flex: 1 }}
-              />
-              {filtroHistFecha && (
-                <button style={{ ...s.deleteBtn, color: "#E85A5A", fontSize: 20 }} onClick={() => setFiltroHistFecha("")}>×</button>
-              )}
+            <div style={{ ...s.label, marginBottom: 6, marginTop: 8 }}>Filtrar por rango de fecha</div>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, color: "#555", marginBottom: 3 }}>Del</div>
+                <input
+                  type="date" value={filtroHistFechaDesde}
+                  onChange={e => setFiltroHistFechaDesde(e.target.value)}
+                  style={s.input}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, color: "#555", marginBottom: 3 }}>Al</div>
+                <input
+                  type="date" value={filtroHistFechaHasta}
+                  onChange={e => setFiltroHistFechaHasta(e.target.value)}
+                  style={s.input}
+                />
+              </div>
             </div>
+            {(filtroHistFechaDesde || filtroHistFechaHasta) && (
+              <button
+                style={{ fontSize: 12, color: "#E85A5A", background: "none", border: "none", cursor: "pointer", padding: 0, marginBottom: 4 }}
+                onClick={() => { setFiltroHistFechaDesde(""); setFiltroHistFechaHasta(""); }}
+              >× Limpiar fechas</button>
+            )}
           </div>
 
           {gastosFiltradosHist.length === 0 ? (
