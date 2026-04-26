@@ -93,18 +93,6 @@ export default function App() {
     setSaving(false);
   };
 
-  const exportarCSV = () => {
-    const headers = "Fecha Completa,Monto,Descripcion,Categoria,Tipo\n";
-    const data = gastos.map(g => `${formatFullDate(g.created_at)},${g.monto},${g.descripcion},${g.categoria},${g.tipo}`).join("\n");
-    const blob = new Blob([headers + data], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `Reporte_Ahorro_${hoy()}.csv`;
-    a.click();
-    showToast("Reporte descargado", "#5AE88A");
-  };
-
   const totalGastado = gastos.filter(g => g.tipo === "gasto").reduce((a, g) => a + g.monto, 0);
   const totalIngresos = gastos.filter(g => g.tipo === "ingreso").reduce((a, g) => a + g.monto, 0);
   const ahorroActual = totalIngresos - totalGastado;
@@ -116,28 +104,29 @@ export default function App() {
   const esFactible = (parseFloat(ingresoMensual) / 30) >= ahorroNecesarioDiario;
 
   const s = {
-    app: { background: "#0A0A0A", minHeight: "100vh", color: "#E8E0D0", maxWidth: 480, margin: "0 auto", paddingBottom: "calc(110px + env(safe-area-inset-bottom))" },
+    app: { background: "#0A0A0A", minHeight: "100vh", color: "#E8E0D0", maxWidth: 480, margin: "0 auto", paddingBottom: "calc(130px + env(safe-area-inset-bottom))" },
     header: { 
-      position: "sticky", top: 0, zIndex: 1000, 
-      background: "#0A0A0A", padding: "calc(25px + env(safe-area-inset-top)) 20px 0",
-      borderBottom: "1px solid #1A1A1A"
+      position: "sticky", top: 0, zIndex: 1000, background: "#0A0A0A", 
+      padding: "calc(25px + env(safe-area-inset-top)) 20px 0", borderBottom: "1px solid #1A1A1A"
     },
     title: { fontFamily: "serif", fontSize: 26, color: "#D4AF37", margin: 0, width: "100%" },
     subtitle: { color: "#555", fontSize: 11, margin: "4px 0 10px", height: 14, overflow: "hidden" },
     tabs: { display: "flex", width: "100%", borderTop: "1px solid #111" },
     tab: (a) => ({ 
-      flex: 1, textAlign: "center", padding: "12px 0", background: "none", border: "none", 
+      flex: 1, textAlign: "center", padding: "14px 0", background: "none", border: "none", 
       borderBottom: a ? "2px solid #D4AF37" : "2px solid transparent",
       color: a ? "#D4AF37" : "#444", fontSize: 13, fontWeight: a ? 700 : 400, transition: "color 0.2s" 
     }),
     section: { padding: "20px" },
-    card: { background: "#111", border: "1px solid #1E1E1E", borderRadius: 16, padding: "16px", marginBottom: 12 },
-    input: { width: "100%", background: "#181818", border: "2px solid #222", borderRadius: 12, color: "#fff", padding: "12px", fontSize: 16, marginBottom: 10, boxSizing: "border-box", outline: "none", transition: "border-color 0.2s" },
+    card: { background: "#111", border: "1px solid #1E1E1E", borderRadius: 18, padding: "18px", marginBottom: 12 },
+    input: { width: "100%", background: "#181818", border: "2px solid #222", borderRadius: 12, color: "#fff", padding: "12px", fontSize: 16, marginBottom: 10, boxSizing: "border-box", outline: "none", transition: "all 0.2s" },
+    // CORRECCIÓN MAESTRA: Menú con altura extra y Safe Area
     navBar: { 
       position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, 
-      background: "rgba(13,13,13,0.85)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+      background: "rgba(13, 13, 13, 0.9)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
       borderTop: "1px solid rgba(255,255,255,0.08)", display: "flex", zIndex: 1000, 
-      paddingBottom: "calc(15px + env(safe-area-inset-bottom))", paddingTop: "12px"
+      paddingBottom: "calc(25px + env(safe-area-inset-bottom))", // Más aire abajo
+      paddingTop: "15px" // Más aire arriba de los iconos
     }
   };
 
@@ -147,7 +136,7 @@ export default function App() {
     <div style={s.app}>
       <style>{`
         html, body { background-color: #0A0A0A !important; margin: 0; padding: 0; width: 100%; overflow-x: hidden; }
-        input:focus { border-color: #D4AF37 !important; }
+        input:focus { border-color: #D4AF37 !important; box-shadow: 0 0 10px rgba(212,175,55,0.1); }
         .hitos-banner { background: linear-gradient(90deg, #D4AF37, #B08D26); color: #000; padding: 10px; border-radius: 12px; font-weight: 800; text-align: center; font-size: 13px; margin-bottom: 15px; animation: bounce 2s infinite; }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
         * { -webkit-tap-highlight-color: transparent; }
@@ -158,9 +147,7 @@ export default function App() {
           <h1 style={s.title}>Ahorro Meta</h1>
           <button onClick={()=>window.location.reload()} style={{background:"#1A1A1A", border:"none", borderRadius:50, width:35, height:35}}>🔄</button>
         </div>
-        <div style={s.subtitle}>
-          Meta: {formatMoney(META_TOTAL)} · Día {diasTrans} de {DIAS_TOTAL}
-        </div>
+        <div style={s.subtitle}>Meta: {formatMoney(META_TOTAL)} · Día {diasTrans} de {DIAS_TOTAL}</div>
         <div style={s.tabs}>
           {[{id:"hoy", l:"Hoy"}, {id:"resumen", l:"Resumen"}, {id:"historial", l:"Historial"}, {id:"config", l:"Config"}].map(t => (
             <button key={t.id} style={s.tab(tab === t.id)} onClick={()=>setTab(t.id)}>{t.l}</button>
@@ -171,8 +158,8 @@ export default function App() {
       <div style={s.section}>
         {tab === "hoy" && (
           <>
-            <div style={{...s.card, borderLeft: `4px solid ${esFactible ? "#5AE88A" : "#E85A5A"}`}}>
-              <div style={{fontSize:10, color:"#666"}}>FACTIBILIDAD</div>
+            <div style={{...s.card, borderLeft: `5px solid ${esFactible ? "#5AE88A" : "#E85A5A"}`}}>
+              <div style={{fontSize:10, color:"#666", marginBottom:4}}>ESTADO DE LA META</div>
               <div style={{fontSize:15, fontWeight:700, color: esFactible ? "#5AE88A" : "#E85A5A"}}>
                 {esFactible ? "🟢 Vas por buen camino para los 100k" : "🔴 Meta en riesgo: ahorra más"}
               </div>
@@ -245,15 +232,22 @@ export default function App() {
         {tab === "config" && (
           <div style={s.card}>
             <div style={{fontSize:11, color:"#666", marginBottom:15}}>ADMINISTRACIÓN</div>
-            <button style={{background:"#1A1A1A", color:"#5AE88A", border:"1px solid #222", padding:12, borderRadius:12, width:"100%", marginBottom:10, fontWeight:600}} onClick={exportarCSV}>📥 Descargar Reporte CSV</button>
-            <div style={{fontSize:10, color:"#444", textAlign:"center"}}>Exporta tus datos para abrirlos en Excel</div>
+            <button style={{background:"#1A1A1A", color:"#5AE88A", border:"1px solid #222", padding:12, borderRadius:12, width:"100%", fontWeight:600}} 
+              onClick={() => {
+                const headers = "Fecha Completa,Monto,Descripcion,Categoria,Tipo\n";
+                const data = gastos.map(g => `${formatFullDate(g.created_at)},${g.monto},${g.descripcion},${g.categoria},${g.tipo}`).join("\n");
+                const blob = new Blob([headers + data], { type: "text/csv" });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url; a.download = `Ahorro_${hoy()}.csv`; a.click();
+              }}>📥 Descargar Reporte CSV</button>
           </div>
         )}
       </div>
 
       <div style={s.navBar}>
         {[{ id: "hoy", icon: "📝", l: "Hoy" }, { id: "resumen", icon: "📊", l: "Resumen" }, { id: "historial", icon: "📋", l: "Historial" }, { id: "config", icon: "⚙️", l: "Config" }].map(n => (
-          <button key={n.id} onClick={() => setTab(n.id)} style={{ flex: 1, background: "none", border: "none", color: tab === n.id ? "#D4AF37" : "#444", display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
+          <button key={n.id} onClick={() => setTab(n.id)} style={{ flex: 1, background: "none", border: "none", color: tab === n.id ? "#D4AF37" : "#444", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
             <span style={{ fontSize: 22 }}>{n.icon}</span>
             <span style={{ fontSize: 10, fontWeight: tab === n.id ? 700 : 400 }}>{n.l}</span>
           </button>
@@ -261,7 +255,7 @@ export default function App() {
       </div>
 
       {toast && (
-        <div style={{ position: "fixed", bottom: 120, left: "50%", transform: "translateX(-50%)", background: "rgba(20,20,20,0.9)", border: `1px solid ${toast.color}`, color: toast.color, padding: "12px 25px", borderRadius: 20, zIndex: 1000, fontWeight: 700, backdropFilter: "blur(10px)" }}>
+        <div style={{ position: "fixed", bottom: 130, left: "50%", transform: "translateX(-50%)", background: "rgba(20,20,20,0.9)", border: `1px solid ${toast.color}`, color: toast.color, padding: "12px 25px", borderRadius: 20, zIndex: 1000, fontWeight: 700, backdropFilter: "blur(10px)" }}>
           {toast.msg}
         </div>
       )}
