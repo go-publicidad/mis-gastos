@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 // =============================================
-// REEMPLAZA ESTOS DOS VALORES CON LOS TUYOS
-// Los obtienes en Supabase → Settings → API
+// TUS CREDENCIALES (Mantenidas de tu archivo)
 // =============================================
 const SUPABASE_URL = "https://jboazxmcmvvcscqeerbz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impib2F6eG1jbXZ2Y3NjcWVlcmJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNTMxMjksImV4cCI6MjA5MjcyOTEyOX0.zFKEHscM7-PaXqoSgbk7ra8JFZ3Hh69JJKktm7N4IwY";
@@ -154,7 +153,8 @@ export default function App() {
   const maxBar = Math.max(...gastosUltimos7.map(d => d.total), 1);
 
   const s = {
-    app: { background: "#0A0A0A", minHeight: "100vh", color: "#E8E0D0", fontFamily: "'DM Sans','Segoe UI',sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: 80, overscrollBehaviorY: "contain" },
+    // CAMBIO: overscrollBehaviorY a "none" para evitar rebotes blancos
+    app: { background: "#0A0A0A", minHeight: "100vh", color: "#E8E0D0", fontFamily: "'DM Sans','Segoe UI',sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: 100, overscrollBehaviorY: "none" },
     header: { padding: "24px 20px 0", borderBottom: "1px solid #1E1E1E" },
     title: { fontFamily: "'Playfair Display','Georgia',serif", fontSize: 28, fontWeight: 700, color: "#D4AF37", margin: 0 },
     refreshBtn: { background: "#1A1A1A", border: "1px solid #333", borderRadius: "50%", width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 18, transition: "background 0.2s" },
@@ -181,7 +181,8 @@ export default function App() {
     catDot: (c) => ({ width: 8, height: 8, borderRadius: "50%", background: c, display: "inline-block", marginRight: 8 }),
     deleteBtn: { background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: 18, padding: "4px" },
     errorCard: { background: "#1A0A0A", border: "1px solid #5A0A0A", borderRadius: 12, padding: "16px", margin: "20px", color: "#E85A5A", fontSize: 13, lineHeight: 1.6 },
-    navBar: { position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, background: "#0D0D0D", borderTop: "1px solid #1A1A1A", display: "flex", zIndex: 100 },
+    // CAMBIO: paddingBottom env(safe-area-inset-bottom) para iPhones modernos
+    navBar: { position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, background: "#0D0D0D", borderTop: "1px solid #1A1A1A", display: "flex", zIndex: 100, paddingBottom: "env(safe-area-inset-bottom)" },
     navBtn: (a) => ({ flex: 1, padding: "12px 0", background: "none", border: "none", color: a ? "#D4AF37" : "#444", fontSize: 10, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }),
   };
 
@@ -195,6 +196,22 @@ export default function App() {
 
   return (
     <div style={s.app}>
+      {/* --- NUEVOS ESTILOS PARA EVITAR ESPACIOS BLANCOS EN IPHONE --- */}
+      <style>{`
+        html, body {
+          background-color: #0A0A0A !important;
+          margin: 0;
+          padding: 0;
+          height: 100%;
+          overscroll-behavior-y: none;
+        }
+        #root {
+          background-color: #0A0A0A;
+          min-height: 100vh;
+        }
+      `}</style>
+      {/* ----------------------------------------------------------- */}
+
       <div style={s.header}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <h1 style={s.title}>Ahorro Meta</h1>
