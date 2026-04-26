@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 // =============================================
@@ -52,31 +52,37 @@ export default function App() {
     setTimeout(() => setToast(null), 2500);
   };
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const { data: movimientos, error: err1 } = await supabase
-          .from("gastos")
-          .select("*")
-          .order("created_at", { ascending: false });
-        if (err1) throw err1;
-        setGastos(movimientos || []);
+  const fetchData = async () => {
+    try {
+      const { data: movimientos, error: err1 } = await supabase
+        .from("gastos")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (err1) throw err1;
+      setGastos(movimientos || []);
 
-        const { data: cfg, error: err2 } = await supabase.from("config").select("*");
-        if (err2) throw err2;
-        if (cfg) {
-          const ing = cfg.find(c => c.key === "ingresoMensual");
-          const fi = cfg.find(c => c.key === "fechaInicio");
-          if (ing) setIngresoMensual(ing.value);
-          if (fi) setFechaInicio(fi.value);
-        }
-        setError(null);
-      } catch (e) {
-        setError("No se pudo conectar. Verifica tu configuración de Supabase.");
+      const { data: cfg, error: err2 } = await supabase.from("config").select("*");
+      if (err2) throw err2;
+      if (cfg) {
+        const ing = cfg.find(c => c.key === "ingresoMensual");
+        const fi = cfg.find(c => c.key === "fechaInicio");
+        if (ing) setIngresoMensual(ing.value);
+        if (fi) setFechaInicio(fi.value);
       }
-      setLoaded(true);
-    })();
+      setError(null);
+    } catch (e) {
+      setError("No se pudo conectar. Verifica tu configuración de Supabase.");
+    }
+    setLoaded(true);
+  };
+
+  useEffect(() => {
+    fetchData();
   }, []);
+
+  const handleRefresh = () => {
+    window.location.reload();
+  };
 
   const agregarMovimiento = async () => {
     const monto = parseFloat(form.monto);
@@ -148,9 +154,10 @@ export default function App() {
   const maxBar = Math.max(...gastosUltimos7.map(d => d.total), 1);
 
   const s = {
-    app: { background: "#0A0A0A", minHeight: "100vh", color: "#E8E0D0", fontFamily: "'DM Sans','Segoe UI',sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: 80 },
+    app: { background: "#0A0A0A", minHeight: "100vh", color: "#E8E0D0", fontFamily: "'DM Sans','Segoe UI',sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: 80, overscrollBehaviorY: "contain" },
     header: { padding: "24px 20px 0", borderBottom: "1px solid #1E1E1E" },
     title: { fontFamily: "'Playfair Display','Georgia',serif", fontSize: 28, fontWeight: 700, color: "#D4AF37", margin: 0 },
+    refreshBtn: { background: "#1A1A1A", border: "1px solid #333", borderRadius: "50%", width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 18, transition: "background 0.2s" },
     subtitle: { color: "#666", fontSize: 13, margin: "4px 0 0" },
     tabs: { display: "flex", padding: "16px 20px 0", borderBottom: "1px solid #1A1A1A" },
     tab: (a) => ({ padding: "8px 16px", background: "none", border: "none", borderBottom: a ? "2px solid #D4AF37" : "2px solid transparent", color: a ? "#D4AF37" : "#555", cursor: "pointer", fontSize: 13, fontWeight: a ? 600 : 400, transition: "all 0.2s" }),
@@ -189,7 +196,10 @@ export default function App() {
   return (
     <div style={s.app}>
       <div style={s.header}>
-        <h1 style={s.title}>Ahorro Meta</h1>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h1 style={s.title}>Ahorro Meta</h1>
+          <button onClick={handleRefresh} style={s.refreshBtn} title="Actualizar">🔄</button>
+        </div>
         <p style={s.subtitle}>
           Meta: {formatMoney(META_TOTAL)} en {MESES} meses · Día {diasTrans} de {DIAS_TOTAL}
           {saving && <span style={{ color: "#555", marginLeft: 8, fontSize: 11 }}>· Guardando...</span>}
