@@ -36,27 +36,10 @@ const formatFecha = (fechaStr) => {
 
 const formatDateTime = (isoStr) => {
   if (!isoStr) return { fecha: "", hora: "" };
-
-  // Normalizamos el texto de Supabase para que JS siempre lo detecte correctamente como UTC
   const validIsoStr = isoStr.includes('Z') || isoStr.includes('+') ? isoStr : `${isoStr}Z`;
   const dt = new Date(validIsoStr);
-
-  // Forzamos la zona horaria a la de Lima
-  const fecha = new Intl.DateTimeFormat("es-PE", {
-    timeZone: "America/Lima",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric"
-  }).format(dt);
-
-  const hora = new Intl.DateTimeFormat("es-PE", {
-    timeZone: "America/Lima",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false
-  }).format(dt);
-
+  const fecha = new Intl.DateTimeFormat("es-PE", { timeZone: "America/Lima", day: "2-digit", month: "2-digit", year: "numeric" }).format(dt);
+  const hora = new Intl.DateTimeFormat("es-PE", { timeZone: "America/Lima", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).format(dt);
   return { fecha, hora };
 };
 
@@ -124,7 +107,7 @@ export default function App() {
   const [tab,            setTab]            = useState("hoy");
   const [form,           setForm]           = useState({ monto: "", descripcion: "", categoria: "comida", tipo: "gasto" });
   const [ingresoMensual, setIngresoMensual] = useState("");
-  const [isEditingIngreso, setIsEditingIngreso] = useState(false); // NUEVO: Estado para el input de ingreso
+  const [isEditingIngreso, setIsEditingIngreso] = useState(false);
   const [fechaInicio,    setFechaInicio]    = useState(hoy());
   const [loaded,         setLoaded]         = useState(false);
   const [saving,         setSaving]         = useState(false);
@@ -137,6 +120,11 @@ export default function App() {
   const [showNuevaCat,  setShowNuevaCat]  = useState(false);
   const [nuevaCatLabel, setNuevaCatLabel] = useState("");
   const [nuevaCatColor, setNuevaCatColor] = useState(COLORES_CUSTOM[0]);
+
+  // NUEVOS ESTADOS PARA EDITAR CATEGORÍAS
+  const [editandoCat,  setEditandoCat]  = useState(null);
+  const [editCatLabel, setEditCatLabel] = useState("");
+  const [editCatColor, setEditCatColor] = useState("");
 
   const [filtroHistCat,        setFiltroHistCat]        = useState("todas");
   const [filtroHistFechaDesde, setFiltroHistFechaDesde] = useState("");
@@ -156,8 +144,7 @@ export default function App() {
   useEffect(() => {
     (async () => {
       try {
-        const { data: movimientos, error: err1 } = await supabase
-          .from("gastos").select("*").order("created_at", { ascending: false });
+        const { data: movimientos, error: err1 } = await supabase.from("gastos").select("*").order("created_at", { ascending: false });
         if (err1) throw err1;
         setGastos(movimientos || []);
 
@@ -248,10 +235,7 @@ export default function App() {
     const nueva = { id, label, color: nuevaCatColor };
     const updated = [...categoriasExtra, nueva];
     setCategoriasExtra(updated);
-    await supabase.from("config").upsert(
-      [{ key: "categoriasCustom", value: JSON.stringify(updated) }],
-      { onConflict: "key" }
-    );
+    await supabase.from("config").upsert([{ key: "categoriasCustom", value: JSON.stringify(updated) }], { onConflict: "key" });
     setNuevaCatLabel("");
     setShowNuevaCat(false);
     showToast(`Categoría "${label}" creada ✓`);
@@ -260,11 +244,27 @@ export default function App() {
   const eliminarCategoria = async (id) => {
     const updated = categoriasExtra.filter(c => c.id !== id);
     setCategoriasExtra(updated);
-    await supabase.from("config").upsert(
-      [{ key: "categoriasCustom", value: JSON.stringify(updated) }],
-      { onConflict: "key" }
-    );
+    await supabase.from("config").upsert([{ key: "categoriasCustom", value: JSON.stringify(updated) }], { onConflict: "key" });
     showToast("Categoría eliminada", "#888");
+  };
+
+  // NUEVAS FUNCIONES PARA EDITAR CATEGORÍA
+  const abrirEdicionCat = (cat) => {
+    setEditandoCat(cat.id);
+    setEditCatLabel(cat.label);
+    setEditCatColor(cat.color);
+  };
+
+  const guardarEdicionCat = async () => {
+    const label = editCatLabel.trim();
+    if (!label) { showToast("Escribe un nombre", "#E85A5A"); return; }
+    const updated = categoriasExtra.map(c => 
+      c.id === editandoCat ? { ...c, label, color: editCatColor } : c
+    );
+    setCategoriasExtra(updated);
+    await supabase.from("config").upsert([{ key: "categoriasCustom", value: JSON.stringify(updated) }], { onConflict: "key" });
+    setEditandoCat(null);
+    showToast("Categoría actualizada ✓");
   };
 
   const fechaHoy     = hoy();
@@ -374,25 +374,8 @@ export default function App() {
     progressBg: { background: "#1A1A1A", borderRadius: 4, height: 8, margin: "12px 0 4px", overflow: "hidden" },
     progressFill: (p) => ({ height: "100%", width: `${p}%`, background: p >= 100 ? "#5AE88A" : p >= 50 ? "#D4AF37" : "#E85A5A", borderRadius: 4, transition: "width 0.6s ease" }),
     grid2:      { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 },
-    
-    // CORRECCIÓN GLOBAL DE INPUTS (Soluciona el desborde en iOS y fuerza altura)
-    input: { 
-      width: "100%", 
-      maxWidth: "100%", // Evita desborde en iPhone
-      background: "#111", 
-      border: "1px solid #2A2A2A", 
-      borderRadius: 8, 
-      color: "#E8E0D0", 
-      padding: "10px 12px", 
-      fontSize: 15, 
-      outline: "none", 
-      boxSizing: "border-box", 
-      fontFamily: "inherit",
-      WebkitAppearance: "none", // Clave para iOS
-      minHeight: 44 // Agregado para mantener altura en iOS
-    },
-    
-    select:     { width: "100%", background: "#111", border: "1px solid #2A2A2A", borderRadius: 8, color: "#E8E0D0", padding: "10px 12px", fontSize: 13, outline: "none", boxSizing: "border-box", fontFamily: "inherit", cursor: "pointer", WebkitAppearance: "none", minHeight: 44 }, // minHeight agregado aquí también
+    input: { width: "100%", maxWidth: "100%", background: "#111", border: "1px solid #2A2A2A", borderRadius: 8, color: "#E8E0D0", padding: "10px 12px", fontSize: 15, outline: "none", boxSizing: "border-box", fontFamily: "inherit", WebkitAppearance: "none", minHeight: 44 },
+    select: { width: "100%", background: "#111", border: "1px solid #2A2A2A", borderRadius: 8, color: "#E8E0D0", padding: "10px 12px", fontSize: 13, outline: "none", boxSizing: "border-box", fontFamily: "inherit", cursor: "pointer", WebkitAppearance: "none", minHeight: 44 },
     btnPrimary: { background: "#D4AF37", color: "#000", border: "none", borderRadius: 8, padding: "12px", fontSize: 14, fontWeight: 700, cursor: "pointer", width: "100%", letterSpacing: "0.5px" },
     btnSecondary:{ background: "#1A1A1A", color: "#D4AF37", border: "1px solid #3A3A00", borderRadius: 8, padding: "10px", fontSize: 13, cursor: "pointer", width: "100%" },
     tipoBtn: (a, c) => ({ flex: 1, padding: "8px", background: a ? c : "#111", border: `1px solid ${a ? c : "#2A2A2A"}`, color: a ? "#000" : "#666", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: a ? 700 : 400, transition: "all 0.2s" }),
@@ -668,7 +651,6 @@ export default function App() {
             >📄 Exportar PDF</button>
           </div>
 
-          {/* CORRECCIÓN: Filtros dentro de un s.card para alinear anchos */}
           <div style={s.card}>
             <div style={{ ...s.label, marginBottom: 6 }}>Filtrar por categoría</div>
             <div style={{ ...s.filterRow, marginBottom: 12 }}>
@@ -742,7 +724,6 @@ export default function App() {
         <div style={s.section}>
           <div style={s.card}>
             <div style={{ ...s.label, marginBottom: 8, textAlign: "center" }}>INGRESO MENSUAL (S/)</div>
-            {/* CORRECCIÓN: Input premium con formato dinámico */}
             <input 
               style={{ ...s.input, marginBottom: 16, fontSize: 24, fontWeight: 700, textAlign: "center", color: "#D4AF37" }} 
               type={isEditingIngreso ? "number" : "text"} 
@@ -784,6 +765,7 @@ export default function App() {
                 onClick={() => setShowNuevaCat(v => !v)}
               >+ Nueva</button>
             </div>
+            
             {showNuevaCat && (
               <div style={{ background: "#0A0A0A", borderRadius: 8, padding: 12, marginBottom: 12 }}>
                 <input
@@ -802,17 +784,43 @@ export default function App() {
                 <button style={s.btnPrimary} onClick={agregarCategoria}>Agregar categoría</button>
               </div>
             )}
+
+            {/* LISTA Y EDICIÓN DE CATEGORÍAS */}
             {categoriasExtra.length === 0 ? (
               <div style={{ color: "#333", fontSize: 13, textAlign: "center", padding: "8px 0" }}>Aún no hay categorías personalizadas</div>
             ) : (
               categoriasExtra.map(cat => (
-                <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #1A1A1A" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ width: 10, height: 10, borderRadius: "50%", background: cat.color, display: "inline-block" }} />
-                    <span style={{ fontSize: 14 }}>{cat.label}</span>
+                editandoCat === cat.id ? (
+                  <div key={cat.id} style={{ background: "#161616", borderRadius: 8, padding: 12, margin: "8px 0" }}>
+                    <input
+                      style={{ ...s.input, marginBottom: 8 }}
+                      value={editCatLabel}
+                      onChange={e => setEditCatLabel(e.target.value)}
+                    />
+                    <div style={{ ...s.label, marginBottom: 6 }}>Elige un color</div>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+                      {COLORES_CUSTOM.map(c => (
+                        <div key={c} onClick={() => setEditCatColor(c)}
+                          style={{ width: 24, height: 24, borderRadius: "50%", background: c, cursor: "pointer", border: editCatColor === c ? "3px solid #fff" : "3px solid transparent" }} />
+                      ))}
+                    </div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button style={{ ...s.btnSecondary, flex: 1 }} onClick={() => setEditandoCat(null)}>Cancelar</button>
+                      <button style={{ ...s.btnPrimary, flex: 1, padding: "10px" }} onClick={guardarEdicionCat}>Guardar</button>
+                    </div>
                   </div>
-                  <button style={{ ...s.deleteBtn, color: "#E85A5A" }} onClick={() => eliminarCategoria(cat.id)}>×</button>
-                </div>
+                ) : (
+                  <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #1A1A1A" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ width: 10, height: 10, borderRadius: "50%", background: cat.color, display: "inline-block" }} />
+                      <span style={{ fontSize: 14 }}>{cat.label}</span>
+                    </div>
+                    <div>
+                      <button style={{ ...s.editBtn, marginRight: 8 }} onClick={() => abrirEdicionCat(cat)}>✏️</button>
+                      <button style={{ ...s.deleteBtn, color: "#E85A5A" }} onClick={() => eliminarCategoria(cat.id)}>×</button>
+                    </div>
+                  </div>
+                )
               ))
             )}
           </div>
