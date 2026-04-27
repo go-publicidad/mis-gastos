@@ -36,7 +36,6 @@ const formatFecha = (fechaStr) => {
 
 const formatDateTime = (isoStr) => {
   if (!isoStr) return { fecha: "", hora: "" };
-  // Ajuste manual a UTC-5 (Lima) — compatible con Safari/iOS
   const dt = new Date(new Date(isoStr).getTime() - 5 * 60 * 60 * 1000);
   const d  = String(dt.getUTCDate()).padStart(2, "0");
   const mo = String(dt.getUTCMonth() + 1).padStart(2, "0");
@@ -53,7 +52,6 @@ const diasTranscurridos = (inicio) => {
   return Math.max(1, diff + 1);
 };
 
-// ── Exportar CSV (abre en Excel) ──────────────────────────────────────────────
 const exportarCSV = (gastos, categorias) => {
   const header = "Fecha,Hora,Tipo,Categoría,Descripción,Monto\n";
   const rows = gastos.map(g => {
@@ -71,7 +69,6 @@ const exportarCSV = (gastos, categorias) => {
   URL.revokeObjectURL(url);
 };
 
-// ── Exportar PDF via ventana de impresión ────────────────────────────────────
 const exportarPDF = (gastos, categorias) => {
   const filas = gastos.map(g => {
     const { fecha, hora } = formatDateTime(g.created_at);
@@ -107,34 +104,30 @@ const exportarPDF = (gastos, categorias) => {
   win.document.close();
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
 export default function App() {
   const [gastos,         setGastos]         = useState([]);
   const [categoriasExtra, setCategoriasExtra] = useState([]);  
   const [tab,            setTab]            = useState("hoy");
   const [form,           setForm]           = useState({ monto: "", descripcion: "", categoria: "comida", tipo: "gasto" });
   const [ingresoMensual, setIngresoMensual] = useState("");
+  const [isEditingIngreso, setIsEditingIngreso] = useState(false); // NUEVO: Estado para el input de ingreso
   const [fechaInicio,    setFechaInicio]    = useState(hoy());
   const [loaded,         setLoaded]         = useState(false);
   const [saving,         setSaving]         = useState(false);
   const [toast,          setToast]          = useState(null);
   const [error,          setError]          = useState(null);
 
-  // Edición de movimiento
   const [editando,  setEditando]  = useState(null);   
   const [editForm,  setEditForm]  = useState({});
 
-  // Categoría custom nueva
   const [showNuevaCat,  setShowNuevaCat]  = useState(false);
   const [nuevaCatLabel, setNuevaCatLabel] = useState("");
   const [nuevaCatColor, setNuevaCatColor] = useState(COLORES_CUSTOM[0]);
 
-  // Filtros historial
   const [filtroHistCat,        setFiltroHistCat]        = useState("todas");
   const [filtroHistFechaDesde, setFiltroHistFechaDesde] = useState("");
   const [filtroHistFechaHasta, setFiltroHistFechaHasta] = useState("");
 
-  // Filtros resumen
   const [filtroResumen,           setFiltroResumen]           = useState("todo");
   const [filtroFechaResumenDesde, setFiltroFechaResumenDesde] = useState(hoy());
   const [filtroFechaResumenHasta, setFiltroFechaResumenHasta] = useState(hoy());
@@ -146,7 +139,6 @@ export default function App() {
     setTimeout(() => setToast(null), 2500);
   };
 
-  // ── Carga inicial ──────────────────────────────────────────────────────────
   useEffect(() => {
     (async () => {
       try {
@@ -173,7 +165,6 @@ export default function App() {
     })();
   }, []);
 
-  // ── Agregar movimiento ────────────────────────────────────────────────────
   const agregarMovimiento = async () => {
     const monto = parseFloat(form.monto);
     if (!monto || monto <= 0) { showToast("Ingresa un monto válido", "#E85A5A"); return; }
@@ -193,7 +184,6 @@ export default function App() {
     setSaving(false);
   };
 
-  // ── Eliminar ──────────────────────────────────────────────────────────────
   const eliminar = async (id) => {
     const { error: err } = await supabase.from("gastos").delete().eq("id", id);
     if (err) { showToast("Error al eliminar", "#E85A5A"); return; }
@@ -201,7 +191,6 @@ export default function App() {
     showToast("Eliminado", "#888");
   };
 
-  // ── Editar movimiento ─────────────────────────────────────────────────────
   const abrirEdicion = (g) => {
     setEditando(g);
     setEditForm({ monto: g.monto, descripcion: g.descripcion, categoria: g.categoria, tipo: g.tipo });
@@ -225,7 +214,6 @@ export default function App() {
     setSaving(false);
   };
 
-  // ── Guardar config ────────────────────────────────────────────────────────
   const guardarConfig = async () => {
     setSaving(true);
     const upserts = [
@@ -239,7 +227,6 @@ export default function App() {
     showToast("Configuración guardada ✓");
   };
 
-  // ── Agregar categoría custom ──────────────────────────────────────────────
   const agregarCategoria = async () => {
     const label = nuevaCatLabel.trim();
     if (!label) { showToast("Escribe un nombre", "#E85A5A"); return; }
@@ -266,7 +253,6 @@ export default function App() {
     showToast("Categoría eliminada", "#888");
   };
 
-  // ── Cálculos base ─────────────────────────────────────────────────────────
   const fechaHoy     = hoy();
   const gastosHoy    = gastos.filter(g => g.fecha === fechaHoy && g.tipo === "gasto");
   const ingresosHoy  = gastos.filter(g => g.fecha === fechaHoy && g.tipo === "ingreso");
@@ -284,7 +270,6 @@ export default function App() {
   const presupuestoDiario  = ingDiario - ahorroMetaDiario;
   const gastoDiarioProm    = diasTrans > 0 ? totalGastado / diasTrans : 0;
 
-  // ── Proyección inteligente ────────────────────────────────────────────────
   const ahorroDiarioProm = diasTrans > 0 ? ahorroAcumulado / diasTrans : 0;
   let proyeccionTexto = "—";
   if (ahorroDiarioProm > 0) {
@@ -304,7 +289,6 @@ export default function App() {
     proyeccionTexto = "Sin ahorro neto aún";
   }
 
-  // ── Filtros de resumen ────────────────────────────────────────────────────
   const getFiltradosResumen = () => {
     const hoyStr = hoy();
     if (filtroResumen === "hoy") return gastos.filter(g => g.fecha === hoyStr);
@@ -344,7 +328,6 @@ export default function App() {
   });
   const maxBar = Math.max(...gastosUltimos7.map(d => d.total), 1);
 
-  // ── Filtros historial ─────────────────────────────────────────────────────
   const gastosFiltradosHist = gastos.filter(g => {
     const matchCat   = filtroHistCat === "todas" || g.categoria === filtroHistCat;
     const matchDesde = !filtroHistFechaDesde || g.fecha >= filtroHistFechaDesde;
@@ -352,7 +335,6 @@ export default function App() {
     return matchCat && matchDesde && matchHasta;
   });
 
-  // ── Estilos ───────────────────────────────────────────────────────────────
   const s = {
     app: {
       background: "#0A0A0A", minHeight: "100vh", color: "#E8E0D0",
@@ -368,7 +350,7 @@ export default function App() {
     tabs:       { display: "flex", padding: "16px 20px 0", borderBottom: "1px solid #1A1A1A" },
     tab:    (a) => ({ padding: "8px 14px", background: "none", border: "none", borderBottom: a ? "2px solid #D4AF37" : "2px solid transparent", color: a ? "#D4AF37" : "#555", cursor: "pointer", fontSize: 13, fontWeight: a ? 600 : 400, transition: "all 0.2s" }),
     section:    { padding: "20px" },
-    card:       { background: "#111", border: "1px solid #1E1E1E", borderRadius: 12, padding: "16px", marginBottom: 12 },
+    card:       { background: "#111", border: "1px solid #1E1E1E", borderRadius: 12, padding: "16px", marginBottom: 12, overflow: "hidden" },
     metaCard:   { background: "linear-gradient(135deg,#1A1500,#0F1000)", border: "1px solid #3A2E00", borderRadius: 16, padding: "20px", marginBottom: 16 },
     label:      { fontSize: 11, color: "#666", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 4 },
     bigNum:     { fontFamily: "monospace", fontSize: 30, fontWeight: 700, color: "#D4AF37", lineHeight: 1 },
@@ -378,8 +360,24 @@ export default function App() {
     progressBg: { background: "#1A1A1A", borderRadius: 4, height: 8, margin: "12px 0 4px", overflow: "hidden" },
     progressFill: (p) => ({ height: "100%", width: `${p}%`, background: p >= 100 ? "#5AE88A" : p >= 50 ? "#D4AF37" : "#E85A5A", borderRadius: 4, transition: "width 0.6s ease" }),
     grid2:      { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 },
-    input:      { width: "100%", background: "#111", border: "1px solid #2A2A2A", borderRadius: 8, color: "#E8E0D0", padding: "10px 12px", fontSize: 15, outline: "none", boxSizing: "border-box", fontFamily: "inherit" },
-    select:     { width: "100%", background: "#111", border: "1px solid #2A2A2A", borderRadius: 8, color: "#E8E0D0", padding: "10px 12px", fontSize: 13, outline: "none", boxSizing: "border-box", fontFamily: "inherit", cursor: "pointer" },
+    
+    // CORRECCIÓN GLOBAL DE INPUTS (Soluciona el desborde en iOS)
+    input: { 
+      width: "100%", 
+      maxWidth: "100%", // Evita desborde en iPhone
+      background: "#111", 
+      border: "1px solid #2A2A2A", 
+      borderRadius: 8, 
+      color: "#E8E0D0", 
+      padding: "10px 12px", 
+      fontSize: 15, 
+      outline: "none", 
+      boxSizing: "border-box", 
+      fontFamily: "inherit",
+      WebkitAppearance: "none" // Clave para iOS
+    },
+    
+    select:     { width: "100%", background: "#111", border: "1px solid #2A2A2A", borderRadius: 8, color: "#E8E0D0", padding: "10px 12px", fontSize: 13, outline: "none", boxSizing: "border-box", fontFamily: "inherit", cursor: "pointer", WebkitAppearance: "none" },
     btnPrimary: { background: "#D4AF37", color: "#000", border: "none", borderRadius: 8, padding: "12px", fontSize: 14, fontWeight: 700, cursor: "pointer", width: "100%", letterSpacing: "0.5px" },
     btnSecondary:{ background: "#1A1A1A", color: "#D4AF37", border: "1px solid #3A3A00", borderRadius: 8, padding: "10px", fontSize: 13, cursor: "pointer", width: "100%" },
     tipoBtn: (a, c) => ({ flex: 1, padding: "8px", background: a ? c : "#111", border: `1px solid ${a ? c : "#2A2A2A"}`, color: a ? "#000" : "#666", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: a ? 700 : 400, transition: "all 0.2s" }),
@@ -390,7 +388,6 @@ export default function App() {
     errorCard:  { background: "#1A0A0A", border: "1px solid #5A0A0A", borderRadius: 12, padding: "16px", margin: "20px", color: "#E85A5A", fontSize: 13 },
     filterRow:  { display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" },
     filterBtn: (a) => ({ padding: "5px 12px", borderRadius: 20, border: `1px solid ${a ? "#D4AF37" : "#2A2A2A"}`, background: a ? "#D4AF37" : "#111", color: a ? "#000" : "#666", fontSize: 12, cursor: "pointer", fontWeight: a ? 700 : 400 }),
-    // Safe area nav
     navBar: {
       position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
       width: "100%", maxWidth: 480,
@@ -405,7 +402,6 @@ export default function App() {
       fontSize: 10, cursor: "pointer",
       display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
     }),
-    // Modal overlay
     overlay: {
       position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)",
       display: "flex", alignItems: "center", justifyContent: "center",
@@ -417,7 +413,6 @@ export default function App() {
     },
   };
 
-  // ── Loading ───────────────────────────────────────────────────────────────
   if (!loaded) return (
     <div style={{ background: "#0A0A0A", height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
       <div style={{ width: 32, height: 32, border: "2px solid #1A1A1A", borderTop: "2px solid #D4AF37", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
@@ -426,7 +421,6 @@ export default function App() {
     </div>
   );
 
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div style={s.app}>
       <style>{`*{box-sizing:border-box} html,body{background:#0A0A0A!important;margin:0;padding:0;overscroll-behavior-y:none;width:100%;max-width:100%}#root{background:#0A0A0A;min-height:100vh;width:100%}`}</style>
@@ -454,7 +448,6 @@ export default function App() {
       {tab === "hoy" && (
         <div style={s.section}>
 
-          {/* Meta card con cuánto falta */}
           <div style={s.metaCard}>
             <div style={s.label}>Progreso hacia tu meta</div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
@@ -466,14 +459,12 @@ export default function App() {
               <span>{progreso.toFixed(1)}% completado</span>
               <span>{diasRestantes} días restantes</span>
             </div>
-            {/* Cuánto falta en números */}
             <div style={{ borderTop: "1px solid #2A2000", paddingTop: 8, display: "flex", justifyContent: "space-between", fontSize: 12 }}>
               <span style={{ color: "#666" }}>Falta ahorrar</span>
               <span style={{ color: "#E8845A", fontFamily: "monospace", fontWeight: 700 }}>
                 {formatMoney(Math.max(0, META_TOTAL - ahorroAcumulado))}
               </span>
             </div>
-            {/* Proyección inteligente */}
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginTop: 4 }}>
               <span style={{ color: "#666" }}>A este ritmo llegarás</span>
               <span style={{ color: "#D4AF37", fontWeight: 700 }}>{proyeccionTexto}</span>
@@ -499,7 +490,6 @@ export default function App() {
             </div>
           )}
 
-          {/* Formulario registro */}
           <div style={s.card}>
             <div style={s.label}>Registrar movimiento</div>
             <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
@@ -518,7 +508,6 @@ export default function App() {
             </button>
           </div>
 
-          {/* Movimientos de hoy */}
           {(gastosHoy.length > 0 || ingresosHoy.length > 0) ? (
             <div style={s.card}>
               <div style={s.label}>Movimientos de hoy</div>
@@ -549,7 +538,6 @@ export default function App() {
       {tab === "resumen" && (
         <div style={s.section}>
 
-          {/* Filtros de período */}
           <div style={s.filterRow}>
             {[
               { id: "hoy",    label: "Hoy" },
@@ -563,22 +551,21 @@ export default function App() {
           </div>
           {filtroResumen === "rango" && (
             <div style={{ ...s.card, padding: 12, marginBottom: 12 }}>
-              {/* SOLUCIÓN: minWidth: 0 para que no desborde en el iPhone */}
-              <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
+                <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
                   <div style={{ ...s.label, marginBottom: 5 }}>Del</div>
                   <input
                     type="date" value={filtroFechaResumenDesde}
                     onChange={e => setFiltroFechaResumenDesde(e.target.value)}
-                    style={{ ...s.input, minWidth: 0, padding: "10px 5px", fontSize: 13 }}
+                    style={{ ...s.input, padding: "10px 5px", fontSize: 13 }}
                   />
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
                   <div style={{ ...s.label, marginBottom: 5 }}>Al</div>
                   <input
                     type="date" value={filtroFechaResumenHasta}
                     onChange={e => setFiltroFechaResumenHasta(e.target.value)}
-                    style={{ ...s.input, minWidth: 0, padding: "10px 5px", fontSize: 13 }}
+                    style={{ ...s.input, padding: "10px 5px", fontSize: 13 }}
                   />
                 </div>
               </div>
@@ -598,7 +585,6 @@ export default function App() {
             <div style={s.card}><div style={s.label}>Gasto prom/día</div><div style={s.smallNum}>{formatMoney(gastoDiarioProm)}</div></div>
           </div>
 
-          {/* Proyección */}
           <div style={{ ...s.card, background: "#0F1A0F", border: "1px solid #1A3A1A", marginBottom: 12 }}>
             <div style={s.label}>Proyección inteligente</div>
             <div style={{ fontSize: 15, color: "#D4AF37", fontWeight: 700, marginTop: 6 }}>
@@ -621,7 +607,6 @@ export default function App() {
             </div>
           )}
 
-          {/* Gráfica 7 días (siempre global) */}
           <div style={s.card}>
             <div style={{ ...s.label, marginBottom: 14 }}>Gastos últimos 7 días</div>
             <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 80 }}>
@@ -634,7 +619,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* Por categoría filtrado */}
           {porCategoriaR.length > 0 && (
             <div style={s.card}>
               <div style={{ ...s.label, marginBottom: 14 }}>Por categoría</div>
@@ -658,7 +642,6 @@ export default function App() {
       {tab === "historial" && (
         <div style={s.section}>
 
-          {/* Botones de exportar */}
           <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
             <button
               style={{ ...s.btnSecondary, flex: 1, fontSize: 12 }}
@@ -670,38 +653,37 @@ export default function App() {
             >📄 Exportar PDF</button>
           </div>
 
-          {/* Filtros historial */}
-          <div style={{ marginBottom: 10 }}>
+          {/* CORRECCIÓN: Filtros dentro de un s.card para alinear anchos */}
+          <div style={s.card}>
             <div style={{ ...s.label, marginBottom: 6 }}>Filtrar por categoría</div>
-            <div style={{ ...s.filterRow, marginBottom: 8 }}>
+            <div style={{ ...s.filterRow, marginBottom: 12 }}>
               <button style={s.filterBtn(filtroHistCat === "todas")} onClick={() => setFiltroHistCat("todas")}>Todas</button>
               {categorias.map(c => (
                 <button key={c.id} style={s.filterBtn(filtroHistCat === c.id)} onClick={() => setFiltroHistCat(c.id)}>{c.label}</button>
               ))}
             </div>
             <div style={{ ...s.label, marginBottom: 6, marginTop: 8 }}>Filtrar por rango de fecha</div>
-            {/* SOLUCIÓN: minWidth: 0 para Historial */}
-            <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 6 }}>
+              <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
                 <div style={{ fontSize: 11, color: "#555", marginBottom: 3 }}>Del</div>
                 <input
                   type="date" value={filtroHistFechaDesde}
                   onChange={e => setFiltroHistFechaDesde(e.target.value)}
-                  style={{ ...s.input, minWidth: 0, padding: "10px 5px", fontSize: 13 }}
+                  style={{ ...s.input, padding: "10px 5px", fontSize: 13 }}
                 />
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
                 <div style={{ fontSize: 11, color: "#555", marginBottom: 3 }}>Al</div>
                 <input
                   type="date" value={filtroHistFechaHasta}
                   onChange={e => setFiltroHistFechaHasta(e.target.value)}
-                  style={{ ...s.input, minWidth: 0, padding: "10px 5px", fontSize: 13 }}
+                  style={{ ...s.input, padding: "10px 5px", fontSize: 13 }}
                 />
               </div>
             </div>
             {(filtroHistFechaDesde || filtroHistFechaHasta) && (
               <button
-                style={{ fontSize: 12, color: "#E85A5A", background: "none", border: "none", cursor: "pointer", padding: 0, marginBottom: 4 }}
+                style={{ fontSize: 12, color: "#E85A5A", background: "none", border: "none", cursor: "pointer", padding: 0, marginTop: 4 }}
                 onClick={() => { setFiltroHistFechaDesde(""); setFiltroHistFechaHasta(""); }}
               >× Limpiar fechas</button>
             )}
@@ -744,10 +726,21 @@ export default function App() {
       {tab === "config" && (
         <div style={s.section}>
           <div style={s.card}>
-            <div style={{ ...s.label, marginBottom: 8 }}>Ingreso mensual (S/)</div>
-            <input style={{ ...s.input, marginBottom: 16, fontSize: 20 }} type="number" placeholder="Ej: 5000" value={ingresoMensual} onChange={e => setIngresoMensual(e.target.value)} />
-            <div style={{ ...s.label, marginBottom: 8 }}>Fecha de inicio del plan</div>
-            <input style={{ ...s.input, marginBottom: 16 }} type="date" value={fechaInicio} onChange={e => setFechaInicio(e.target.value)} />
+            <div style={{ ...s.label, marginBottom: 8, textAlign: "center" }}>INGRESO MENSUAL (S/)</div>
+            {/* CORRECCIÓN: Input premium con formato dinámico */}
+            <input 
+              style={{ ...s.input, marginBottom: 16, fontSize: 24, fontWeight: 700, textAlign: "center", color: "#D4AF37" }} 
+              type={isEditingIngreso ? "number" : "text"} 
+              placeholder="Ej: 5000" 
+              value={isEditingIngreso ? ingresoMensual : (ingresoMensual ? formatMoney(ingresoMensual) : "")} 
+              onFocus={() => setIsEditingIngreso(true)}
+              onBlur={() => setIsEditingIngreso(false)}
+              onChange={e => setIngresoMensual(e.target.value)} 
+            />
+            
+            <div style={{ ...s.label, marginBottom: 8, textAlign: "center" }}>FECHA DE INICIO DEL PLAN</div>
+            <input style={{ ...s.input, marginBottom: 16, textAlign: "center", fontSize: 16 }} type="date" value={fechaInicio} onChange={e => setFechaInicio(e.target.value)} />
+            
             <button style={s.btnPrimary} onClick={guardarConfig} disabled={saving}>
               {saving ? "Guardando..." : "Guardar configuración"}
             </button>
@@ -768,7 +761,6 @@ export default function App() {
             </div>
           )}
 
-          {/* Categorías custom */}
           <div style={s.card}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
               <div style={s.label}>Categorías personalizadas</div>
