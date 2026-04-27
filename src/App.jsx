@@ -110,7 +110,7 @@ export default function App() {
   const [tab,            setTab]            = useState("hoy");
   const [form,           setForm]           = useState({ monto: "", descripcion: "", categoria: "comida", tipo: "gasto" });
   const [ingresoMensual, setIngresoMensual] = useState("");
-  const [isEditingIngreso, setIsEditingIngreso] = useState(false); 
+  const [isEditingIngreso, setIsEditingIngreso] = useState(false); // NUEVO: Estado para el input de ingreso
   const [fechaInicio,    setFechaInicio]    = useState(hoy());
   const [loaded,         setLoaded]         = useState(false);
   const [saving,         setSaving]         = useState(false);
@@ -159,7 +159,7 @@ export default function App() {
         }
         setError(null);
       } catch (e) {
-        setError("No se pudo conectar. Verifica tu configuración.");
+        setError("No se pudo conectar. Verifica tu configuración de Supabase.");
       }
       setLoaded(true);
     })();
@@ -335,7 +335,6 @@ export default function App() {
     return matchCat && matchDesde && matchHasta;
   });
 
-  // ── ESTILOS MAESTROS UNIFICADOS ──────────────────────────────────────────
   const s = {
     app: {
       background: "#0A0A0A", minHeight: "100vh", color: "#E8E0D0",
@@ -344,19 +343,15 @@ export default function App() {
       paddingBottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
       overscrollBehaviorY: "none",
     },
-    // SE REDUJO EL PADDING GLOBAL PARA QUE LAS CAJAS SEAN MÁS ANCHAS EN TODAS LAS PESTAÑAS
-    header:     { padding: "24px 14px 0", borderBottom: "1px solid #1E1E1E", position: "sticky", top: 0, zIndex: 1000, background: "#0A0A0A" },
+    header:     { padding: "24px 20px 0", borderBottom: "1px solid #1E1E1E" },
     title:      { fontFamily: "'Playfair Display','Georgia',serif", fontSize: 28, fontWeight: 700, color: "#D4AF37", margin: 0 },
     refreshBtn: { background: "#1A1A1A", border: "1px solid #333", borderRadius: "50%", width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 18 },
     subtitle:   { color: "#666", fontSize: 13, margin: "4px 0 0" },
-    tabs:       { display: "flex", paddingTop: 16, borderBottom: "1px solid #1A1A1A" },
-    tab:    (a) => ({ flex: 1, padding: "8px 0", background: "none", border: "none", borderBottom: a ? "2px solid #D4AF37" : "2px solid transparent", color: a ? "#D4AF37" : "#555", cursor: "pointer", fontSize: 13, fontWeight: a ? 700 : 400, transition: "all 0.2s" }),
-    section:    { padding: "16px 14px" }, // PADDING REDUCIDO PARA QUE LA APP SE VEA ANCHA Y MODERNA
-    
-    // CAJAS ESTRUCTURALES CON ANCHO ESTRICTO
-    card:       { width: "100%", boxSizing: "border-box", background: "#111", border: "1px solid #1E1E1E", borderRadius: 12, padding: "16px", marginBottom: 12, overflow: "hidden" },
-    metaCard:   { width: "100%", boxSizing: "border-box", background: "linear-gradient(135deg,#1A1500,#0F1000)", border: "1px solid #3A2E00", borderRadius: 16, padding: "20px", marginBottom: 16, overflow: "hidden" },
-    
+    tabs:       { display: "flex", padding: "16px 20px 0", borderBottom: "1px solid #1A1A1A" },
+    tab:    (a) => ({ padding: "8px 14px", background: "none", border: "none", borderBottom: a ? "2px solid #D4AF37" : "2px solid transparent", color: a ? "#D4AF37" : "#555", cursor: "pointer", fontSize: 13, fontWeight: a ? 600 : 400, transition: "all 0.2s" }),
+    section:    { padding: "20px" },
+    card:       { background: "#111", border: "1px solid #1E1E1E", borderRadius: 12, padding: "16px", marginBottom: 12, overflow: "hidden" },
+    metaCard:   { background: "linear-gradient(135deg,#1A1500,#0F1000)", border: "1px solid #3A2E00", borderRadius: 16, padding: "20px", marginBottom: 16 },
     label:      { fontSize: 11, color: "#666", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 4 },
     bigNum:     { fontFamily: "monospace", fontSize: 30, fontWeight: 700, color: "#D4AF37", lineHeight: 1 },
     smallNum:   { fontFamily: "monospace", fontSize: 18, fontWeight: 600, color: "#E8E0D0" },
@@ -366,26 +361,33 @@ export default function App() {
     progressFill: (p) => ({ height: "100%", width: `${p}%`, background: p >= 100 ? "#5AE88A" : p >= 50 ? "#D4AF37" : "#E85A5A", borderRadius: 4, transition: "width 0.6s ease" }),
     grid2:      { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 },
     
-    // INPUTS SEGUROS PARA IPHONE
+    // CORRECCIÓN GLOBAL DE INPUTS (Soluciona el desborde en iOS)
     input: { 
       width: "100%", 
-      background: "#111", border: "1px solid #2A2A2A", borderRadius: 8, color: "#E8E0D0", 
-      padding: "10px 12px", fontSize: 15, outline: "none", 
-      boxSizing: "border-box", fontFamily: "inherit", WebkitAppearance: "none", display: "block"
+      maxWidth: "100%", // Evita desborde en iPhone
+      background: "#111", 
+      border: "1px solid #2A2A2A", 
+      borderRadius: 8, 
+      color: "#E8E0D0", 
+      padding: "10px 12px", 
+      fontSize: 15, 
+      outline: "none", 
+      boxSizing: "border-box", 
+      fontFamily: "inherit",
+      WebkitAppearance: "none" // Clave para iOS
     },
     
     select:     { width: "100%", background: "#111", border: "1px solid #2A2A2A", borderRadius: 8, color: "#E8E0D0", padding: "10px 12px", fontSize: 13, outline: "none", boxSizing: "border-box", fontFamily: "inherit", cursor: "pointer", WebkitAppearance: "none" },
     btnPrimary: { background: "#D4AF37", color: "#000", border: "none", borderRadius: 8, padding: "12px", fontSize: 14, fontWeight: 700, cursor: "pointer", width: "100%", letterSpacing: "0.5px" },
-    btnSecondary:{ background: "#1A1A1A", color: "#D4AF37", border: "1px solid #3A3A00", borderRadius: 8, padding: "10px", fontSize: 13, cursor: "pointer", width: "100%", boxSizing: "border-box" },
+    btnSecondary:{ background: "#1A1A1A", color: "#D4AF37", border: "1px solid #3A3A00", borderRadius: 8, padding: "10px", fontSize: 13, cursor: "pointer", width: "100%" },
     tipoBtn: (a, c) => ({ flex: 1, padding: "8px", background: a ? c : "#111", border: `1px solid ${a ? c : "#2A2A2A"}`, color: a ? "#000" : "#666", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: a ? 700 : 400, transition: "all 0.2s" }),
     itemRow:    { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #161616" },
     catDot: (c) => ({ width: 8, height: 8, borderRadius: "50%", background: c, display: "inline-block", marginRight: 8, flexShrink: 0 }),
     deleteBtn:  { background: "none", border: "none", color: "#444", cursor: "pointer", fontSize: 18, padding: "4px 6px" },
     editBtn:    { background: "none", border: "none", color: "#D4AF37", cursor: "pointer", fontSize: 15, padding: "4px 6px" },
     errorCard:  { background: "#1A0A0A", border: "1px solid #5A0A0A", borderRadius: 12, padding: "16px", margin: "20px", color: "#E85A5A", fontSize: 13 },
-    filterRow:  { display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap", width: "100%", boxSizing: "border-box" },
+    filterRow:  { display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" },
     filterBtn: (a) => ({ padding: "5px 12px", borderRadius: 20, border: `1px solid ${a ? "#D4AF37" : "#2A2A2A"}`, background: a ? "#D4AF37" : "#111", color: a ? "#000" : "#666", fontSize: 12, cursor: "pointer", fontWeight: a ? 700 : 400 }),
-    
     navBar: {
       position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
       width: "100%", maxWidth: 480,
@@ -395,34 +397,35 @@ export default function App() {
     },
     navBtn: (a) => ({
       flex: 1, paddingTop: 12, paddingBottom: 10,
-      background: "none", border: "none", color: a ? "#D4AF37" : "#444",
+      background: "none", border: "none",
+      color: a ? "#D4AF37" : "#444",
       fontSize: 10, cursor: "pointer",
       display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
     }),
     overlay: {
       position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)",
       display: "flex", alignItems: "center", justifyContent: "center",
-      zIndex: 200, padding: "20px", boxSizing: "border-box"
+      zIndex: 200, padding: "20px",
     },
     modal: {
       background: "#111", border: "1px solid #2A2A2A", borderRadius: 16,
-      padding: "20px", width: "100%", maxWidth: 400, boxSizing: "border-box"
+      padding: "20px", width: "100%", maxWidth: 400,
     },
   };
 
   if (!loaded) return (
     <div style={{ background: "#0A0A0A", height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
       <div style={{ width: 32, height: 32, border: "2px solid #1A1A1A", borderTop: "2px solid #D4AF37", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } } *{box-sizing:border-box} html,body{background:#0A0A0A!important;margin:0;padding:0;width:100%;max-width:100%} #root{background:#0A0A0A;min-height:100vh;width:100%}`}</style>
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } } *{box-sizing:border-box} html,body{background:#0A0A0A!important;margin:0;padding:0;overscroll-behavior-y:none;width:100%;max-width:100%} #root{background:#0A0A0A;min-height:100vh;width:100%}`}</style>
       <span style={{ color: "#555", fontSize: 13 }}>Conectando...</span>
     </div>
   );
 
   return (
     <div style={s.app}>
-      <style>{`*{box-sizing:border-box} html,body{background:#0A0A0A!important;margin:0;padding:0;width:100%;max-width:100%}#root{background:#0A0A0A;min-height:100vh;width:100%}`}</style>
+      <style>{`*{box-sizing:border-box} html,body{background:#0A0A0A!important;margin:0;padding:0;overscroll-behavior-y:none;width:100%;max-width:100%}#root{background:#0A0A0A;min-height:100vh;width:100%}`}</style>
 
-      {/* HEADER FIJO */}
+      {/* HEADER */}
       <div style={s.header}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <h1 style={s.title}>Ahorro Meta</h1>
@@ -489,7 +492,7 @@ export default function App() {
 
           <div style={s.card}>
             <div style={s.label}>Registrar movimiento</div>
-            <div style={{ display: "flex", gap: 8, marginBottom: 12, width: "100%", boxSizing: "border-box" }}>
+            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
               <button style={s.tipoBtn(form.tipo === "gasto", "#E85A5A")} onClick={() => setForm(f => ({ ...f, tipo: "gasto" }))}>− Gasto</button>
               <button style={s.tipoBtn(form.tipo === "ingreso", "#5AE88A")} onClick={() => setForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
             </div>
@@ -512,9 +515,9 @@ export default function App() {
                 const cat = categorias.find(c => c.id === g.categoria);
                 return (
                   <div key={g.id} style={s.itemRow}>
-                    <div style={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0, overflow: "hidden" }}>
+                    <div style={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0 }}>
                       {cat && <span style={s.catDot(cat.color)} />}
-                      <span style={{ fontSize: 14, color: "#C0B8A8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block" }}>{g.descripcion}</span>
+                      <span style={{ fontSize: 14, color: "#C0B8A8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.descripcion}</span>
                     </div>
                     <span style={{ fontFamily: "monospace", fontWeight: 600, color: g.tipo === "gasto" ? "#E85A5A" : "#5AE88A", marginRight: 4, flexShrink: 0 }}>
                       {g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}
@@ -548,22 +551,21 @@ export default function App() {
           </div>
           {filtroResumen === "rango" && (
             <div style={{ ...s.card, padding: 12, marginBottom: 12 }}>
-              {/* ESTRUCTURA PROTEGIDA PARA FECHAS */}
-              <div style={{ display: "flex", gap: 10, alignItems: "flex-end", width: "100%", boxSizing: "border-box" }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
+                <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
                   <div style={{ ...s.label, marginBottom: 5 }}>Del</div>
                   <input
                     type="date" value={filtroFechaResumenDesde}
                     onChange={e => setFiltroFechaResumenDesde(e.target.value)}
-                    style={{ ...s.input, padding: "10px", fontSize: 13 }}
+                    style={{ ...s.input, padding: "10px 5px", fontSize: 13 }}
                   />
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
                   <div style={{ ...s.label, marginBottom: 5 }}>Al</div>
                   <input
                     type="date" value={filtroFechaResumenHasta}
                     onChange={e => setFiltroFechaResumenHasta(e.target.value)}
-                    style={{ ...s.input, padding: "10px", fontSize: 13 }}
+                    style={{ ...s.input, padding: "10px 5px", fontSize: 13 }}
                   />
                 </div>
               </div>
@@ -607,7 +609,7 @@ export default function App() {
 
           <div style={s.card}>
             <div style={{ ...s.label, marginBottom: 14 }}>Gastos últimos 7 días</div>
-            <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 80, width: "100%" }}>
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 80 }}>
               {gastosUltimos7.map((d, i) => (
                 <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
                   <div style={{ width: "100%", height: `${d.total ? Math.max(8, (d.total / maxBar) * 70) : 3}px`, background: d.fecha === fechaHoy ? "#D4AF37" : "#2A2A2A", borderRadius: "3px 3px 0 0", transition: "height 0.4s" }} />
@@ -640,7 +642,7 @@ export default function App() {
       {tab === "historial" && (
         <div style={s.section}>
 
-          <div style={{ display: "flex", gap: 8, marginBottom: 14, width: "100%" }}>
+          <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
             <button
               style={{ ...s.btnSecondary, flex: 1, fontSize: 12 }}
               onClick={() => exportarCSV(gastosFiltradosHist, categorias)}
@@ -651,6 +653,7 @@ export default function App() {
             >📄 Exportar PDF</button>
           </div>
 
+          {/* CORRECCIÓN: Filtros dentro de un s.card para alinear anchos */}
           <div style={s.card}>
             <div style={{ ...s.label, marginBottom: 6 }}>Filtrar por categoría</div>
             <div style={{ ...s.filterRow, marginBottom: 12 }}>
@@ -660,22 +663,21 @@ export default function App() {
               ))}
             </div>
             <div style={{ ...s.label, marginBottom: 6, marginTop: 8 }}>Filtrar por rango de fecha</div>
-            {/* ESTRUCTURA PROTEGIDA PARA FECHAS */}
-            <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 6, width: "100%", boxSizing: "border-box" }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 6 }}>
+              <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
                 <div style={{ fontSize: 11, color: "#555", marginBottom: 3 }}>Del</div>
                 <input
                   type="date" value={filtroHistFechaDesde}
                   onChange={e => setFiltroHistFechaDesde(e.target.value)}
-                  style={{ ...s.input, padding: "10px", fontSize: 13 }}
+                  style={{ ...s.input, padding: "10px 5px", fontSize: 13 }}
                 />
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
                 <div style={{ fontSize: 11, color: "#555", marginBottom: 3 }}>Al</div>
                 <input
                   type="date" value={filtroHistFechaHasta}
                   onChange={e => setFiltroHistFechaHasta(e.target.value)}
-                  style={{ ...s.input, padding: "10px", fontSize: 13 }}
+                  style={{ ...s.input, padding: "10px 5px", fontSize: 13 }}
                 />
               </div>
             </div>
@@ -698,11 +700,10 @@ export default function App() {
                 return (
                   <div key={g.id} style={{ ...s.card, padding: "12px 14px", marginBottom: 6 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      {/* TRUNCAMIENTO PROTEGIDO PARA QUE NO ENSANCHE LA CAJA */}
-                      <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: "flex", alignItems: "center", marginBottom: 2 }}>
                           {cat && <span style={s.catDot(cat.color)} />}
-                          <span style={{ fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>{g.descripcion}</span>
+                          <span style={{ fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.descripcion}</span>
                         </div>
                         <div style={{ fontSize: 11, color: "#555" }}>{fecha}</div>
                         <div style={{ fontSize: 10, color: "#3A3A3A" }}>{hora}</div>
@@ -726,9 +727,9 @@ export default function App() {
         <div style={s.section}>
           <div style={s.card}>
             <div style={{ ...s.label, marginBottom: 8, textAlign: "center" }}>INGRESO MENSUAL (S/)</div>
-            {/* FORMATO S/ 30,000.00 MÁGICO */}
+            {/* CORRECCIÓN: Input premium con formato dinámico */}
             <input 
-              style={{ ...s.input, marginBottom: 16, fontSize: 24, fontWeight: 700, textAlign: "center", color: "#D4AF37", width: "100%" }} 
+              style={{ ...s.input, marginBottom: 16, fontSize: 24, fontWeight: 700, textAlign: "center", color: "#D4AF37" }} 
               type={isEditingIngreso ? "number" : "text"} 
               placeholder="Ej: 5000" 
               value={isEditingIngreso ? ingresoMensual : (ingresoMensual ? formatMoney(ingresoMensual) : "")} 
@@ -738,13 +739,7 @@ export default function App() {
             />
             
             <div style={{ ...s.label, marginBottom: 8, textAlign: "center" }}>FECHA DE INICIO DEL PLAN</div>
-            {/* ANCHO EXACTO AL INGRESO MENSUAL */}
-            <input 
-              style={{ ...s.input, marginBottom: 16, textAlign: "center", fontSize: 16, width: "100%" }} 
-              type="date" 
-              value={fechaInicio} 
-              onChange={e => setFechaInicio(e.target.value)} 
-            />
+            <input style={{ ...s.input, marginBottom: 16, textAlign: "center", fontSize: 16 }} type="date" value={fechaInicio} onChange={e => setFechaInicio(e.target.value)} />
             
             <button style={s.btnPrimary} onClick={guardarConfig} disabled={saving}>
               {saving ? "Guardando..." : "Guardar configuración"}
