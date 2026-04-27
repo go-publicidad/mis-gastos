@@ -36,14 +36,28 @@ const formatFecha = (fechaStr) => {
 
 const formatDateTime = (isoStr) => {
   if (!isoStr) return { fecha: "", hora: "" };
-  const dt = new Date(new Date(isoStr).getTime() - 5 * 60 * 60 * 1000);
-  const d  = String(dt.getUTCDate()).padStart(2, "0");
-  const mo = String(dt.getUTCMonth() + 1).padStart(2, "0");
-  const y  = dt.getUTCFullYear();
-  const h  = String(dt.getUTCHours()).padStart(2, "0");
-  const mi = String(dt.getUTCMinutes()).padStart(2, "0");
-  const se = String(dt.getUTCSeconds()).padStart(2, "0");
-  return { fecha: `${d}/${mo}/${y}`, hora: `${h}:${mi}:${se}` };
+
+  // Normalizamos el texto de Supabase para que JS siempre lo detecte correctamente como UTC
+  const validIsoStr = isoStr.includes('Z') || isoStr.includes('+') ? isoStr : `${isoStr}Z`;
+  const dt = new Date(validIsoStr);
+
+  // Forzamos la zona horaria a la de Lima
+  const fecha = new Intl.DateTimeFormat("es-PE", {
+    timeZone: "America/Lima",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  }).format(dt);
+
+  const hora = new Intl.DateTimeFormat("es-PE", {
+    timeZone: "America/Lima",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  }).format(dt);
+
+  return { fecha, hora };
 };
 
 const diasTranscurridos = (inicio) => {
