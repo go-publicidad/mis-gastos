@@ -110,7 +110,7 @@ const exportarPDF = (gastos, categorias) => {
 // ─────────────────────────────────────────────────────────────────────────────
 export default function App() {
   const [gastos,         setGastos]         = useState([]);
-  const [categoriasExtra, setCategoriasExtra] = useState([]);  // categorías custom del usuario
+  const [categoriasExtra, setCategoriasExtra] = useState([]);  
   const [tab,            setTab]            = useState("hoy");
   const [form,           setForm]           = useState({ monto: "", descripcion: "", categoria: "comida", tipo: "gasto" });
   const [ingresoMensual, setIngresoMensual] = useState("");
@@ -121,7 +121,7 @@ export default function App() {
   const [error,          setError]          = useState(null);
 
   // Edición de movimiento
-  const [editando,  setEditando]  = useState(null);   // objeto completo
+  const [editando,  setEditando]  = useState(null);   
   const [editForm,  setEditForm]  = useState({});
 
   // Categoría custom nueva
@@ -563,21 +563,22 @@ export default function App() {
           </div>
           {filtroResumen === "rango" && (
             <div style={{ ...s.card, padding: 12, marginBottom: 12 }}>
+              {/* SOLUCIÓN: minWidth: 0 para que no desborde en el iPhone */}
               <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ ...s.label, marginBottom: 5 }}>Del</div>
                   <input
                     type="date" value={filtroFechaResumenDesde}
                     onChange={e => setFiltroFechaResumenDesde(e.target.value)}
-                    style={s.input}
+                    style={{ ...s.input, minWidth: 0, padding: "10px 5px", fontSize: 13 }}
                   />
                 </div>
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ ...s.label, marginBottom: 5 }}>Al</div>
                   <input
                     type="date" value={filtroFechaResumenHasta}
                     onChange={e => setFiltroFechaResumenHasta(e.target.value)}
-                    style={s.input}
+                    style={{ ...s.input, minWidth: 0, padding: "10px 5px", fontSize: 13 }}
                   />
                 </div>
               </div>
@@ -679,21 +680,22 @@ export default function App() {
               ))}
             </div>
             <div style={{ ...s.label, marginBottom: 6, marginTop: 8 }}>Filtrar por rango de fecha</div>
+            {/* SOLUCIÓN: minWidth: 0 para Historial */}
             <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 11, color: "#555", marginBottom: 3 }}>Del</div>
                 <input
                   type="date" value={filtroHistFechaDesde}
                   onChange={e => setFiltroHistFechaDesde(e.target.value)}
-                  style={s.input}
+                  style={{ ...s.input, minWidth: 0, padding: "10px 5px", fontSize: 13 }}
                 />
               </div>
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 11, color: "#555", marginBottom: 3 }}>Al</div>
                 <input
                   type="date" value={filtroHistFechaHasta}
                   onChange={e => setFiltroHistFechaHasta(e.target.value)}
-                  style={s.input}
+                  style={{ ...s.input, minWidth: 0, padding: "10px 5px", fontSize: 13 }}
                 />
               </div>
             </div>
