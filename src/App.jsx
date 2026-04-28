@@ -146,6 +146,14 @@ export default function App() {
   const [filtroFechaResumenDesde, setFiltroFechaResumenDesde] = useState(hoy());
   const [filtroFechaResumenHasta, setFiltroFechaResumenHasta] = useState(hoy());
 
+  // NUEVOS ESTADOS: PANTALLA "VER TODOS" Y MODAL CORREO
+  const [viewAll, setViewAll] = useState(false);
+  const [showVtFiltro, setShowVtFiltro] = useState(false);
+  const [vtFechaDesde, setVtFechaDesde] = useState("");
+  const [vtFechaHasta, setVtFechaHasta] = useState("");
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailDestino, setEmailDestino] = useState("");
+
   const categorias = [...CATEGORIAS_DEFAULT, ...categoriasExtra];
 
   const showToast = (msg, color = "#D4AF37") => {
@@ -338,13 +346,11 @@ export default function App() {
   const getFiltradosResumen = () => {
     const hoyStr = hoy();
     if (filtroResumen === "hoy") return gastos.filter(g => g.fecha === hoyStr);
-    
     if (filtroResumen === "semana") {
       const hace7 = new Date(Date.now() - 18000000 - 6 * 86400000);
       const limite = hace7.toISOString().split("T")[0];
       return gastos.filter(g => g.fecha >= limite);
     }
-    
     if (filtroResumen === "mes") {
       const mesActual = hoyStr.slice(0, 7);
       return gastos.filter(g => g.fecha.startsWith(mesActual));
@@ -388,6 +394,13 @@ export default function App() {
     return matchCat && matchDesde && matchHasta;
   });
 
+  // FILTRO PARA LA PANTALLA "VER TODOS"
+  const gastosVerTodos = gastos.filter(g => {
+    const matchDesde = !vtFechaDesde || g.fecha >= vtFechaDesde;
+    const matchHasta = !vtFechaHasta || g.fecha <= vtFechaHasta;
+    return matchDesde && matchHasta;
+  });
+
   const s = {
     app: {
       background: "#0A0A0A", minHeight: "100vh", color: "#E8E0D0",
@@ -404,20 +417,9 @@ export default function App() {
     subtitle:   { color: "#666", fontSize: 13, margin: "4px 0 0" },
     tabs:       { display: "flex", padding: "16px 20px 0", borderBottom: "1px solid #1A1A1A" },
     tab:    (a) => ({ padding: "8px 14px", background: "none", border: "none", borderBottom: a ? "2px solid #D4AF37" : "2px solid transparent", color: a ? "#D4AF37" : "#555", cursor: "pointer", fontSize: 13, fontWeight: a ? 600 : 400, transition: "all 0.2s" }),
-    
-    section:    { 
-      padding: "20px", 
-      width: "100%", 
-      maxWidth: "100%", 
-      boxSizing: "border-box",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "stretch" 
-    },
-    
+    section:    { padding: "20px", width: "100%", maxWidth: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "stretch" },
     card:       { width: "100%", background: "#111", border: "1px solid #1E1E1E", borderRadius: 12, padding: "16px", marginBottom: 12, overflow: "hidden", boxSizing: "border-box" },
     metaCard:   { width: "100%", background: "linear-gradient(135deg,#1A1500,#0F1000)", border: "1px solid #3A2E00", borderRadius: 16, padding: "20px", marginBottom: 16, boxSizing: "border-box" },
-    
     label:      { fontSize: 11, color: "#666", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 4 },
     bigNum:     { fontFamily: "monospace", fontSize: 30, fontWeight: 700, color: "#D4AF37", lineHeight: 1 },
     smallNum:   { fontFamily: "monospace", fontSize: 18, fontWeight: 600, color: "#E8E0D0" },
@@ -475,291 +477,54 @@ export default function App() {
     <div style={s.app}>
       <style>{`*{box-sizing:border-box} html,body{background:#0A0A0A!important;margin:0;padding:0;overscroll-behavior-y:none;width:100vw;max-width:100%;overflow-x:hidden}#root{background:#0A0A0A;min-height:100vh;width:100%;max-width:100%;overflow-x:hidden}`}</style>
 
-      {/* HEADER */}
-      <div style={s.header}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h1 style={s.title}>Ahorro Meta</h1>
-          <button onClick={() => window.location.reload()} style={s.refreshBtn} title="Actualizar">🔄</button>
-        </div>
-        <p style={s.subtitle}>
-          Meta: {formatMoney(META_TOTAL)} en {MESES} meses · Día {diasTranscurridos(fechaInicio)} de {DIAS_TOTAL}
-          {saving && <span style={{ color: "#555", marginLeft: 8, fontSize: 11 }}>· Guardando...</span>}
-        </p>
-        <div style={s.tabs}>
-          {[{ id: "hoy", label: "Hoy" }, { id: "resumen", label: "Resumen" }, { id: "historial", label: "Historial" }, { id: "config", label: "Config" }].map(t => (
-            <button key={t.id} style={s.tab(tab === t.id)} onClick={() => setTab(t.id)}>{t.label}</button>
-          ))}
-        </div>
-      </div>
-
-      {error && <div style={s.errorCard}>⚠️ {error}</div>}
-
-      {/* ═══════════ TAB: HOY ═══════════ */}
-      {tab === "hoy" && (
-        <div style={s.section}>
-
-          <div style={s.metaCard}>
-            <div style={s.label}>Progreso hacia tu meta</div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-              <span style={s.bigNum}>{formatMoney(Math.max(0, ahorroAcumulado))}</span>
-              <span style={{ color: "#555", fontSize: 13 }}>de {formatMoney(META_TOTAL)}</span>
-            </div>
-            <div style={s.progressBg}><div style={s.progressFill(progreso)} /></div>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#888", marginBottom: 8 }}>
-              <span>{progreso.toFixed(1)}% completado</span>
-              <span>{diasRestantes} días restantes</span>
-            </div>
-            <div style={{ borderTop: "1px solid #2A2000", paddingTop: 8, display: "flex", justifyContent: "space-between", fontSize: 12 }}>
-              <span style={{ color: "#666" }}>Falta ahorrar</span>
-              <span style={{ color: "#E8845A", fontFamily: "monospace", fontWeight: 700 }}>
-                {formatMoney(Math.max(0, META_TOTAL - ahorroAcumulado))}
-              </span>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginTop: 4 }}>
-              <span style={{ color: "#666" }}>A este ritmo llegarás</span>
-              <span style={{ color: "#D4AF37", fontWeight: 700 }}>{proyeccionTexto}</span>
-            </div>
-          </div>
-
-          <div style={s.grid2}>
-            <div style={s.card}><div style={s.label}>Gastado hoy</div><div style={{ ...s.redNum, fontSize: 20 }}>{formatMoney(totalGastadoHoy)}</div></div>
-            <div style={s.card}><div style={s.label}>Límite/día</div><div style={{ ...s.greenNum, fontSize: 20 }}>{ingMensual > 0 ? formatMoney(presupuestoDiario) : "—"}</div></div>
-          </div>
-
-          {ingMensual > 0 && (
-            <div style={s.grid2}>
-              <div style={s.card}>
-                <div style={s.label}>Ingresos hoy</div>
-                <div style={{ ...s.greenNum, fontSize: 20 }}>
-                  {formatMoney(totalIngresosHoy)}
-                </div>
-              </div>
-              
-              <div style={{ ...s.card, background: totalGastadoHoy > presupuestoDiario ? "#1A0A0A" : "#0A1A0A", border: `1px solid ${totalGastadoHoy > presupuestoDiario ? "#3A1000" : "#103A10"}` }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ ...s.label, fontSize: 10 }}>Saldo disponible hoy</div>
-                    <div style={{ fontFamily: "monospace", fontSize: 18, fontWeight: 700, color: (presupuestoDiario - totalGastadoHoy) >= 0 ? "#5AE88A" : "#E85A5A", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                      {formatMoney(presupuestoDiario - totalGastadoHoy)}
-                    </div>
-                  </div>
-                  <span style={{ fontSize: 20, marginLeft: 4 }}>{(presupuestoDiario - totalGastadoHoy) >= 0 ? "✅" : "⚠️"}</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div style={s.card}>
-            <div style={s.label}>Registrar movimiento</div>
-            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-              <button style={s.tipoBtn(form.tipo === "gasto", "#E85A5A")} onClick={() => setForm(f => ({ ...f, tipo: "gasto" }))}>− Gasto</button>
-              <button style={s.tipoBtn(form.tipo === "ingreso", "#5AE88A")} onClick={() => setForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
-            </div>
-            <input style={{ ...s.input, marginBottom: 8, fontSize: 22, fontWeight: 700 }} type="number" placeholder="0.00" value={form.monto} onChange={e => setForm(f => ({ ...f, monto: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
-            {form.tipo === "gasto" && (
-              <select style={{ ...s.select, marginBottom: 8 }} value={form.categoria} onChange={e => setForm(f => ({ ...f, categoria: e.target.value }))}>
-                {categorias.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-              </select>
-            )}
-            <input style={{ ...s.input, marginBottom: 10 }} type="text" placeholder="Descripción (opcional)" value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
-            <button style={s.btnPrimary} onClick={agregarMovimiento} disabled={saving}>
-              {saving ? "Guardando..." : `Registrar ${form.tipo === "gasto" ? "Gasto" : "Ingreso"}`}
+      {/* RENDERIZADO CONDICIONAL: PANTALLA PRINCIPAL vs PANTALLA "VER TODOS" */}
+      {viewAll ? (
+        <>
+          {/* HEADER DE LA NUEVA PANTALLA */}
+          <div style={{ padding: "16px 20px", borderBottom: "1px solid #1A1A1A", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#0A0A0A", position: "sticky", top: 0, zIndex: 10 }}>
+            <button style={{ background: "none", border: "none", color: "#D4AF37", fontSize: 24, cursor: "pointer", padding: 0 }} onClick={() => setViewAll(false)}>
+              ←
             </button>
-          </div>
-
-          {(gastosHoy.length > 0 || ingresosHoy.length > 0) ? (
-            <div style={s.card}>
-              <div style={s.label}>Movimientos de hoy</div>
-              {[...gastosHoy, ...ingresosHoy].map(g => {
-                const cat = categorias.find(c => c.id === g.categoria);
-                const { fecha, hora } = formatDateTime(g.created_at);
-                return (
-                  <div key={g.id} style={s.itemRow}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", marginBottom: 2 }}>
-                        {cat && <span style={s.catDot(cat.color)} />}
-                        <span style={{ fontSize: 14, color: "#C0B8A8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.descripcion}</span>
-                      </div>
-                      {/* LÍNEA MODIFICADA PARA AHORRAR ESPACIO: Fecha y Hora juntas */}
-                      <div style={{ fontSize: 11, color: "#666" }}>
-                        {fecha} <span style={{ opacity: 0.5, margin: "0 4px" }}>|</span> {hora}
-                      </div>
-                    </div>
-                    <span style={{ fontFamily: "monospace", fontWeight: 600, color: g.tipo === "gasto" ? "#E85A5A" : "#5AE88A", marginRight: 4, flexShrink: 0 }}>
-                      {g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}
-                    </span>
-                    <button style={s.editBtn} onClick={() => abrirEdicion(g)}>✏️</button>
-                    <button style={s.deleteBtn} onClick={() => eliminar(g.id)}>×</button>
-                  </div>
-                );
-              })}
+            <h2 style={{ margin: 0, fontSize: 18, color: "#E8E0D0", fontWeight: 600 }}>Movimientos</h2>
+            <div style={{ display: "flex", gap: 16 }}>
+              <button style={{ background: "none", border: "none", color: "#D4AF37", fontSize: 20, cursor: "pointer", padding: 0 }} onClick={() => setShowEmailModal(true)}>
+                ✉️
+              </button>
+              <button style={{ background: "none", border: "none", color: "#D4AF37", fontSize: 20, cursor: "pointer", padding: 0 }} onClick={() => setShowVtFiltro(!showVtFiltro)}>
+                🎚️
+              </button>
             </div>
-          ) : (
-            <div style={{ ...s.card, textAlign: "center", color: "#333", padding: "24px" }}>Sin movimientos hoy</div>
-          )}
-        </div>
-      )}
-
-      {/* ═══════════ TAB: RESUMEN ═══════════ */}
-      {tab === "resumen" && (
-        <div style={s.section}>
-
-          <div style={s.filterRow}>
-            {[
-              { id: "hoy",    label: "Hoy" },
-              { id: "semana", label: "7 días" },
-              { id: "mes",    label: "Este mes" },
-              { id: "todo",   label: "Todo" },
-              { id: "rango",  label: "📅 Rango" },
-            ].map(f => (
-              <button key={f.id} style={s.filterBtn(filtroResumen === f.id)} onClick={() => setFiltroResumen(f.id)}>{f.label}</button>
-            ))}
           </div>
-          {filtroResumen === "rango" && (
-            <div style={{ ...s.card, padding: 12 }}>
-              <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
+
+          {/* PANEL DE FILTRO DESPLEGABLE EN VER TODOS */}
+          {showVtFiltro && (
+            <div style={{ padding: "16px 20px", background: "#111", borderBottom: "1px solid #1E1E1E" }}>
+              <div style={{ ...s.label, marginBottom: 6, textAlign: "center" }}>Filtrar por rango de fecha</div>
+              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                 <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                  <div style={{ ...s.label, marginBottom: 5 }}>Del</div>
-                  <input
-                    type="date" value={filtroFechaResumenDesde}
-                    onChange={e => setFiltroFechaResumenDesde(e.target.value)}
-                    style={{ ...s.input, padding: "10px 5px", fontSize: 16 }}
-                  />
+                  <div style={{ fontSize: 11, color: "#555", marginBottom: 3 }}>Del</div>
+                  <input type="date" value={vtFechaDesde} onChange={e => setVtFechaDesde(e.target.value)} style={{ ...s.input, padding: "10px 5px", fontSize: 16 }} />
                 </div>
                 <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                  <div style={{ ...s.label, marginBottom: 5 }}>Al</div>
-                  <input
-                    type="date" value={filtroFechaResumenHasta}
-                    onChange={e => setFiltroFechaResumenHasta(e.target.value)}
-                    style={{ ...s.input, padding: "10px 5px", fontSize: 16 }}
-                  />
+                  <div style={{ fontSize: 11, color: "#555", marginBottom: 3 }}>Al</div>
+                  <input type="date" value={vtFechaHasta} onChange={e => setVtFechaHasta(e.target.value)} style={{ ...s.input, padding: "10px 5px", fontSize: 16 }} />
                 </div>
               </div>
-              {(filtroFechaResumenDesde || filtroFechaResumenHasta) && (
-                <button
-                  style={{ fontSize: 12, color: "#E85A5A", background: "none", border: "none", cursor: "pointer", marginTop: 8, padding: 0 }}
-                  onClick={() => { setFiltroFechaResumenDesde(""); setFiltroFechaResumenHasta(""); }}
-                >× Limpiar fechas</button>
+              {(vtFechaDesde || vtFechaHasta) && (
+                <button style={{ width: "100%", fontSize: 12, color: "#E85A5A", background: "none", border: "none", cursor: "pointer", padding: "12px 0 0", marginTop: 4 }} onClick={() => { setVtFechaDesde(""); setVtFechaHasta(""); }}>
+                  × Limpiar fechas
+                </button>
               )}
             </div>
           )}
 
-          <div style={s.grid2}>
-            <div style={s.card}><div style={s.label}>Total gastado</div><div style={s.redNum}>{formatMoney(totalGastadoR)}</div></div>
-            <div style={s.card}><div style={s.label}>Total ingresos</div><div style={s.greenNum}>{formatMoney(totalIngresosR)}</div></div>
-            <div style={s.card}><div style={s.label}>Ahorro período</div><div style={{ ...s.smallNum, color: ahorroR >= 0 ? "#D4AF37" : "#E85A5A" }}>{formatMoney(ahorroR)}</div></div>
-            <div style={s.card}><div style={s.label}>Gasto prom/día</div><div style={s.smallNum}>{formatMoney(gastoDiarioProm)}</div></div>
-          </div>
-
-          <div style={{ ...s.card, background: "#0F1A0F", border: "1px solid #1A3A1A", marginBottom: 12 }}>
-            <div style={s.label}>Proyección inteligente</div>
-            <div style={{ fontSize: 15, color: "#D4AF37", fontWeight: 700, marginTop: 6 }}>
-              📈 A este ritmo llegarás a tu meta {proyeccionTexto}
-            </div>
-            <div style={{ fontSize: 12, color: "#555", marginTop: 4 }}>
-              Basado en un ahorro diario promedio de {formatMoney(ahorroDiarioProm > 0 ? ahorroDiarioProm : 0)}
-            </div>
-          </div>
-
-          {ingMensual > 0 && (
-            <div style={s.metaCard}>
-              <div style={s.label}>Para lograr tu meta</div>
-              <div style={{ fontSize: 13, color: "#888", lineHeight: 1.9, marginTop: 8 }}>
-                <div>💰 Ahorra <strong style={{ color: "#D4AF37" }}>{formatMoney(ahorroMetaDiario)}/día</strong></div>
-                <div>📅 o <strong style={{ color: "#D4AF37" }}>{formatMoney(ahorroMetaDiario * 30)}/mes</strong></div>
-                <div>💸 Límite de gasto: <strong style={{ color: "#5AE88A" }}>{formatMoney(presupuestoDiario)}/día</strong></div>
-                <div>🎯 Faltan: <strong style={{ color: "#D4AF37" }}>{formatMoney(Math.max(0, META_TOTAL - ahorroAcumulado))}</strong></div>
-              </div>
-            </div>
-          )}
-
-          <div style={s.card}>
-            <div style={{ ...s.label, marginBottom: 14 }}>Gastos últimos 7 días</div>
-            <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 80 }}>
-              {gastosUltimos7.map((d, i) => (
-                <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                  <div style={{ width: "100%", height: `${d.total ? Math.max(8, (d.total / maxBar) * 70) : 3}px`, background: d.fecha === fechaHoy ? "#D4AF37" : "#2A2A2A", borderRadius: "3px 3px 0 0", transition: "height 0.4s" }} />
-                  <span style={{ fontSize: 9, color: d.fecha === fechaHoy ? "#D4AF37" : "#444", textTransform: "capitalize" }}>{d.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {porCategoriaR.length > 0 && (
-            <div style={s.card}>
-              <div style={{ ...s.label, marginBottom: 14 }}>Por categoría</div>
-              {porCategoriaR.map(cat => (
-                <div key={cat.id} style={{ marginBottom: 12 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                    <span style={{ fontSize: 13 }}>{cat.label}</span>
-                    <span style={{ fontFamily: "monospace", fontSize: 13, color: cat.color }}>{formatMoney(cat.total)}</span>
-                  </div>
-                  <div style={{ background: "#1A1A1A", borderRadius: 3, height: 4, overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: `${(cat.total / maxCatR) * 100}%`, background: cat.color, borderRadius: 3 }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ═══════════ TAB: HISTORIAL ═══════════ */}
-      {tab === "historial" && (
-        <div style={s.section}>
-
-          <div style={{ display: "flex", gap: 8, marginBottom: 12, width: "100%" }}>
-            <button
-              style={{ ...s.btnSecondary, flex: 1, fontSize: 12 }}
-              onClick={() => exportarCSV(gastosFiltradosHist, categorias)}
-            >📊 Exportar Excel</button>
-            <button
-              style={{ ...s.btnSecondary, flex: 1, fontSize: 12 }}
-              onClick={() => exportarPDF(gastosFiltradosHist, categorias)}
-            >📄 Exportar PDF</button>
-          </div>
-
-          <div style={s.card}>
-            <div style={{ ...s.label, marginBottom: 6 }}>Filtrar por categoría</div>
-            <div style={{ ...s.filterRow, marginBottom: 12 }}>
-              <button style={s.filterBtn(filtroHistCat === "todas")} onClick={() => setFiltroHistCat("todas")}>Todas</button>
-              {categorias.map(c => (
-                <button key={c.id} style={s.filterBtn(filtroHistCat === c.id)} onClick={() => setFiltroHistCat(c.id)}>{c.label}</button>
-              ))}
-            </div>
-            <div style={{ ...s.label, marginBottom: 6, marginTop: 8 }}>Filtrar por rango de fecha</div>
-            <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 6 }}>
-              <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                <div style={{ fontSize: 11, color: "#555", marginBottom: 3 }}>Del</div>
-                <input
-                  type="date" value={filtroHistFechaDesde}
-                  onChange={e => setFiltroHistFechaDesde(e.target.value)}
-                  style={{ ...s.input, padding: "10px 5px", fontSize: 16 }}
-                />
-              </div>
-              <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                <div style={{ fontSize: 11, color: "#555", marginBottom: 3 }}>Al</div>
-                <input
-                  type="date" value={filtroHistFechaHasta}
-                  onChange={e => setFiltroHistFechaHasta(e.target.value)}
-                  style={{ ...s.input, padding: "10px 5px", fontSize: 16 }}
-                />
-              </div>
-            </div>
-            {(filtroHistFechaDesde || filtroHistFechaHasta) && (
-              <button
-                style={{ fontSize: 12, color: "#E85A5A", background: "none", border: "none", cursor: "pointer", padding: 0, marginTop: 4 }}
-                onClick={() => { setFiltroHistFechaDesde(""); setFiltroHistFechaHasta(""); }}
-              >× Limpiar fechas</button>
-            )}
-          </div>
-
-          {gastosFiltradosHist.length === 0 ? (
-            <div style={{ ...s.card, textAlign: "center", color: "#333", padding: "32px" }}>Sin movimientos con este filtro</div>
-          ) : (
-            <>
-              <div style={{ ...s.label, marginBottom: 12 }}>{gastosFiltradosHist.length} movimientos</div>
-              {gastosFiltradosHist.map(g => {
+          {/* LISTA DE MOVIMIENTOS VER TODOS */}
+          <div style={s.section}>
+            <div style={{ ...s.label, marginBottom: 12, textAlign: "center" }}>{gastosVerTodos.length} movimientos</div>
+            {gastosVerTodos.length === 0 ? (
+              <div style={{ ...s.card, textAlign: "center", color: "#333", padding: "32px" }}>No se encontraron movimientos</div>
+            ) : (
+              gastosVerTodos.map(g => {
                 const cat = categorias.find(c => c.id === g.categoria);
                 const { fecha, hora } = formatDateTime(g.created_at);
                 return (
@@ -770,7 +535,6 @@ export default function App() {
                           {cat && <span style={s.catDot(cat.color)} />}
                           <span style={{ fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.descripcion}</span>
                         </div>
-                        {/* LÍNEA MODIFICADA PARA AHORRAR ESPACIO: Fecha y Hora juntas */}
                         <div style={{ fontSize: 11, color: "#666" }}>
                           {fecha} <span style={{ opacity: 0.5, margin: "0 4px" }}>|</span> {hora}
                         </div>
@@ -783,162 +547,480 @@ export default function App() {
                     </div>
                   </div>
                 );
-              })}
-            </>
-          )}
-        </div>
-      )}
-
-      {/* ═══════════ TAB: CONFIG ═══════════ */}
-      {tab === "config" && (
-        <div style={s.section}>
-          <div style={s.card}>
-            <div style={{ ...s.label, marginBottom: 8, textAlign: "center" }}>INGRESO MENSUAL (S/)</div>
-            <input 
-              style={{ ...s.input, marginBottom: 16, fontSize: 24, fontWeight: 700, textAlign: "center", color: "#D4AF37" }} 
-              type={isEditingIngreso ? "number" : "text"} 
-              placeholder="Ej: 5000" 
-              value={isEditingIngreso ? ingresoMensual : (ingresoMensual ? formatMoney(ingresoMensual) : "")} 
-              onFocus={() => setIsEditingIngreso(true)}
-              onBlur={() => setIsEditingIngreso(false)}
-              onChange={e => setIngresoMensual(e.target.value)} 
-            />
-            
-            <div style={{ ...s.label, marginBottom: 8, textAlign: "center" }}>FECHA DE INICIO DEL PLAN</div>
-            <input style={{ ...s.input, marginBottom: 16, textAlign: "center", fontSize: 16 }} type="date" value={fechaInicio} onChange={e => setFechaInicio(e.target.value)} />
-            
-            <button style={s.btnPrimary} onClick={guardarConfig} disabled={saving}>
-              {saving ? "Guardando..." : "Guardar configuración"}
-            </button>
+              })
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          {/* HEADER NORMAL DE LA APP */}
+          <div style={s.header}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h1 style={s.title}>Ahorro Meta</h1>
+              <button onClick={() => window.location.reload()} style={s.refreshBtn} title="Actualizar">🔄</button>
+            </div>
+            <p style={s.subtitle}>
+              Meta: {formatMoney(META_TOTAL)} en {MESES} meses · Día {diasTranscurridos(fechaInicio)} de {DIAS_TOTAL}
+              {saving && <span style={{ color: "#555", marginLeft: 8, fontSize: 11 }}>· Guardando...</span>}
+            </p>
+            <div style={s.tabs}>
+              {[{ id: "hoy", label: "Hoy" }, { id: "resumen", label: "Resumen" }, { id: "historial", label: "Historial" }, { id: "config", label: "Config" }].map(t => (
+                <button key={t.id} style={s.tab(tab === t.id)} onClick={() => setTab(t.id)}>{t.label}</button>
+              ))}
+            </div>
           </div>
 
-          {ingMensual > 0 && (
-            <div style={s.metaCard}>
-              <div style={s.label}>Tu plan para S/ 100,000</div>
-              <div style={{ fontSize: 13, color: "#888", lineHeight: 2, marginTop: 8 }}>
-                <div>📥 Ingreso mensual: <strong style={{ color: "#E8E0D0" }}>{formatMoney(ingMensual)}</strong></div>
-                <div>🎯 Ahorro necesario/mes: <strong style={{ color: "#D4AF37" }}>{formatMoney(META_TOTAL / MESES)}</strong></div>
-                <div>💸 Gasto máximo/mes: <strong style={{ color: "#5AE88A" }}>{formatMoney(ingMensual - META_TOTAL / MESES)}</strong></div>
-                <div>📆 Gasto máximo/día: <strong style={{ color: "#5AE88A" }}>{formatMoney(presupuestoDiario)}</strong></div>
-                {ingMensual < META_TOTAL / MESES && (
-                  <div style={{ marginTop: 8, color: "#E85A5A", fontSize: 12 }}>⚠️ Tu ingreso es menor al ahorro necesario. Considera aumentar ingresos.</div>
-                )}
+          {error && <div style={s.errorCard}>⚠️ {error}</div>}
+
+          {/* ═══════════ TAB: HOY ═══════════ */}
+          {tab === "hoy" && (
+            <div style={s.section}>
+
+              <div style={s.metaCard}>
+                <div style={s.label}>Progreso hacia tu meta</div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                  <span style={s.bigNum}>{formatMoney(Math.max(0, ahorroAcumulado))}</span>
+                  <span style={{ color: "#555", fontSize: 13 }}>de {formatMoney(META_TOTAL)}</span>
+                </div>
+                <div style={s.progressBg}><div style={s.progressFill(progreso)} /></div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#888", marginBottom: 8 }}>
+                  <span>{progreso.toFixed(1)}% completado</span>
+                  <span>{diasRestantes} días restantes</span>
+                </div>
+                <div style={{ borderTop: "1px solid #2A2000", paddingTop: 8, display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+                  <span style={{ color: "#666" }}>Falta ahorrar</span>
+                  <span style={{ color: "#E8845A", fontFamily: "monospace", fontWeight: 700 }}>
+                    {formatMoney(Math.max(0, META_TOTAL - ahorroAcumulado))}
+                  </span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginTop: 4 }}>
+                  <span style={{ color: "#666" }}>A este ritmo llegarás</span>
+                  <span style={{ color: "#D4AF37", fontWeight: 700 }}>{proyeccionTexto}</span>
+                </div>
               </div>
+
+              <div style={s.grid2}>
+                <div style={s.card}><div style={s.label}>Gastado hoy</div><div style={{ ...s.redNum, fontSize: 20 }}>{formatMoney(totalGastadoHoy)}</div></div>
+                <div style={s.card}><div style={s.label}>Límite/día</div><div style={{ ...s.greenNum, fontSize: 20 }}>{ingMensual > 0 ? formatMoney(presupuestoDiario) : "—"}</div></div>
+              </div>
+
+              {ingMensual > 0 && (
+                <div style={s.grid2}>
+                  <div style={s.card}>
+                    <div style={s.label}>Ingresos hoy</div>
+                    <div style={{ ...s.greenNum, fontSize: 20 }}>
+                      {formatMoney(totalIngresosHoy)}
+                    </div>
+                  </div>
+                  
+                  <div style={{ ...s.card, background: totalGastadoHoy > presupuestoDiario ? "#1A0A0A" : "#0A1A0A", border: `1px solid ${totalGastadoHoy > presupuestoDiario ? "#3A1000" : "#103A10"}` }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ ...s.label, fontSize: 10 }}>Saldo disponible hoy</div>
+                        <div style={{ fontFamily: "monospace", fontSize: 18, fontWeight: 700, color: (presupuestoDiario - totalGastadoHoy) >= 0 ? "#5AE88A" : "#E85A5A", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {formatMoney(presupuestoDiario - totalGastadoHoy)}
+                        </div>
+                      </div>
+                      <span style={{ fontSize: 20, marginLeft: 4 }}>{(presupuestoDiario - totalGastadoHoy) >= 0 ? "✅" : "⚠️"}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div style={s.card}>
+                <div style={s.label}>Registrar movimiento</div>
+                <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                  <button style={s.tipoBtn(form.tipo === "gasto", "#E85A5A")} onClick={() => setForm(f => ({ ...f, tipo: "gasto" }))}>− Gasto</button>
+                  <button style={s.tipoBtn(form.tipo === "ingreso", "#5AE88A")} onClick={() => setForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
+                </div>
+                <input style={{ ...s.input, marginBottom: 8, fontSize: 22, fontWeight: 700 }} type="number" placeholder="0.00" value={form.monto} onChange={e => setForm(f => ({ ...f, monto: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
+                {form.tipo === "gasto" && (
+                  <select style={{ ...s.select, marginBottom: 8 }} value={form.categoria} onChange={e => setForm(f => ({ ...f, categoria: e.target.value }))}>
+                    {categorias.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                  </select>
+                )}
+                <input style={{ ...s.input, marginBottom: 10 }} type="text" placeholder="Descripción (opcional)" value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
+                <button style={s.btnPrimary} onClick={agregarMovimiento} disabled={saving}>
+                  {saving ? "Guardando..." : `Registrar ${form.tipo === "gasto" ? "Gasto" : "Ingreso"}`}
+                </button>
+              </div>
+
+              {(gastosHoy.length > 0 || ingresosHoy.length > 0) ? (
+                <div style={s.card}>
+                  <div style={s.label}>Movimientos de hoy</div>
+                  {[...gastosHoy, ...ingresosHoy].map(g => {
+                    const cat = categorias.find(c => c.id === g.categoria);
+                    const { fecha, hora } = formatDateTime(g.created_at);
+                    return (
+                      <div key={g.id} style={s.itemRow}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: "flex", alignItems: "center", marginBottom: 2 }}>
+                            {cat && <span style={s.catDot(cat.color)} />}
+                            <span style={{ fontSize: 14, color: "#C0B8A8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.descripcion}</span>
+                          </div>
+                          <div style={{ fontSize: 11, color: "#666" }}>
+                            {fecha} <span style={{ opacity: 0.5, margin: "0 4px" }}>|</span> {hora}
+                          </div>
+                        </div>
+                        <span style={{ fontFamily: "monospace", fontWeight: 600, color: g.tipo === "gasto" ? "#E85A5A" : "#5AE88A", marginRight: 4, flexShrink: 0 }}>
+                          {g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}
+                        </span>
+                        <button style={s.editBtn} onClick={() => abrirEdicion(g)}>✏️</button>
+                        <button style={s.deleteBtn} onClick={() => eliminar(g.id)}>×</button>
+                      </div>
+                    );
+                  })}
+                  {/* BOTÓN VER TODOS */}
+                  <button style={{ ...s.btnPrimary, marginTop: 12, padding: "10px", fontSize: 13 }} onClick={() => setViewAll(true)}>
+                    Ver todos
+                  </button>
+                </div>
+              ) : (
+                <div style={{ ...s.card, textAlign: "center", color: "#333", padding: "24px" }}>Sin movimientos hoy</div>
+              )}
             </div>
           )}
 
-          <div style={s.card}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <div style={s.label}>Categorías personalizadas</div>
-              <button
-                style={{ background: "#D4AF37", color: "#000", border: "none", borderRadius: 6, padding: "4px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
-                onClick={() => setShowNuevaCat(v => !v)}
-              >+ Nueva</button>
-            </div>
-            
-            {showNuevaCat && (
-              <div style={{ background: "#0A0A0A", borderRadius: 8, padding: 12, marginBottom: 12 }}>
-                <input
-                  style={{ ...s.input, marginBottom: 8 }}
-                  placeholder="Ej: 🛍️ Compras"
-                  value={nuevaCatLabel}
-                  onChange={e => setNuevaCatLabel(e.target.value)}
-                />
-                <div style={{ ...s.label, marginBottom: 6 }}>Elige un color</div>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
-                  {COLORES_CUSTOM.map(c => (
-                    <div key={c} onClick={() => setNuevaCatColor(c)}
-                      style={{ width: 24, height: 24, borderRadius: "50%", background: c, cursor: "pointer", border: nuevaCatColor === c ? "3px solid #fff" : "3px solid transparent" }} />
-                  ))}
+          {/* ═══════════ TAB: RESUMEN ═══════════ */}
+          {tab === "resumen" && (
+            <div style={s.section}>
+
+              <div style={s.filterRow}>
+                {[
+                  { id: "hoy",    label: "Hoy" },
+                  { id: "semana", label: "7 días" },
+                  { id: "mes",    label: "Este mes" },
+                  { id: "todo",   label: "Todo" },
+                  { id: "rango",  label: "📅 Rango" },
+                ].map(f => (
+                  <button key={f.id} style={s.filterBtn(filtroResumen === f.id)} onClick={() => setFiltroResumen(f.id)}>{f.label}</button>
+                ))}
+              </div>
+              {filtroResumen === "rango" && (
+                <div style={{ ...s.card, padding: 12 }}>
+                  <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
+                    <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
+                      <div style={{ ...s.label, marginBottom: 5 }}>Del</div>
+                      <input
+                        type="date" value={filtroFechaResumenDesde}
+                        onChange={e => setFiltroFechaResumenDesde(e.target.value)}
+                        style={{ ...s.input, padding: "10px 5px", fontSize: 16 }}
+                      />
+                    </div>
+                    <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
+                      <div style={{ ...s.label, marginBottom: 5 }}>Al</div>
+                      <input
+                        type="date" value={filtroFechaResumenHasta}
+                        onChange={e => setFiltroFechaResumenHasta(e.target.value)}
+                        style={{ ...s.input, padding: "10px 5px", fontSize: 16 }}
+                      />
+                    </div>
+                  </div>
+                  {(filtroFechaResumenDesde || filtroFechaResumenHasta) && (
+                    <button
+                      style={{ fontSize: 12, color: "#E85A5A", background: "none", border: "none", cursor: "pointer", marginTop: 8, padding: 0 }}
+                      onClick={() => { setFiltroFechaResumenDesde(""); setFiltroFechaResumenHasta(""); }}
+                    >× Limpiar fechas</button>
+                  )}
                 </div>
-                
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button style={{ ...s.btnSecondary, flex: 1 }} onClick={() => setShowNuevaCat(false)}>Cancelar</button>
-                  <button style={{ ...s.btnPrimary, flex: 1 }} onClick={agregarCategoria}>Agregar categoría</button>
+              )}
+
+              <div style={s.grid2}>
+                <div style={s.card}><div style={s.label}>Total gastado</div><div style={s.redNum}>{formatMoney(totalGastadoR)}</div></div>
+                <div style={s.card}><div style={s.label}>Total ingresos</div><div style={s.greenNum}>{formatMoney(totalIngresosR)}</div></div>
+                <div style={s.card}><div style={s.label}>Ahorro período</div><div style={{ ...s.smallNum, color: ahorroR >= 0 ? "#D4AF37" : "#E85A5A" }}>{formatMoney(ahorroR)}</div></div>
+                <div style={s.card}><div style={s.label}>Gasto prom/día</div><div style={s.smallNum}>{formatMoney(gastoDiarioProm)}</div></div>
+              </div>
+
+              <div style={{ ...s.card, background: "#0F1A0F", border: "1px solid #1A3A1A", marginBottom: 12 }}>
+                <div style={s.label}>Proyección inteligente</div>
+                <div style={{ fontSize: 15, color: "#D4AF37", fontWeight: 700, marginTop: 6 }}>
+                  📈 A este ritmo llegarás a tu meta {proyeccionTexto}
+                </div>
+                <div style={{ fontSize: 12, color: "#555", marginTop: 4 }}>
+                  Basado en un ahorro diario promedio de {formatMoney(ahorroDiarioProm > 0 ? ahorroDiarioProm : 0)}
                 </div>
               </div>
-            )}
 
-            {/* LISTA Y EDICIÓN DE CATEGORÍAS */}
-            {categoriasExtra.length === 0 ? (
-              <div style={{ color: "#333", fontSize: 13, textAlign: "center", padding: "8px 0" }}>Aún no hay categorías personalizadas</div>
-            ) : (
-              categoriasExtra.map(cat => (
-                editandoCat === cat.id ? (
-                  <div key={cat.id} style={{ background: "#161616", borderRadius: 8, padding: 12, margin: "8px 0" }}>
+              {ingMensual > 0 && (
+                <div style={s.metaCard}>
+                  <div style={s.label}>Para lograr tu meta</div>
+                  <div style={{ fontSize: 13, color: "#888", lineHeight: 1.9, marginTop: 8 }}>
+                    <div>💰 Ahorra <strong style={{ color: "#D4AF37" }}>{formatMoney(ahorroMetaDiario)}/día</strong></div>
+                    <div>📅 o <strong style={{ color: "#D4AF37" }}>{formatMoney(ahorroMetaDiario * 30)}/mes</strong></div>
+                    <div>💸 Límite de gasto: <strong style={{ color: "#5AE88A" }}>{formatMoney(presupuestoDiario)}/día</strong></div>
+                    <div>🎯 Faltan: <strong style={{ color: "#D4AF37" }}>{formatMoney(Math.max(0, META_TOTAL - ahorroAcumulado))}</strong></div>
+                  </div>
+                </div>
+              )}
+
+              <div style={s.card}>
+                <div style={{ ...s.label, marginBottom: 14 }}>Gastos últimos 7 días</div>
+                <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 80 }}>
+                  {gastosUltimos7.map((d, i) => (
+                    <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                      <div style={{ width: "100%", height: `${d.total ? Math.max(8, (d.total / maxBar) * 70) : 3}px`, background: d.fecha === fechaHoy ? "#D4AF37" : "#2A2A2A", borderRadius: "3px 3px 0 0", transition: "height 0.4s" }} />
+                      <span style={{ fontSize: 9, color: d.fecha === fechaHoy ? "#D4AF37" : "#444", textTransform: "capitalize" }}>{d.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {porCategoriaR.length > 0 && (
+                <div style={s.card}>
+                  <div style={{ ...s.label, marginBottom: 14 }}>Por categoría</div>
+                  {porCategoriaR.map(cat => (
+                    <div key={cat.id} style={{ marginBottom: 12 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                        <span style={{ fontSize: 13 }}>{cat.label}</span>
+                        <span style={{ fontFamily: "monospace", fontSize: 13, color: cat.color }}>{formatMoney(cat.total)}</span>
+                      </div>
+                      <div style={{ background: "#1A1A1A", borderRadius: 3, height: 4, overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${(cat.total / maxCatR) * 100}%`, background: cat.color, borderRadius: 3 }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ═══════════ TAB: HISTORIAL ═══════════ */}
+          {tab === "historial" && (
+            <div style={s.section}>
+
+              <div style={{ display: "flex", gap: 8, marginBottom: 12, width: "100%" }}>
+                <button
+                  style={{ ...s.btnSecondary, flex: 1, fontSize: 12 }}
+                  onClick={() => exportarCSV(gastosFiltradosHist, categorias)}
+                >📊 Exportar Excel</button>
+                <button
+                  style={{ ...s.btnSecondary, flex: 1, fontSize: 12 }}
+                  onClick={() => exportarPDF(gastosFiltradosHist, categorias)}
+                >📄 Exportar PDF</button>
+              </div>
+
+              <div style={s.card}>
+                <div style={{ ...s.label, marginBottom: 6 }}>Filtrar por categoría</div>
+                <div style={{ ...s.filterRow, marginBottom: 12 }}>
+                  <button style={s.filterBtn(filtroHistCat === "todas")} onClick={() => setFiltroHistCat("todas")}>Todas</button>
+                  {categorias.map(c => (
+                    <button key={c.id} style={s.filterBtn(filtroHistCat === c.id)} onClick={() => setFiltroHistCat(c.id)}>{c.label}</button>
+                  ))}
+                </div>
+                <div style={{ ...s.label, marginBottom: 6, marginTop: 8 }}>Filtrar por rango de fecha</div>
+                <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 6 }}>
+                  <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
+                    <div style={{ fontSize: 11, color: "#555", marginBottom: 3 }}>Del</div>
+                    <input
+                      type="date" value={filtroHistFechaDesde}
+                      onChange={e => setFiltroHistFechaDesde(e.target.value)}
+                      style={{ ...s.input, padding: "10px 5px", fontSize: 16 }}
+                    />
+                  </div>
+                  <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
+                    <div style={{ fontSize: 11, color: "#555", marginBottom: 3 }}>Al</div>
+                    <input
+                      type="date" value={filtroHistFechaHasta}
+                      onChange={e => setFiltroHistFechaHasta(e.target.value)}
+                      style={{ ...s.input, padding: "10px 5px", fontSize: 16 }}
+                    />
+                  </div>
+                </div>
+                {(filtroHistFechaDesde || filtroHistFechaHasta) && (
+                  <button
+                    style={{ fontSize: 12, color: "#E85A5A", background: "none", border: "none", cursor: "pointer", padding: 0, marginTop: 4 }}
+                    onClick={() => { setFiltroHistFechaDesde(""); setFiltroHistFechaHasta(""); }}
+                  >× Limpiar fechas</button>
+                )}
+              </div>
+
+              {gastosFiltradosHist.length === 0 ? (
+                <div style={{ ...s.card, textAlign: "center", color: "#333", padding: "32px" }}>Sin movimientos con este filtro</div>
+              ) : (
+                <>
+                  <div style={{ ...s.label, marginBottom: 12 }}>{gastosFiltradosHist.length} movimientos</div>
+                  {gastosFiltradosHist.map(g => {
+                    const cat = categorias.find(c => c.id === g.categoria);
+                    const { fecha, hora } = formatDateTime(g.created_at);
+                    return (
+                      <div key={g.id} style={{ ...s.card, padding: "12px 14px", marginBottom: 6 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: "flex", alignItems: "center", marginBottom: 2 }}>
+                              {cat && <span style={s.catDot(cat.color)} />}
+                              <span style={{ fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.descripcion}</span>
+                            </div>
+                            <div style={{ fontSize: 11, color: "#666" }}>
+                              {fecha} <span style={{ opacity: 0.5, margin: "0 4px" }}>|</span> {hora}
+                            </div>
+                          </div>
+                          <span style={{ fontFamily: "monospace", fontWeight: 700, color: g.tipo === "gasto" ? "#E85A5A" : "#5AE88A", marginRight: 4, flexShrink: 0 }}>
+                            {g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}
+                          </span>
+                          <button style={s.editBtn} onClick={() => abrirEdicion(g)}>✏️</button>
+                          <button style={s.deleteBtn} onClick={() => eliminar(g.id)}>×</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* ═══════════ TAB: CONFIG ═══════════ */}
+          {tab === "config" && (
+            <div style={s.section}>
+              <div style={s.card}>
+                <div style={{ ...s.label, marginBottom: 8, textAlign: "center" }}>INGRESO MENSUAL (S/)</div>
+                <input 
+                  style={{ ...s.input, marginBottom: 16, fontSize: 24, fontWeight: 700, textAlign: "center", color: "#D4AF37" }} 
+                  type={isEditingIngreso ? "number" : "text"} 
+                  placeholder="Ej: 5000" 
+                  value={isEditingIngreso ? ingresoMensual : (ingresoMensual ? formatMoney(ingresoMensual) : "")} 
+                  onFocus={() => setIsEditingIngreso(true)}
+                  onBlur={() => setIsEditingIngreso(false)}
+                  onChange={e => setIngresoMensual(e.target.value)} 
+                />
+                
+                <div style={{ ...s.label, marginBottom: 8, textAlign: "center" }}>FECHA DE INICIO DEL PLAN</div>
+                <input style={{ ...s.input, marginBottom: 16, textAlign: "center", fontSize: 16 }} type="date" value={fechaInicio} onChange={e => setFechaInicio(e.target.value)} />
+                
+                <button style={s.btnPrimary} onClick={guardarConfig} disabled={saving}>
+                  {saving ? "Guardando..." : "Guardar configuración"}
+                </button>
+              </div>
+
+              {ingMensual > 0 && (
+                <div style={s.metaCard}>
+                  <div style={s.label}>Tu plan para S/ 100,000</div>
+                  <div style={{ fontSize: 13, color: "#888", lineHeight: 2, marginTop: 8 }}>
+                    <div>📥 Ingreso mensual: <strong style={{ color: "#E8E0D0" }}>{formatMoney(ingMensual)}</strong></div>
+                    <div>🎯 Ahorro necesario/mes: <strong style={{ color: "#D4AF37" }}>{formatMoney(META_TOTAL / MESES)}</strong></div>
+                    <div>💸 Gasto máximo/mes: <strong style={{ color: "#5AE88A" }}>{formatMoney(ingMensual - META_TOTAL / MESES)}</strong></div>
+                    <div>📆 Gasto máximo/día: <strong style={{ color: "#5AE88A" }}>{formatMoney(presupuestoDiario)}</strong></div>
+                    {ingMensual < META_TOTAL / MESES && (
+                      <div style={{ marginTop: 8, color: "#E85A5A", fontSize: 12 }}>⚠️ Tu ingreso es menor al ahorro necesario. Considera aumentar ingresos.</div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div style={s.card}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                  <div style={s.label}>Categorías personalizadas</div>
+                  <button
+                    style={{ background: "#D4AF37", color: "#000", border: "none", borderRadius: 6, padding: "4px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+                    onClick={() => setShowNuevaCat(v => !v)}
+                  >+ Nueva</button>
+                </div>
+                
+                {showNuevaCat && (
+                  <div style={{ background: "#0A0A0A", borderRadius: 8, padding: 12, marginBottom: 12 }}>
                     <input
                       style={{ ...s.input, marginBottom: 8 }}
-                      value={editCatLabel}
-                      onChange={e => setEditCatLabel(e.target.value)}
+                      placeholder="Ej: 🛍️ Compras"
+                      value={nuevaCatLabel}
+                      onChange={e => setNuevaCatLabel(e.target.value)}
                     />
                     <div style={{ ...s.label, marginBottom: 6 }}>Elige un color</div>
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
                       {COLORES_CUSTOM.map(c => (
-                        <div key={c} onClick={() => setEditCatColor(c)}
-                          style={{ width: 24, height: 24, borderRadius: "50%", background: c, cursor: "pointer", border: editCatColor === c ? "3px solid #fff" : "3px solid transparent" }} />
+                        <div key={c} onClick={() => setNuevaCatColor(c)}
+                          style={{ width: 24, height: 24, borderRadius: "50%", background: c, cursor: "pointer", border: nuevaCatColor === c ? "3px solid #fff" : "3px solid transparent" }} />
                       ))}
                     </div>
+                    
                     <div style={{ display: "flex", gap: 8 }}>
-                      <button style={{ ...s.btnSecondary, flex: 1 }} onClick={() => setEditandoCat(null)}>Cancelar</button>
-                      <button style={{ ...s.btnPrimary, flex: 1, padding: "10px" }} onClick={guardarEdicionCat}>Guardar</button>
+                      <button style={{ ...s.btnSecondary, flex: 1 }} onClick={() => setShowNuevaCat(false)}>Cancelar</button>
+                      <button style={{ ...s.btnPrimary, flex: 1 }} onClick={agregarCategoria}>Agregar categoría</button>
                     </div>
                   </div>
-                ) : (
-                  <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #1A1A1A" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ width: 10, height: 10, borderRadius: "50%", background: cat.color, display: "inline-block" }} />
-                      <span style={{ fontSize: 14 }}>{cat.label}</span>
-                    </div>
-                    <div>
-                      <button style={{ ...s.editBtn, marginRight: 8 }} onClick={() => abrirEdicionCat(cat)}>✏️</button>
-                      <button style={{ ...s.deleteBtn, color: "#E85A5A" }} onClick={() => eliminarCategoria(cat.id)}>×</button>
-                    </div>
-                  </div>
-                )
-              ))
-            )}
-          </div>
+                )}
 
-          <div style={{ ...s.card, borderColor: "#2A0A0A" }}>
-            <div style={{ ...s.label, marginBottom: 8, color: "#E85A5A" }}>Zona de peligro</div>
-            <button style={{ ...s.btnSecondary, color: "#E85A5A", borderColor: "#3A1A1A" }}
-              onClick={async () => {
-                const confirm = window.prompt("Escribe BORRAR TODO para confirmar:");
-                if (confirm === "BORRAR TODO") {
-                  await supabase.from("gastos").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-                  setGastos([]);
-                  showToast("Todos los movimientos eliminados", "#888");
-                }
-              }}>
-              Eliminar todos los movimientos
-            </button>
+                {/* LISTA Y EDICIÓN DE CATEGORÍAS */}
+                {categoriasExtra.length === 0 ? (
+                  <div style={{ color: "#333", fontSize: 13, textAlign: "center", padding: "8px 0" }}>Aún no hay categorías personalizadas</div>
+                ) : (
+                  categoriasExtra.map(cat => (
+                    editandoCat === cat.id ? (
+                      <div key={cat.id} style={{ background: "#161616", borderRadius: 8, padding: 12, margin: "8px 0" }}>
+                        <input
+                          style={{ ...s.input, marginBottom: 8 }}
+                          value={editCatLabel}
+                          onChange={e => setEditCatLabel(e.target.value)}
+                        />
+                        <div style={{ ...s.label, marginBottom: 6 }}>Elige un color</div>
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+                          {COLORES_CUSTOM.map(c => (
+                            <div key={c} onClick={() => setEditCatColor(c)}
+                              style={{ width: 24, height: 24, borderRadius: "50%", background: c, cursor: "pointer", border: editCatColor === c ? "3px solid #fff" : "3px solid transparent" }} />
+                          ))}
+                        </div>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button style={{ ...s.btnSecondary, flex: 1 }} onClick={() => setEditandoCat(null)}>Cancelar</button>
+                          <button style={{ ...s.btnPrimary, flex: 1, padding: "10px" }} onClick={guardarEdicionCat}>Guardar</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #1A1A1A" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ width: 10, height: 10, borderRadius: "50%", background: cat.color, display: "inline-block" }} />
+                          <span style={{ fontSize: 14 }}>{cat.label}</span>
+                        </div>
+                        <div>
+                          <button style={{ ...s.editBtn, marginRight: 8 }} onClick={() => abrirEdicionCat(cat)}>✏️</button>
+                          <button style={{ ...s.deleteBtn, color: "#E85A5A" }} onClick={() => eliminarCategoria(cat.id)}>×</button>
+                        </div>
+                      </div>
+                    )
+                  ))
+                )}
+              </div>
+
+              <div style={{ ...s.card, borderColor: "#2A0A0A" }}>
+                <div style={{ ...s.label, marginBottom: 8, color: "#E85A5A" }}>Zona de peligro</div>
+                <button style={{ ...s.btnSecondary, color: "#E85A5A", borderColor: "#3A1A1A" }}
+                  onClick={async () => {
+                    const confirm = window.prompt("Escribe BORRAR TODO para confirmar:");
+                    if (confirm === "BORRAR TODO") {
+                      await supabase.from("gastos").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+                      setGastos([]);
+                      showToast("Todos los movimientos eliminados", "#888");
+                    }
+                  }}>
+                  Eliminar todos los movimientos
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Nav bar con Safe Area ── */}
+          <div style={s.navBar}>
+            {[
+              { id: "hoy",      icon: "📝", label: "Hoy" },
+              { id: "resumen",  icon: "📊", label: "Resumen" },
+              { id: "historial",icon: "📋", label: "Historial" },
+              { id: "config",   icon: "⚙️", label: "Config" },
+            ].map(n => (
+              <button key={n.id} style={s.navBtn(tab === n.id)} onClick={() => setTab(n.id)}>
+                <span style={{ fontSize: 22 }}>{n.icon}</span>
+                <span>{n.label}</span>
+              </button>
+            ))}
           </div>
-        </div>
+        </>
       )}
 
-      {/* ── Nav bar con Safe Area ── */}
-      <div style={s.navBar}>
-        {[
-          { id: "hoy",      icon: "📝", label: "Hoy" },
-          { id: "resumen",  icon: "📊", label: "Resumen" },
-          { id: "historial",icon: "📋", label: "Historial" },
-          { id: "config",   icon: "⚙️", label: "Config" },
-        ].map(n => (
-          <button key={n.id} style={s.navBtn(tab === n.id)} onClick={() => setTab(n.id)}>
-            <span style={{ fontSize: 22 }}>{n.icon}</span>
-            <span>{n.label}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* ── Toast ── */}
+      {/* ── Toast GLOBAL ── */}
       {toast && (
         <div style={{ position: "fixed", bottom: "calc(90px + env(safe-area-inset-bottom, 0px))", left: "50%", transform: "translateX(-50%)", background: "#1A1A1A", border: `1px solid ${toast.color}`, color: toast.color, padding: "10px 20px", borderRadius: 8, fontSize: 13, zIndex: 999, whiteSpace: "nowrap", boxShadow: "0 4px 20px rgba(0,0,0,0.5)" }}>
           {toast.msg}
         </div>
       )}
 
-      {/* ── Modal edición ── */}
+      {/* ── Modal Edición GLOBAL ── */}
       {editando && (
         <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setEditando(null); }}>
           <div style={s.modal}>
@@ -963,6 +1045,28 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* ── Modal de Correo (Sólo para "Ver Todos") ── */}
+      {showEmailModal && (
+        <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setShowEmailModal(false); }}>
+          <div style={{ ...s.modal, textAlign: "center" }}>
+            <h3 style={{ margin: "0 0 8px", fontSize: 18, color: "#E8E0D0" }}>Enviar movimientos</h3>
+            <p style={{ margin: "0 0 16px", fontSize: 13, color: "#888" }}>Ingresa el e-mail del destinatario.</p>
+            <input 
+              style={{ ...s.input, marginBottom: 16, textAlign: "center" }} 
+              type="email" 
+              placeholder="correo@ejemplo.com" 
+              value={emailDestino} 
+              onChange={e => setEmailDestino(e.target.value)} 
+            />
+            <div style={{ display: "flex", gap: 8, borderTop: "1px solid #1E1E1E", paddingTop: 12 }}>
+              <button style={{ flex: 1, background: "none", border: "none", color: "#D4AF37", fontSize: 15, cursor: "pointer", padding: "8px 0" }} onClick={() => setShowEmailModal(false)}>Cancelar</button>
+              <button style={{ flex: 1, background: "none", border: "none", color: "#4D96FF", fontSize: 15, cursor: "pointer", padding: "8px 0", fontWeight: 600 }} onClick={() => { showToast("Enviado con éxito", "#5AE88A"); setShowEmailModal(false); setEmailDestino(""); }}>Enviar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
