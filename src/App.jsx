@@ -52,7 +52,6 @@ const formatDateTime = (isoStr) => {
   return { fecha, hora };
 };
 
-// Función robusta para calcular diferencia de días exactos
 const diffDias = (d1Str, d2Str) => {
   if (!d1Str || !d2Str) return 0;
   const [y1, m1, day1] = d1Str.split("-");
@@ -118,7 +117,6 @@ export default function App() {
   const [tab,            setTab]            = useState("hoy");
   const [form,           setForm]           = useState({ monto: "", descripcion: "", categoria: "comida", tipo: "gasto" });
   
-  // ESTADOS DE CONFIGURACIÓN DINÁMICA
   const [metaAhorro,      setMetaAhorro]      = useState("100000");
   const [fechaInicioPlan, setFechaInicioPlan] = useState(hoy());
   const [fechaFinPlan,    setFechaFinPlan]    = useState(calcularFechaFutura(150));
@@ -317,7 +315,6 @@ export default function App() {
     showToast("Categoría actualizada ✓");
   };
 
-  // CÁLCULOS DINÁMICOS BASADOS EN LA CONFIGURACIÓN DEL USUARIO
   const metaTotalNum  = parseFloat(metaAhorro) || 0;
   const ingMensual    = parseFloat(ingresoMensual) || 0;
   
@@ -499,7 +496,7 @@ export default function App() {
         <>
           {/* HEADER DE LA PANTALLA "MOVIMIENTOS" */}
           <div style={{ padding: "16px 20px", borderBottom: "1px solid #1A1A1A", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#0A0A0A", position: "sticky", top: 0, zIndex: 10 }}>
-            <button style={{ background: "none", border: "none", color: "#D4AF37", fontSize: 24, cursor: "pointer", padding: 0 }} onClick={() => setViewAll(false)}>
+            <button style={{ background: "none", border: "none", color: "#D4AF37", fontSize: 24, cursor: "pointer", padding: 0 }} onClick={() => { setViewAll(false); window.scrollTo(0, 0); }}>
               ←
             </button>
             <h2 style={{ margin: 0, fontSize: 18, color: "#E8E0D0", fontWeight: 600 }}>Movimientos</h2>
@@ -616,21 +613,17 @@ export default function App() {
                 </div>
               </div>
 
-              {/* NUEVO: CUADRÍCULA 2x2 REORGANIZADA SEGÚN PETICIÓN */}
               <div style={s.grid2}>
-                {/* 1) Ingresos Hoy */}
                 <div style={s.card}>
                   <div style={s.label}>Ingresos hoy</div>
                   <div style={{ ...s.greenNum, fontSize: 20 }}>{formatMoney(totalIngresosHoy)}</div>
                 </div>
                 
-                {/* 2) Gastado Hoy */}
                 <div style={s.card}>
                   <div style={s.label}>Gastado hoy</div>
                   <div style={{ ...s.redNum, fontSize: 20 }}>{formatMoney(totalGastadoHoy)}</div>
                 </div>
 
-                {/* 3) Ahorro Hoy (Amarillo) */}
                 <div style={s.card}>
                   <div style={s.label}>Ahorro hoy</div>
                   <div style={{ fontFamily: "monospace", fontSize: 20, fontWeight: 600, color: "#D4AF37" }}>
@@ -638,7 +631,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 4) Límite Ahorro / Día */}
                 <div style={s.card}>
                   <div style={s.label}>Límite ahorro / día</div>
                   <div style={{ fontFamily: "monospace", fontSize: 20, fontWeight: 600, color: "#E8E0D0" }}>
@@ -693,8 +685,8 @@ export default function App() {
                       </div>
                     );
                   })}
-                  {/* BOTÓN VER TODOS */}
-                  <button style={{ ...s.btnPrimary, marginTop: 12, padding: "10px", fontSize: 13 }} onClick={() => setViewAll(true)}>
+                  {/* BOTÓN VER TODOS: Se agregó window.scrollTo(0, 0) */}
+                  <button style={{ ...s.btnPrimary, marginTop: 12, padding: "10px", fontSize: 13 }} onClick={() => { setViewAll(true); window.scrollTo(0, 0); }}>
                     Ver todos
                   </button>
                 </div>
