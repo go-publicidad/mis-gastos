@@ -164,11 +164,20 @@ export default function App() {
   };
 
   useEffect(() => {
-    // MAGIA ANTI-BORDES BLANCOS PARA iPHONE
+    // EL DESTRUCTOR DE CSS POR DEFECTO DE REACT/VITE
     document.documentElement.style.backgroundColor = "#0A0A0A";
     document.body.style.backgroundColor = "#0A0A0A";
     document.body.style.margin = "0";
     document.body.style.padding = "0";
+    
+    // Obligamos al div #root a quitarse los paddings blancos de Vite
+    const rootNode = document.getElementById("root");
+    if (rootNode) {
+      rootNode.style.padding = "0";
+      rootNode.style.margin = "0";
+      rootNode.style.maxWidth = "100%";
+      rootNode.style.width = "100%";
+    }
 
     let viewportMeta = document.querySelector("meta[name=viewport]");
     if (!viewportMeta) {
@@ -497,9 +506,10 @@ export default function App() {
     <div style={{ background: "#0A0A0A", height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
       <div style={{ width: 32, height: 32, border: "2px solid #1A1A1A", borderTop: "2px solid #D4AF37", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
       <style>{`
+        :root { background-color: #0A0A0A !important; }
         *, *::before, *::after { box-sizing: border-box; }
-        html, body { background-color: #0A0A0A !important; margin: 0 !important; padding: 0 !important; width: 100% !important; height: 100% !important; overflow-x: hidden !important; -webkit-font-smoothing: antialiased; }
-        #root { background-color: #0A0A0A !important; min-height: 100vh !important; width: 100% !important; overflow-x: hidden !important; }
+        html, body { background-color: #0A0A0A !important; margin: 0 !important; padding: 0 !important; width: 100% !important; max-width: 100% !important; height: 100% !important; overflow-x: hidden !important; -webkit-font-smoothing: antialiased; }
+        #root { background-color: #0A0A0A !important; min-height: 100vh !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 0 !important; display: block !important; text-align: left !important; overflow-x: hidden !important; }
       `}</style>
       <span style={{ color: "#555", fontSize: 13 }}>Conectando...</span>
     </div>
@@ -508,9 +518,10 @@ export default function App() {
   return (
     <div style={s.app}>
       <style>{`
+        :root { background-color: #0A0A0A !important; }
         *, *::before, *::after { box-sizing: border-box; }
-        html, body { background-color: #0A0A0A !important; margin: 0 !important; padding: 0 !important; width: 100% !important; height: 100% !important; overflow-x: hidden !important; -webkit-font-smoothing: antialiased; }
-        #root { background-color: #0A0A0A !important; min-height: 100vh !important; width: 100% !important; overflow-x: hidden !important; }
+        html, body { background-color: #0A0A0A !important; margin: 0 !important; padding: 0 !important; width: 100% !important; max-width: 100% !important; height: 100% !important; overflow-x: hidden !important; -webkit-font-smoothing: antialiased; }
+        #root { background-color: #0A0A0A !important; min-height: 100vh !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 0 !important; display: block !important; text-align: left !important; overflow-x: hidden !important; }
       `}</style>
 
       {/* RENDERIZADO CONDICIONAL: PANTALLA PRINCIPAL vs PANTALLA "VER TODOS" */}
