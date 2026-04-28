@@ -198,7 +198,6 @@ export default function App() {
     setSaving(false);
   };
 
-  // NUEVO: Agregada confirmación antes de eliminar
   const eliminar = async (id) => {
     const confirmacion = window.confirm("¿Seguro que deseas eliminar este movimiento?");
     if (!confirmacion) return;
@@ -287,6 +286,9 @@ export default function App() {
   const gastosHoy    = gastos.filter(g => g.fecha === fechaHoy && g.tipo === "gasto");
   const ingresosHoy  = gastos.filter(g => g.fecha === fechaHoy && g.tipo === "ingreso");
   const totalGastadoHoy = gastosHoy.reduce((a, g) => a + g.monto, 0);
+  
+  // NUEVO: Total de ingresos del día
+  const totalIngresosHoy = ingresosHoy.reduce((a, g) => a + g.monto, 0);
 
   const totalGastado  = gastos.filter(g => g.tipo === "gasto").reduce((a, g) => a + g.monto, 0);
   const totalIngresos = gastos.filter(g => g.tipo === "ingreso").reduce((a, g) => a + g.monto, 0);
@@ -511,15 +513,26 @@ export default function App() {
           </div>
 
           {ingMensual > 0 && (
-            <div style={{ ...s.card, background: totalGastadoHoy > presupuestoDiario ? "#1A0A0A" : "#0A1A0A", border: `1px solid ${totalGastadoHoy > presupuestoDiario ? "#3A1000" : "#103A10"}` }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div>
-                  <div style={s.label}>Saldo disponible hoy</div>
-                  <div style={{ fontFamily: "monospace", fontSize: 20, fontWeight: 700, color: (presupuestoDiario - totalGastadoHoy) >= 0 ? "#5AE88A" : "#E85A5A" }}>
-                    {formatMoney(presupuestoDiario - totalGastadoHoy)}
-                  </div>
+            <div style={s.grid2}>
+              {/* CAJA 1: INGRESOS HOY */}
+              <div style={s.card}>
+                <div style={s.label}>Ingresos hoy</div>
+                <div style={{ ...s.greenNum, fontSize: 20 }}>
+                  {formatMoney(totalIngresosHoy)}
                 </div>
-                <span style={{ fontSize: 28 }}>{(presupuestoDiario - totalGastadoHoy) >= 0 ? "✅" : "⚠️"}</span>
+              </div>
+              
+              {/* CAJA 2: SALDO DISPONIBLE HOY */}
+              <div style={{ ...s.card, background: totalGastadoHoy > presupuestoDiario ? "#1A0A0A" : "#0A1A0A", border: `1px solid ${totalGastadoHoy > presupuestoDiario ? "#3A1000" : "#103A10"}` }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ ...s.label, fontSize: 10 }}>Saldo disponible hoy</div>
+                    <div style={{ fontFamily: "monospace", fontSize: 18, fontWeight: 700, color: (presupuestoDiario - totalGastadoHoy) >= 0 ? "#5AE88A" : "#E85A5A", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {formatMoney(presupuestoDiario - totalGastadoHoy)}
+                    </div>
+                  </div>
+                  <span style={{ fontSize: 20, marginLeft: 4 }}>{(presupuestoDiario - totalGastadoHoy) >= 0 ? "✅" : "⚠️"}</span>
+                </div>
               </div>
             </div>
           )}
@@ -619,7 +632,7 @@ export default function App() {
             <div style={s.card}><div style={s.label}>Gasto prom/día</div><div style={s.smallNum}>{formatMoney(gastoDiarioProm)}</div></div>
           </div>
 
-          <div style={{ ...s.card, background: "#0F1A0F", border: "1px solid #1A3A1A" }}>
+          <div style={{ ...s.card, background: "#0F1A0F", border: "1px solid #1A3A1A", marginBottom: 12 }}>
             <div style={s.label}>Proyección inteligente</div>
             <div style={{ fontSize: 15, color: "#D4AF37", fontWeight: 700, marginTop: 6 }}>
               📈 A este ritmo llegarás a tu meta {proyeccionTexto}
