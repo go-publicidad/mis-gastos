@@ -164,27 +164,14 @@ export default function App() {
   };
 
   useEffect(() => {
-    // MAGIA ANTI-BORDES BLANCOS PARA iPHONE
-    document.documentElement.style.backgroundColor = "#0A0A0A";
-    document.body.style.backgroundColor = "#0A0A0A";
-    document.body.style.margin = "0";
-    document.body.style.padding = "0";
-
     let viewportMeta = document.querySelector("meta[name=viewport]");
     if (!viewportMeta) {
       viewportMeta = document.createElement("meta");
-      viewportMeta.setAttribute("name", "viewport");
+      viewportMeta.name = "viewport";
       document.head.appendChild(viewportMeta);
     }
+    // NUEVO: Agregado viewport-fit=cover para forzar a iOS a usar toda la pantalla
     viewportMeta.setAttribute("content", "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover");
-
-    let themeMeta = document.querySelector("meta[name=theme-color]");
-    if (!themeMeta) {
-      themeMeta = document.createElement("meta");
-      themeMeta.setAttribute("name", "theme-color");
-      document.head.appendChild(themeMeta);
-    }
-    themeMeta.setAttribute("content", "#0A0A0A");
 
     (async () => {
       try {
@@ -496,22 +483,15 @@ export default function App() {
   if (!loaded) return (
     <div style={{ background: "#0A0A0A", height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
       <div style={{ width: 32, height: 32, border: "2px solid #1A1A1A", borderTop: "2px solid #D4AF37", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-      <style>{`
-        *, *::before, *::after { box-sizing: border-box; }
-        html, body { background-color: #0A0A0A !important; margin: 0 !important; padding: 0 !important; width: 100% !important; height: 100% !important; overflow-x: hidden !important; -webkit-font-smoothing: antialiased; }
-        #root { background-color: #0A0A0A !important; min-height: 100vh !important; width: 100% !important; overflow-x: hidden !important; }
-      `}</style>
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } } *{box-sizing:border-box} html,body{background-color:#0A0A0A!important;margin:0;padding:0;overscroll-behavior-y:none;width:100%;height:100%;overflow-x:hidden;-webkit-font-smoothing:antialiased} #root{background-color:#0A0A0A;min-height:100vh;width:100%;overflow-x:hidden}`}</style>
       <span style={{ color: "#555", fontSize: 13 }}>Conectando...</span>
     </div>
   );
 
   return (
     <div style={s.app}>
-      <style>{`
-        *, *::before, *::after { box-sizing: border-box; }
-        html, body { background-color: #0A0A0A !important; margin: 0 !important; padding: 0 !important; width: 100% !important; height: 100% !important; overflow-x: hidden !important; -webkit-font-smoothing: antialiased; }
-        #root { background-color: #0A0A0A !important; min-height: 100vh !important; width: 100% !important; overflow-x: hidden !important; }
-      `}</style>
+      {/* NUEVO ESTILO GLOBAL: Se cambia 100vw por 100% para evitar la linea blanca en Safari */}
+      <style>{`*{box-sizing:border-box} html,body{background-color:#0A0A0A!important;margin:0;padding:0;overscroll-behavior-y:none;width:100%;height:100%;overflow-x:hidden;-webkit-font-smoothing:antialiased}#root{background-color:#0A0A0A;min-height:100vh;width:100%;overflow-x:hidden}`}</style>
 
       {/* RENDERIZADO CONDICIONAL: PANTALLA PRINCIPAL vs PANTALLA "VER TODOS" */}
       {viewAll ? (
