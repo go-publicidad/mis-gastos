@@ -146,7 +146,6 @@ export default function App() {
   const [filtroFechaResumenDesde, setFiltroFechaResumenDesde] = useState(hoy());
   const [filtroFechaResumenHasta, setFiltroFechaResumenHasta] = useState(hoy());
 
-  // NUEVOS ESTADOS: PANTALLA "VER TODOS" Y MODAL CORREO
   const [viewAll, setViewAll] = useState(false);
   const [showVtFiltro, setShowVtFiltro] = useState(false);
   const [vtFechaDesde, setVtFechaDesde] = useState("");
@@ -394,7 +393,6 @@ export default function App() {
     return matchCat && matchDesde && matchHasta;
   });
 
-  // FILTRO PARA LA PANTALLA "VER TODOS"
   const gastosVerTodos = gastos.filter(g => {
     const matchDesde = !vtFechaDesde || g.fecha >= vtFechaDesde;
     const matchHasta = !vtFechaHasta || g.fecha <= vtFechaHasta;
@@ -480,7 +478,7 @@ export default function App() {
       {/* RENDERIZADO CONDICIONAL: PANTALLA PRINCIPAL vs PANTALLA "VER TODOS" */}
       {viewAll ? (
         <>
-          {/* HEADER DE LA NUEVA PANTALLA */}
+          {/* HEADER DE LA PANTALLA "MOVIMIENTOS" */}
           <div style={{ padding: "16px 20px", borderBottom: "1px solid #1A1A1A", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#0A0A0A", position: "sticky", top: 0, zIndex: 10 }}>
             <button style={{ background: "none", border: "none", color: "#D4AF37", fontSize: 24, cursor: "pointer", padding: 0 }} onClick={() => setViewAll(false)}>
               ←
@@ -491,7 +489,7 @@ export default function App() {
                 ✉️
               </button>
               <button style={{ background: "none", border: "none", color: "#D4AF37", fontSize: 20, cursor: "pointer", padding: 0 }} onClick={() => setShowVtFiltro(!showVtFiltro)}>
-                🎚️
+                📅
               </button>
             </div>
           </div>
@@ -855,11 +853,9 @@ export default function App() {
                               {fecha} <span style={{ opacity: 0.5, margin: "0 4px" }}>|</span> {hora}
                             </div>
                           </div>
-                          <span style={{ fontFamily: "monospace", fontWeight: 700, color: g.tipo === "gasto" ? "#E85A5A" : "#5AE88A", marginRight: 4, flexShrink: 0 }}>
+                          <span style={{ fontFamily: "monospace", fontWeight: 700, color: g.tipo === "gasto" ? "#E85A5A" : "#5AE88A", flexShrink: 0 }}>
                             {g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}
                           </span>
-                          <button style={s.editBtn} onClick={() => abrirEdicion(g)}>✏️</button>
-                          <button style={s.deleteBtn} onClick={() => eliminar(g.id)}>×</button>
                         </div>
                       </div>
                     );
