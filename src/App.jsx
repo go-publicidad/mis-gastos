@@ -27,7 +27,6 @@ const getLimaTime = () => new Date(Date.now() - 18000000);
 
 const hoy = () => getLimaTime().toISOString().split("T")[0];
 
-// EL PARCHE QUE SE PERDIÓ: Fuerza la fecha local exacta para los filtros
 const getFechaLocal = (isoStr) => {
   if (!isoStr) return hoy();
   const validIsoStr = isoStr.includes('Z') || isoStr.includes('+') ? isoStr : `${isoStr}Z`;
@@ -168,7 +167,6 @@ export default function App() {
         const { data: movimientos, error: err1 } = await supabase.from("gastos").select("*").order("created_at", { ascending: false });
         if (err1) throw err1;
         
-        // APLICANDO EL PARCHE PARA SOBRESCRIBIR LA FECHA DE SUPABASE
         const movimientosCorregidos = (movimientos || []).map(m => ({
           ...m,
           fecha: getFechaLocal(m.created_at)
@@ -208,7 +206,6 @@ export default function App() {
     const { data, error: err } = await supabase.from("gastos").insert([nuevo]).select();
     if (err) { showToast("Error al guardar", "#E85A5A"); setSaving(false); return; }
     
-    // Normalizamos también el que recién se guarda
     const movGuardado = { ...data[0], fecha: getFechaLocal(data[0].created_at) };
     
     setGastos(prev => [movGuardado, ...prev]);
@@ -583,8 +580,10 @@ export default function App() {
                         {cat && <span style={s.catDot(cat.color)} />}
                         <span style={{ fontSize: 14, color: "#C0B8A8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.descripcion}</span>
                       </div>
-                      <div style={{ fontSize: 11, color: "#555" }}>{fecha}</div>
-                      <div style={{ fontSize: 10, color: "#3A3A3A" }}>{hora}</div>
+                      {/* LÍNEA MODIFICADA PARA AHORRAR ESPACIO: Fecha y Hora juntas */}
+                      <div style={{ fontSize: 11, color: "#666" }}>
+                        {fecha} <span style={{ opacity: 0.5, margin: "0 4px" }}>|</span> {hora}
+                      </div>
                     </div>
                     <span style={{ fontFamily: "monospace", fontWeight: 600, color: g.tipo === "gasto" ? "#E85A5A" : "#5AE88A", marginRight: 4, flexShrink: 0 }}>
                       {g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}
@@ -771,8 +770,10 @@ export default function App() {
                           {cat && <span style={s.catDot(cat.color)} />}
                           <span style={{ fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.descripcion}</span>
                         </div>
-                        <div style={{ fontSize: 11, color: "#555" }}>{fecha}</div>
-                        <div style={{ fontSize: 10, color: "#3A3A3A" }}>{hora}</div>
+                        {/* LÍNEA MODIFICADA PARA AHORRAR ESPACIO: Fecha y Hora juntas */}
+                        <div style={{ fontSize: 11, color: "#666" }}>
+                          {fecha} <span style={{ opacity: 0.5, margin: "0 4px" }}>|</span> {hora}
+                        </div>
                       </div>
                       <span style={{ fontFamily: "monospace", fontWeight: 700, color: g.tipo === "gasto" ? "#E85A5A" : "#5AE88A", marginRight: 4, flexShrink: 0 }}>
                         {g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}
