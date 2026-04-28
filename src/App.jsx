@@ -137,7 +137,6 @@ export default function App() {
   const [nuevaCatLabel, setNuevaCatLabel] = useState("");
   const [nuevaCatColor, setNuevaCatColor] = useState(COLORES_CUSTOM[0]);
 
-  // NUEVOS ESTADOS PARA EDITAR CATEGORÍAS
   const [editandoCat,  setEditandoCat]  = useState(null);
   const [editCatLabel, setEditCatLabel] = useState("");
   const [editCatColor, setEditCatColor] = useState("");
@@ -383,6 +382,10 @@ export default function App() {
     return matchCat && matchDesde && matchHasta;
   });
 
+  // --------------------------------------------------------------------------
+  // ESTILOS ACTUALIZADOS: 
+  // Anchos forzados a 100% y márgenes purgados para simetría perfecta en todas las vistas.
+  // --------------------------------------------------------------------------
   const s = {
     app: {
       background: "#0A0A0A", minHeight: "100vh", color: "#E8E0D0",
@@ -390,6 +393,7 @@ export default function App() {
       maxWidth: 480, margin: "0 auto",
       paddingBottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
       overscrollBehaviorY: "none",
+      overflowX: "hidden"
     },
     header:     { padding: "24px 20px 0", borderBottom: "1px solid #1E1E1E" },
     title:      { fontFamily: "'Playfair Display','Georgia',serif", fontSize: 28, fontWeight: 700, color: "#D4AF37", margin: 0 },
@@ -397,9 +401,12 @@ export default function App() {
     subtitle:   { color: "#666", fontSize: 13, margin: "4px 0 0" },
     tabs:       { display: "flex", padding: "16px 20px 0", borderBottom: "1px solid #1A1A1A" },
     tab:    (a) => ({ padding: "8px 14px", background: "none", border: "none", borderBottom: a ? "2px solid #D4AF37" : "2px solid transparent", color: a ? "#D4AF37" : "#555", cursor: "pointer", fontSize: 13, fontWeight: a ? 600 : 400, transition: "all 0.2s" }),
-    section:    { padding: "20px" },
-    card:       { background: "#111", border: "1px solid #1E1E1E", borderRadius: 12, padding: "16px", marginBottom: 12, overflow: "hidden" },
-    metaCard:   { background: "linear-gradient(135deg,#1A1500,#0F1000)", border: "1px solid #3A2E00", borderRadius: 16, padding: "20px", marginBottom: 16 },
+    
+    // Contenedores ajustados
+    section:    { padding: "20px", width: "100%", boxSizing: "border-box" },
+    card:       { width: "100%", background: "#111", border: "1px solid #1E1E1E", borderRadius: 12, padding: "16px", margin: "0 0 12px 0", overflow: "hidden", boxSizing: "border-box" },
+    metaCard:   { width: "100%", background: "linear-gradient(135deg,#1A1500,#0F1000)", border: "1px solid #3A2E00", borderRadius: 16, padding: "20px", margin: "0 0 16px 0", boxSizing: "border-box" },
+    
     label:      { fontSize: 11, color: "#666", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 4 },
     bigNum:     { fontFamily: "monospace", fontSize: 30, fontWeight: 700, color: "#D4AF37", lineHeight: 1 },
     smallNum:   { fontFamily: "monospace", fontSize: 18, fontWeight: 600, color: "#E8E0D0" },
@@ -407,7 +414,7 @@ export default function App() {
     greenNum:   { fontFamily: "monospace", fontSize: 22, fontWeight: 600, color: "#5AE88A" },
     progressBg: { background: "#1A1A1A", borderRadius: 4, height: 8, margin: "12px 0 4px", overflow: "hidden" },
     progressFill: (p) => ({ height: "100%", width: `${p}%`, background: p >= 100 ? "#5AE88A" : p >= 50 ? "#D4AF37" : "#E85A5A", borderRadius: 4, transition: "width 0.6s ease" }),
-    grid2:      { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 },
+    grid2:      { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, margin: "0 0 12px 0", width: "100%" },
     input: { width: "100%", maxWidth: "100%", background: "#111", border: "1px solid #2A2A2A", borderRadius: 8, color: "#E8E0D0", padding: "10px 12px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", WebkitAppearance: "none", minHeight: 44 },
     select: { width: "100%", background: "#111", border: "1px solid #2A2A2A", borderRadius: 8, color: "#E8E0D0", padding: "10px 12px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", cursor: "pointer", WebkitAppearance: "none", minHeight: 44 },
     btnPrimary: { background: "#D4AF37", color: "#000", border: "none", borderRadius: 8, padding: "12px", fontSize: 14, fontWeight: 700, cursor: "pointer", width: "100%", letterSpacing: "0.5px" },
@@ -442,6 +449,7 @@ export default function App() {
     modal: {
       background: "#111", border: "1px solid #2A2A2A", borderRadius: 16,
       padding: "20px", width: "100%", maxWidth: 400,
+      boxSizing: "border-box"
     },
   };
 
@@ -509,7 +517,7 @@ export default function App() {
           </div>
 
           {ingMensual > 0 && (
-            <div style={{ ...s.card, marginBottom: 16, background: totalGastadoHoy > presupuestoDiario ? "#1A0A0A" : "#0A1A0A", border: `1px solid ${totalGastadoHoy > presupuestoDiario ? "#3A1000" : "#103A10"}` }}>
+            <div style={{ ...s.card, background: totalGastadoHoy > presupuestoDiario ? "#1A0A0A" : "#0A1A0A", border: `1px solid ${totalGastadoHoy > presupuestoDiario ? "#3A1000" : "#103A10"}` }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
                   <div style={s.label}>Saldo disponible hoy</div>
@@ -582,7 +590,7 @@ export default function App() {
             ))}
           </div>
           {filtroResumen === "rango" && (
-            <div style={{ ...s.card, padding: 12, marginBottom: 12 }}>
+            <div style={{ ...s.card, padding: 12 }}>
               <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
                 <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
                   <div style={{ ...s.label, marginBottom: 5 }}>Del</div>
@@ -617,7 +625,7 @@ export default function App() {
             <div style={s.card}><div style={s.label}>Gasto prom/día</div><div style={s.smallNum}>{formatMoney(gastoDiarioProm)}</div></div>
           </div>
 
-          <div style={{ ...s.card, background: "#0F1A0F", border: "1px solid #1A3A1A", marginBottom: 12 }}>
+          <div style={{ ...s.card, background: "#0F1A0F", border: "1px solid #1A3A1A" }}>
             <div style={s.label}>Proyección inteligente</div>
             <div style={{ fontSize: 15, color: "#D4AF37", fontWeight: 700, marginTop: 6 }}>
               📈 A este ritmo llegarás a tu meta {proyeccionTexto}
@@ -674,7 +682,7 @@ export default function App() {
       {tab === "historial" && (
         <div style={s.section}>
 
-          <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+          <div style={{ display: "flex", gap: 8, marginBottom: 12, width: "100%" }}>
             <button
               style={{ ...s.btnSecondary, flex: 1, fontSize: 12 }}
               onClick={() => exportarCSV(gastosFiltradosHist, categorias)}
@@ -729,7 +737,7 @@ export default function App() {
                 const cat = categorias.find(c => c.id === g.categoria);
                 const { fecha, hora } = formatDateTime(g.created_at);
                 return (
-                  <div key={g.id} style={{ ...s.card, padding: "12px 14px", marginBottom: 6 }}>
+                  <div key={g.id} style={{ ...s.card, padding: "12px 14px" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: "flex", alignItems: "center", marginBottom: 2 }}>
@@ -816,7 +824,6 @@ export default function App() {
                   ))}
                 </div>
                 
-                {/* AQUÍ ESTÁ EL BOTÓN CANCELAR QUE TE DEBÍA */}
                 <div style={{ display: "flex", gap: 8 }}>
                   <button style={{ ...s.btnSecondary, flex: 1 }} onClick={() => setShowNuevaCat(false)}>Cancelar</button>
                   <button style={{ ...s.btnPrimary, flex: 1 }} onClick={agregarCategoria}>Agregar categoría</button>
@@ -824,7 +831,6 @@ export default function App() {
               </div>
             )}
 
-            {/* LISTA Y EDICIÓN DE CATEGORÍAS */}
             {categoriasExtra.length === 0 ? (
               <div style={{ color: "#333", fontSize: 13, textAlign: "center", padding: "8px 0" }}>Aún no hay categorías personalizadas</div>
             ) : (
