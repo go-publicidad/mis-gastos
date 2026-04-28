@@ -23,18 +23,13 @@ const CATEGORIAS_DEFAULT = [
 
 const COLORES_CUSTOM = ["#FF6B6B","#FFD93D","#6BCB77","#4D96FF","#C77DFF","#FF9F1C","#2EC4B6","#E71D36","#F72585","#B5E48C"];
 
-// CORRECCIÓN: Función 'hoy' forzada a la zona horaria de Perú, 
-// garantizando que no cambie de día a las 7 PM.
-const hoy = () => {
-  const dt = new Date();
-  const parts = new Intl.DateTimeFormat("es-PE", {
-    timeZone: "America/Lima", year: "numeric", month: "2-digit", day: "2-digit"
-  }).formatToParts(dt);
-  const d = parts.find(p => p.type === 'day').value;
-  const m = parts.find(p => p.type === 'month').value;
-  const y = parts.find(p => p.type === 'year').value;
-  return `${y}-${m}-${d}`;
-};
+// --------------------------------------------------------------------------
+// MAGIA MATEMÁTICA: Forzamos la zona horaria UTC-5 (Perú) sin depender del celular
+// 18,000,000 ms = 5 horas exactas
+// --------------------------------------------------------------------------
+const getLimaTime = () => new Date(Date.now() - 18000000);
+
+const hoy = () => getLimaTime().toISOString().split("T")[0];
 
 const formatMoney = (n) =>
   `${CURRENCY} ${Number(n || 0).toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -49,19 +44,26 @@ const formatDateTime = (isoStr) => {
   if (!isoStr) return { fecha: "", hora: "" };
   const validIsoStr = isoStr.includes('Z') || isoStr.includes('+') ? isoStr : `${isoStr}Z`;
   const dt = new Date(validIsoStr);
-  const fecha = new Intl.DateTimeFormat("es-PE", { timeZone: "America/Lima", day: "2-digit", month: "2-digit", year: "numeric" }).format(dt);
-  const hora = new Intl.DateTimeFormat("es-PE", { timeZone: "America/Lima", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).format(dt);
+  
+  // Restamos 5 horas matemáticamente al dato que viene de Supabase
+  const limaDate = new Date(dt.getTime() - 18000000);
+  const iso = limaDate.toISOString(); // "YYYY-MM-DDTHH:mm:ss.sssZ"
+  
+  const fecha = iso.substring(0, 10).split('-').reverse().join('/');
+  const hora = iso.substring(11, 19);
+  
   return { fecha, hora };
 };
 
-// CORRECCIÓN: Calcula la diferencia usando días calendario locales y no milisegundos brutos.
 const diasTranscurridos = (inicio) => {
   if (!inicio) return 1;
   const [y1, m1, d1] = inicio.split("-");
   const [y2, m2, d2] = hoy().split("-");
-  const dif = Math.round((new Date(y2, m2 - 1, d2) - new Date(y1, m1 - 1, d1)) / 86400000);
+  // Date.UTC evita saltos raros al cambiar de meses o años
+  const dif = Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 86400000);
   return Math.max(1, dif + 1);
 };
+// --------------------------------------------------------------------------
 
 const exportarCSV = (gastos, categorias) => {
   const header = "Fecha,Hora,Tipo,Categoría,Descripción,Monto\n";
@@ -135,6 +137,7 @@ export default function App() {
   const [nuevaCatLabel, setNuevaCatLabel] = useState("");
   const [nuevaCatColor, setNuevaCatColor] = useState(COLORES_CUSTOM[0]);
 
+  // NUEVOS ESTADOS PARA EDITAR CATEGORÍAS
   const [editandoCat,  setEditandoCat]  = useState(null);
   const [editCatLabel, setEditCatLabel] = useState("");
   const [editCatColor, setEditCatColor] = useState("");
@@ -326,11 +329,14 @@ export default function App() {
   const getFiltradosResumen = () => {
     const hoyStr = hoy();
     if (filtroResumen === "hoy") return gastos.filter(g => g.fecha === hoyStr);
+    
+    // Filtro Matemático de 7 días
     if (filtroResumen === "semana") {
-      const hace7 = new Date(); hace7.setDate(hace7.getDate() - 6);
+      const hace7 = new Date(Date.now() - 18000000 - 6 * 86400000);
       const limite = hace7.toISOString().split("T")[0];
       return gastos.filter(g => g.fecha >= limite);
     }
+    
     if (filtroResumen === "mes") {
       const mesActual = hoyStr.slice(0, 7);
       return gastos.filter(g => g.fecha.startsWith(mesActual));
@@ -353,13 +359,21 @@ export default function App() {
   })).filter(c => c.total > 0).sort((a, b) => b.total - a.total);
   const maxCatR = porCategoriaR[0]?.total || 1;
 
+  // Gráfico matemático de 7 días
   const gastosUltimos7 = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(); d.setDate(d.getDate() - (6 - i));
+    const msLima = Date.now() - 18000000;
+    const d = new Date(msLima - (6 - i) * 86400000);
     const fecha = d.toISOString().split("T")[0];
-    const label = d.toLocaleDateString("es-PE", { weekday: "short" });
+    
+    const [y, m, day] = fecha.split("-");
+    const tempDate = new Date(Date.UTC(y, m - 1, day, 12, 0, 0));
+    const diasSemana = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+    const label = diasSemana[tempDate.getUTCDay()];
+    
     const total = gastos.filter(g => g.fecha === fecha && g.tipo === "gasto").reduce((a, g) => a + g.monto, 0);
     return { label, total, fecha };
   });
+  
   const maxBar = Math.max(...gastosUltimos7.map(d => d.total), 1);
 
   const gastosFiltradosHist = gastos.filter(g => {
@@ -805,7 +819,6 @@ export default function App() {
               </div>
             )}
 
-            {/* LISTA Y EDICIÓN DE CATEGORÍAS */}
             {categoriasExtra.length === 0 ? (
               <div style={{ color: "#333", fontSize: 13, textAlign: "center", padding: "8px 0" }}>Aún no hay categorías personalizadas</div>
             ) : (
