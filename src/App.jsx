@@ -597,33 +597,36 @@ export default function App() {
                 </div>
               </div>
 
+              {/* NUEVO: CUADRÍCULA 2x2 PARA HOY */}
               <div style={s.grid2}>
-                <div style={s.card}><div style={s.label}>Gastado hoy</div><div style={{ ...s.redNum, fontSize: 20 }}>{formatMoney(totalGastadoHoy)}</div></div>
-                <div style={s.card}><div style={s.label}>Límite/día</div><div style={{ ...s.greenNum, fontSize: 20 }}>{ingMensual > 0 ? formatMoney(presupuestoDiario) : "—"}</div></div>
-              </div>
+                {/* 1) Ingresos Hoy */}
+                <div style={s.card}>
+                  <div style={s.label}>Ingresos hoy</div>
+                  <div style={{ ...s.greenNum, fontSize: 20 }}>{formatMoney(totalIngresosHoy)}</div>
+                </div>
+                
+                {/* 2) Gastado Hoy */}
+                <div style={s.card}>
+                  <div style={s.label}>Gastado hoy</div>
+                  <div style={{ ...s.redNum, fontSize: 20 }}>{formatMoney(totalGastadoHoy)}</div>
+                </div>
 
-              {ingMensual > 0 && (
-                <div style={s.grid2}>
-                  <div style={s.card}>
-                    <div style={s.label}>Ingresos hoy</div>
-                    <div style={{ ...s.greenNum, fontSize: 20 }}>
-                      {formatMoney(totalIngresosHoy)}
-                    </div>
-                  </div>
-                  
-                  <div style={{ ...s.card, background: totalGastadoHoy > presupuestoDiario ? "#1A0A0A" : "#0A1A0A", border: `1px solid ${totalGastadoHoy > presupuestoDiario ? "#3A1000" : "#103A10"}` }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ ...s.label, fontSize: 10 }}>Saldo disponible hoy</div>
-                        <div style={{ fontFamily: "monospace", fontSize: 18, fontWeight: 700, color: (presupuestoDiario - totalGastadoHoy) >= 0 ? "#5AE88A" : "#E85A5A", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {formatMoney(presupuestoDiario - totalGastadoHoy)}
-                        </div>
-                      </div>
-                      <span style={{ fontSize: 20, marginLeft: 4 }}>{(presupuestoDiario - totalGastadoHoy) >= 0 ? "✅" : "⚠️"}</span>
-                    </div>
+                {/* 3) Ahorro Hoy (Amarillo) */}
+                <div style={s.card}>
+                  <div style={s.label}>Ahorro hoy</div>
+                  <div style={{ fontFamily: "monospace", fontSize: 20, fontWeight: 600, color: "#D4AF37" }}>
+                    {formatMoney(totalIngresosHoy - totalGastadoHoy)}
                   </div>
                 </div>
-              )}
+
+                {/* 4) Límite Ahorro / Día */}
+                <div style={s.card}>
+                  <div style={s.label}>Límite ahorro / día</div>
+                  <div style={{ fontFamily: "monospace", fontSize: 20, fontWeight: 600, color: "#E8E0D0" }}>
+                    {formatMoney(ahorroMetaDiario)}
+                  </div>
+                </div>
+              </div>
 
               <div style={s.card}>
                 <div style={s.label}>Registrar movimiento</div>
@@ -634,7 +637,6 @@ export default function App() {
                 
                 <input style={{ ...s.input, marginBottom: 8, fontSize: 22, fontWeight: 700 }} type="number" placeholder="0.00" value={form.monto} onChange={e => setForm(f => ({ ...f, monto: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
                 
-                {/* CAJAS DE CATEGORÍA Y DESCRIPCIÓN CON TAMAÑO AJUSTADO */}
                 <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
                   <select style={{ ...s.select, flex: 1, marginBottom: 0 }} value={form.categoria} onChange={e => setForm(f => ({ ...f, categoria: e.target.value }))}>
                     {categorias.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
@@ -1031,7 +1033,6 @@ export default function App() {
             </div>
             <input style={{ ...s.input, marginBottom: 8, fontSize: 20, fontWeight: 700 }} type="number" placeholder="0.00" value={editForm.monto} onChange={e => setEditForm(f => ({ ...f, monto: e.target.value }))} />
             
-            {/* CAJAS DE EDICIÓN CON TAMAÑO AJUSTADO */}
             <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
               <select style={{ ...s.select, flex: 1, marginBottom: 0 }} value={editForm.categoria} onChange={e => setEditForm(f => ({ ...f, categoria: e.target.value }))}>
                 {categorias.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
