@@ -815,10 +815,16 @@ export default function App() {
                       style={{ width: 24, height: 24, borderRadius: "50%", background: c, cursor: "pointer", border: nuevaCatColor === c ? "3px solid #fff" : "3px solid transparent" }} />
                   ))}
                 </div>
-                <button style={s.btnPrimary} onClick={agregarCategoria}>Agregar categoría</button>
+                
+                {/* AQUÍ ESTÁ EL BOTÓN CANCELAR QUE TE DEBÍA */}
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button style={{ ...s.btnSecondary, flex: 1 }} onClick={() => setShowNuevaCat(false)}>Cancelar</button>
+                  <button style={{ ...s.btnPrimary, flex: 1 }} onClick={agregarCategoria}>Agregar categoría</button>
+                </div>
               </div>
             )}
 
+            {/* LISTA Y EDICIÓN DE CATEGORÍAS */}
             {categoriasExtra.length === 0 ? (
               <div style={{ color: "#333", fontSize: 13, textAlign: "center", padding: "8px 0" }}>Aún no hay categorías personalizadas</div>
             ) : (
