@@ -422,8 +422,8 @@ export default function App() {
       maxWidth: 480, margin: "0 auto",
       paddingBottom: "calc(100px + env(safe-area-inset-bottom, 0px))",
       overflowX: "hidden",
-      overflowY: "auto", // <-- SOLUCION PARA EL SCROLL EN ANDROID
-      WebkitOverflowScrolling: "touch", // Para mantener suavidad en iOS
+      overflowY: "auto", 
+      WebkitOverflowScrolling: "touch",
       width: "100%"
     },
     header:     { padding: "24px 20px 0", borderBottom: "1px solid #1E1E1E" },
@@ -484,7 +484,6 @@ export default function App() {
   if (!loaded) return (
     <div style={{ background: "#0A0A0A", height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
       <div style={{ width: 32, height: 32, border: "2px solid #1A1A1A", borderTop: "2px solid #D4AF37", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-      {/* SOLUCION PARA EL SCROLL EN ANDROID - Se removió overscroll-behavior y se añadió overflow-y: auto */}
       <style>{`@keyframes spin { to { transform: rotate(360deg) } } *{box-sizing:border-box} html,body{background:#0A0A0A!important;margin:0;padding:0;width:100vw;max-width:100%;overflow-x:hidden;overflow-y:auto;} #root{background:#0A0A0A;min-height:100vh;width:100%;max-width:100%;overflow-x:hidden;overflow-y:auto;}`}</style>
       <span style={{ color: "#555", fontSize: 13 }}>Conectando...</span>
     </div>
@@ -492,7 +491,6 @@ export default function App() {
 
   return (
     <div style={s.app}>
-      {/* SOLUCION PARA EL SCROLL EN ANDROID - Se removió overscroll-behavior y se añadió overflow-y: auto */}
       <style>{`*{box-sizing:border-box} html,body{background:#0A0A0A!important;margin:0;padding:0;width:100vw;max-width:100%;overflow-x:hidden;overflow-y:auto;}#root{background:#0A0A0A;min-height:100vh;width:100%;max-width:100%;overflow-x:hidden;overflow-y:auto;}`}</style>
 
       {/* RENDERIZADO CONDICIONAL: PANTALLA PRINCIPAL vs PANTALLA "VER TODOS" */}
@@ -520,12 +518,12 @@ export default function App() {
               <div style={{ ...s.label, marginBottom: 6, textAlign: "center" }}>Filtrar por rango de fecha</div>
               <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                 <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                  <div style={{ fontSize: 11, color: "#555", marginBottom: 3 }}>Del</div>
-                  <input type="date" value={vtFechaDesde} onChange={e => setVtFechaDesde(e.target.value)} style={{ ...s.input, padding: "10px 5px", fontSize: 16 }} />
+                  <div style={{ ...s.label, marginBottom: 3, textAlign: "center" }}>Del</div>
+                  <input type="date" value={vtFechaDesde} onChange={e => setVtFechaDesde(e.target.value)} style={{ ...s.input, padding: "10px 5px", fontSize: 16, textAlign: "center" }} />
                 </div>
                 <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                  <div style={{ fontSize: 11, color: "#555", marginBottom: 3 }}>Al</div>
-                  <input type="date" value={vtFechaHasta} onChange={e => setVtFechaHasta(e.target.value)} style={{ ...s.input, padding: "10px 5px", fontSize: 16 }} />
+                  <div style={{ ...s.label, marginBottom: 3, textAlign: "center" }}>Al</div>
+                  <input type="date" value={vtFechaHasta} onChange={e => setVtFechaHasta(e.target.value)} style={{ ...s.input, padding: "10px 5px", fontSize: 16, textAlign: "center" }} />
                 </div>
               </div>
               {(vtFechaDesde || vtFechaHasta) && (
@@ -617,25 +615,26 @@ export default function App() {
                 </div>
               </div>
 
+              {/* REQUERIMIENTO 1: Textos y montos centrados en cajas */}
               <div style={s.grid2}>
-                <div style={s.card}>
+                <div style={{ ...s.card, textAlign: "center" }}>
                   <div style={s.label}>Ingresos hoy</div>
                   <div style={{ ...s.greenNum, fontSize: 20 }}>{formatMoney(totalIngresosHoy)}</div>
                 </div>
                 
-                <div style={s.card}>
+                <div style={{ ...s.card, textAlign: "center" }}>
                   <div style={s.label}>Gastado hoy</div>
                   <div style={{ ...s.redNum, fontSize: 20 }}>{formatMoney(totalGastadoHoy)}</div>
                 </div>
 
-                <div style={s.card}>
+                <div style={{ ...s.card, textAlign: "center" }}>
                   <div style={s.label}>Ahorro hoy</div>
                   <div style={{ fontFamily: "monospace", fontSize: 20, fontWeight: 600, color: "#D4AF37" }}>
                     {formatMoney(totalIngresosHoy - totalGastadoHoy)}
                   </div>
                 </div>
 
-                <div style={s.card}>
+                <div style={{ ...s.card, textAlign: "center" }}>
                   <div style={s.label}>Límite ahorro / día</div>
                   <div style={{ fontFamily: "monospace", fontSize: 20, fontWeight: 600, color: "#E8E0D0" }}>
                     {formatMoney(ahorroMetaDiario)}
@@ -644,7 +643,8 @@ export default function App() {
               </div>
 
               <div style={s.card}>
-                <div style={s.label}>Registrar movimiento</div>
+                {/* REQUERIMIENTO 2: Registrar Movimiento centrado con más espacio */}
+                <div style={{ ...s.label, textAlign: "center", marginBottom: 16 }}>Registrar movimiento</div>
                 <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
                   <button style={s.tipoBtn(form.tipo === "gasto", "#E85A5A")} onClick={() => setForm(f => ({ ...f, tipo: "gasto" }))}>− Gasto</button>
                   <button style={s.tipoBtn(form.tipo === "ingreso", "#5AE88A")} onClick={() => setForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
@@ -718,25 +718,26 @@ export default function App() {
                 <div style={{ ...s.card, padding: 12 }}>
                   <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
                     <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                      <div style={{ ...s.label, marginBottom: 5 }}>Del</div>
+                      {/* REQUERIMIENTO 3: Textos Del/Al centrados y fecha centrada en Resumen */}
+                      <div style={{ ...s.label, marginBottom: 5, textAlign: "center" }}>Del</div>
                       <input
                         type="date" value={filtroFechaResumenDesde}
                         onChange={e => setFiltroFechaResumenDesde(e.target.value)}
-                        style={{ ...s.input, padding: "10px 5px", fontSize: 16 }}
+                        style={{ ...s.input, padding: "10px 5px", fontSize: 16, textAlign: "center" }}
                       />
                     </div>
                     <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                      <div style={{ ...s.label, marginBottom: 5 }}>Al</div>
+                      <div style={{ ...s.label, marginBottom: 5, textAlign: "center" }}>Al</div>
                       <input
                         type="date" value={filtroFechaResumenHasta}
                         onChange={e => setFiltroFechaResumenHasta(e.target.value)}
-                        style={{ ...s.input, padding: "10px 5px", fontSize: 16 }}
+                        style={{ ...s.input, padding: "10px 5px", fontSize: 16, textAlign: "center" }}
                       />
                     </div>
                   </div>
                   {(filtroFechaResumenDesde || filtroFechaResumenHasta) && (
                     <button
-                      style={{ fontSize: 12, color: "#E85A5A", background: "none", border: "none", cursor: "pointer", marginTop: 8, padding: 0 }}
+                      style={{ width: "100%", fontSize: 12, color: "#E85A5A", background: "none", border: "none", cursor: "pointer", marginTop: 12, padding: 0 }}
                       onClick={() => { setFiltroFechaResumenDesde(""); setFiltroFechaResumenHasta(""); }}
                     >× Limpiar fechas</button>
                   )}
@@ -762,8 +763,9 @@ export default function App() {
 
               {ingMensual > 0 && (
                 <div style={s.metaCard}>
+                  {/* REQUERIMIENTO 6: Datos centrados en Para lograr tu meta */}
                   <div style={{ ...s.label, textAlign: "center" }}>Para lograr tu meta</div>
-                  <div style={{ fontSize: 13, color: "#888", lineHeight: 1.9, marginTop: 8 }}>
+                  <div style={{ fontSize: 13, color: "#888", lineHeight: 1.9, marginTop: 8, textAlign: "center" }}>
                     <div>💰 Ahorra <strong style={{ color: "#D4AF37" }}>{formatMoney(ahorroMetaDiario)}/día</strong></div>
                     <div>📅 o <strong style={{ color: "#D4AF37" }}>{formatMoney(ahorroMetaDiario * 30)}/mes</strong></div>
                     <div>💸 Límite de gasto: <strong style={{ color: "#5AE88A" }}>{formatMoney(presupuestoDiario)}/día</strong></div>
@@ -826,28 +828,29 @@ export default function App() {
                     <button key={c.id} style={s.filterBtn(filtroHistCat === c.id)} onClick={() => setFiltroHistCat(c.id)}>{c.label}</button>
                   ))}
                 </div>
-                <div style={{ ...s.label, marginBottom: 6, marginTop: 8, textAlign: "center" }}>Filtrar por rango de fecha</div>
+                {/* REQUERIMIENTO 4: Filtrar por rango de fecha y textos centrados en Historial */}
+                <div style={{ ...s.label, marginBottom: 8, marginTop: 12, textAlign: "center" }}>Filtrar por rango de fecha</div>
                 <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 6 }}>
                   <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                    <div style={{ fontSize: 11, color: "#555", marginBottom: 3 }}>Del</div>
+                    <div style={{ ...s.label, marginBottom: 3, textAlign: "center" }}>Del</div>
                     <input
                       type="date" value={filtroHistFechaDesde}
                       onChange={e => setFiltroHistFechaDesde(e.target.value)}
-                      style={{ ...s.input, padding: "10px 5px", fontSize: 16 }}
+                      style={{ ...s.input, padding: "10px 5px", fontSize: 16, textAlign: "center" }}
                     />
                   </div>
                   <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                    <div style={{ fontSize: 11, color: "#555", marginBottom: 3 }}>Al</div>
+                    <div style={{ ...s.label, marginBottom: 3, textAlign: "center" }}>Al</div>
                     <input
                       type="date" value={filtroHistFechaHasta}
                       onChange={e => setFiltroHistFechaHasta(e.target.value)}
-                      style={{ ...s.input, padding: "10px 5px", fontSize: 16 }}
+                      style={{ ...s.input, padding: "10px 5px", fontSize: 16, textAlign: "center" }}
                     />
                   </div>
                 </div>
                 {(filtroHistFechaDesde || filtroHistFechaHasta) && (
                   <button
-                    style={{ fontSize: 12, color: "#E85A5A", background: "none", border: "none", cursor: "pointer", padding: 0, marginTop: 4 }}
+                    style={{ width: "100%", fontSize: 12, color: "#E85A5A", background: "none", border: "none", cursor: "pointer", padding: "12px 0 0", marginTop: 4 }}
                     onClick={() => { setFiltroHistFechaDesde(""); setFiltroHistFechaHasta(""); }}
                   >× Limpiar fechas</button>
                 )}
@@ -857,7 +860,9 @@ export default function App() {
                 <div style={{ ...s.card, textAlign: "center", color: "#333", padding: "32px" }}>Sin movimientos con este filtro</div>
               ) : (
                 <>
-                  <div style={{ ...s.label, marginBottom: 12 }}>{gastosFiltradosHist.length} movimientos</div>
+                  {/* REQUERIMIENTO 5: 27 movimientos centrado con más espacio arriba y abajo */}
+                  <div style={{ ...s.label, textAlign: "center", marginTop: 24, marginBottom: 16 }}>{gastosFiltradosHist.length} movimientos</div>
+                  
                   {gastosFiltradosHist.map(g => {
                     const cat = categorias.find(c => c.id === g.categoria);
                     const { fecha, hora } = formatDateTime(g.created_at);
@@ -905,11 +910,11 @@ export default function App() {
                 <div style={{ ...s.label, marginBottom: 8, textAlign: "center" }}>PERÍODO DE AHORRO</div>
                 <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 11, color: "#555", marginBottom: 4, textAlign: "center" }}>DEL</div>
+                    <div style={{ ...s.label, marginBottom: 4, textAlign: "center" }}>DEL</div>
                     <input style={{ ...s.input, textAlign: "center", fontSize: 14 }} type="date" value={fechaInicioPlan} onChange={e => setFechaInicioPlan(e.target.value)} />
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 11, color: "#555", marginBottom: 4, textAlign: "center" }}>AL</div>
+                    <div style={{ ...s.label, marginBottom: 4, textAlign: "center" }}>AL</div>
                     <input style={{ ...s.input, textAlign: "center", fontSize: 14 }} type="date" value={fechaFinPlan} onChange={e => setFechaFinPlan(e.target.value)} />
                   </div>
                 </div>
@@ -934,7 +939,7 @@ export default function App() {
               {ingMensual > 0 && metaTotalNum > 0 && (
                 <div style={s.metaCard}>
                   <div style={{ ...s.label, textAlign: "center" }}>Tu plan para {formatMoney(metaTotalNum)}</div>
-                  <div style={{ fontSize: 13, color: "#888", lineHeight: 2, marginTop: 8 }}>
+                  <div style={{ fontSize: 13, color: "#888", lineHeight: 2, marginTop: 8, textAlign: "center" }}>
                     <div>📥 Ingreso mensual: <strong style={{ color: "#E8E0D0" }}>{formatMoney(ingMensual)}</strong></div>
                     <div>🎯 Ahorro necesario/mes: <strong style={{ color: "#D4AF37" }}>{formatMoney(ahorroMetaDiario * 30)}</strong></div>
                     <div>💸 Gasto máximo/mes: <strong style={{ color: "#5AE88A" }}>{formatMoney(ingMensual - (ahorroMetaDiario * 30))}</strong></div>
@@ -1019,7 +1024,7 @@ export default function App() {
               </div>
 
               <div style={{ ...s.card, borderColor: "#2A0A0A" }}>
-                <div style={{ ...s.label, marginBottom: 8, color: "#E85A5A" }}>Zona de peligro</div>
+                <div style={{ ...s.label, marginBottom: 8, color: "#E85A5A", textAlign: "center" }}>Zona de peligro</div>
                 <button style={{ ...s.btnSecondary, color: "#E85A5A", borderColor: "#3A1A1A" }}
                   onClick={async () => {
                     const confirm = window.prompt("Escribe BORRAR TODO para confirmar:");
@@ -1063,12 +1068,12 @@ export default function App() {
       {editando && (
         <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setEditando(null); }}>
           <div style={s.modal}>
-            <div style={{ ...s.label, marginBottom: 12, fontSize: 14 }}>✏️ Editar movimiento</div>
+            <div style={{ ...s.label, marginBottom: 12, fontSize: 14, textAlign: "center" }}>✏️ Editar movimiento</div>
             <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
               <button style={s.tipoBtn(editForm.tipo === "gasto", "#E85A5A")} onClick={() => setEditForm(f => ({ ...f, tipo: "gasto" }))}>− Gasto</button>
               <button style={s.tipoBtn(editForm.tipo === "ingreso", "#5AE88A")} onClick={() => setEditForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
             </div>
-            <input style={{ ...s.input, marginBottom: 8, fontSize: 20, fontWeight: 700 }} type="number" placeholder="0.00" value={editForm.monto} onChange={e => setEditForm(f => ({ ...f, monto: e.target.value }))} />
+            <input style={{ ...s.input, marginBottom: 8, fontSize: 20, fontWeight: 700, textAlign: "center" }} type="number" placeholder="0.00" value={editForm.monto} onChange={e => setEditForm(f => ({ ...f, monto: e.target.value }))} />
             
             <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
               <select style={{ ...s.select, flex: 1, marginBottom: 0 }} value={editForm.categoria} onChange={e => setEditForm(f => ({ ...f, categoria: e.target.value }))}>
