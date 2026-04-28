@@ -111,6 +111,15 @@ const exportarPDF = (gastos, categorias) => {
   win.document.close();
 };
 
+// COMPONENTE AUXILIAR PARA LOS BOTONES DEL MENÚ
+const MenuItem = ({ icon, text, color = "#E8E0D0", onClick }) => (
+  <button onClick={onClick} style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, background: "none", border: "none", padding: "16px 0", cursor: "pointer", color: color, fontSize: 16, borderBottom: "1px solid #161616", textAlign: "left" }}>
+    <span style={{ fontSize: 22 }}>{icon}</span>
+    <span style={{ flex: 1, fontWeight: 500 }}>{text}</span>
+    <span style={{ color: "#333", fontSize: 20 }}>›</span>
+  </button>
+);
+
 export default function App() {
   const [gastos,         setGastos]         = useState([]);
   const [categoriasExtra, setCategoriasExtra] = useState([]);  
@@ -155,6 +164,9 @@ export default function App() {
   const [vtFechaHasta, setVtFechaHasta] = useState("");
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailDestino, setEmailDestino] = useState("");
+
+  // NUEVO ESTADO PARA CONTROLAR EL MENÚ LATERAL
+  const [showMenu, setShowMenu] = useState(false);
 
   const categorias = [...CATEGORIAS_DEFAULT, ...categoriasExtra];
 
@@ -572,6 +584,15 @@ export default function App() {
           {/* HEADER NORMAL DE LA APP */}
           <div style={s.header}>
             <div style={{ display: "flex", justifyContent: "center", alignItems: "center", position: "relative", marginBottom: 4 }}>
+              {/* BOTON DE HAMBURGUESA PARA ABRIR EL MENU */}
+              <button 
+                onClick={() => setShowMenu(true)} 
+                style={{ background: "transparent", border: "none", color: "#5AE88A", fontSize: 26, cursor: "pointer", position: "absolute", left: 0, padding: 0 }}
+                title="Menú"
+              >
+                ☰
+              </button>
+              
               <h1 style={{ ...s.title, textAlign: "center" }}>Ahorro Meta</h1>
               <button onClick={() => window.location.reload()} style={{ ...s.refreshBtn, position: "absolute", right: 0 }} title="Actualizar">🔄</button>
             </div>
@@ -615,7 +636,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* REQUERIMIENTO 1: Textos y montos centrados en cajas */}
               <div style={s.grid2}>
                 <div style={{ ...s.card, textAlign: "center" }}>
                   <div style={s.label}>Ingresos hoy</div>
@@ -643,7 +663,6 @@ export default function App() {
               </div>
 
               <div style={s.card}>
-                {/* REQUERIMIENTO 2: Registrar Movimiento centrado con más espacio */}
                 <div style={{ ...s.label, textAlign: "center", marginBottom: 16 }}>Registrar movimiento</div>
                 <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
                   <button style={s.tipoBtn(form.tipo === "gasto", "#E85A5A")} onClick={() => setForm(f => ({ ...f, tipo: "gasto" }))}>− Gasto</button>
@@ -718,7 +737,6 @@ export default function App() {
                 <div style={{ ...s.card, padding: 12 }}>
                   <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
                     <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                      {/* REQUERIMIENTO 3: Textos Del/Al centrados y fecha centrada en Resumen */}
                       <div style={{ ...s.label, marginBottom: 5, textAlign: "center" }}>Del</div>
                       <input
                         type="date" value={filtroFechaResumenDesde}
@@ -763,7 +781,6 @@ export default function App() {
 
               {ingMensual > 0 && (
                 <div style={s.metaCard}>
-                  {/* REQUERIMIENTO 6: Datos centrados en Para lograr tu meta */}
                   <div style={{ ...s.label, textAlign: "center" }}>Para lograr tu meta</div>
                   <div style={{ fontSize: 13, color: "#888", lineHeight: 1.9, marginTop: 8, textAlign: "center" }}>
                     <div>💰 Ahorra <strong style={{ color: "#D4AF37" }}>{formatMoney(ahorroMetaDiario)}/día</strong></div>
@@ -828,7 +845,6 @@ export default function App() {
                     <button key={c.id} style={s.filterBtn(filtroHistCat === c.id)} onClick={() => setFiltroHistCat(c.id)}>{c.label}</button>
                   ))}
                 </div>
-                {/* REQUERIMIENTO 4: Filtrar por rango de fecha y textos centrados en Historial */}
                 <div style={{ ...s.label, marginBottom: 8, marginTop: 12, textAlign: "center" }}>Filtrar por rango de fecha</div>
                 <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 6 }}>
                   <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
@@ -860,7 +876,6 @@ export default function App() {
                 <div style={{ ...s.card, textAlign: "center", color: "#333", padding: "32px" }}>Sin movimientos con este filtro</div>
               ) : (
                 <>
-                  {/* REQUERIMIENTO 5: 27 movimientos centrado con más espacio arriba y abajo */}
                   <div style={{ ...s.label, textAlign: "center", marginTop: 24, marginBottom: 16 }}>{gastosFiltradosHist.length} movimientos</div>
                   
                   {gastosFiltradosHist.map(g => {
@@ -1055,6 +1070,46 @@ export default function App() {
             ))}
           </div>
         </>
+      )}
+
+      {/* ── PANTALLA DEL MENÚ LATERAL (MI PERFIL) ── */}
+      {showMenu && (
+        <div style={{
+          position: "fixed", inset: 0, background: "#0A0A0A", zIndex: 9999,
+          padding: "env(safe-area-inset-top, 20px) 20px 20px",
+          overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column"
+        }}>
+          {/* Header del Menú con Flecha */}
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: "1px solid #1E1E1E", paddingBottom: 16, marginTop: 16 }}>
+            <button onClick={() => setShowMenu(false)} style={{ background: "none", border: "none", color: "#D4AF37", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16, display: "flex" }}>
+              ←
+            </button>
+            <h2 style={{ margin: 0, fontSize: 22, color: "#E8E0D0", fontWeight: 700 }}>Mi Perfil</h2>
+          </div>
+
+          {/* Bloque: MI CUENTA */}
+          <div style={{ marginBottom: 32 }}>
+            <div style={{ fontSize: 12, color: "#D4AF37", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Mi cuenta</div>
+            <MenuItem icon="🪪" text="Mis datos" />
+            <MenuItem icon="🔒" text="Cambiar mi clave" />
+            <MenuItem icon="🏆" text="Mis logros / Insignias" />
+          </div>
+
+          {/* Bloque: AJUSTES */}
+          <div style={{ marginBottom: 32 }}>
+            <div style={{ fontSize: 12, color: "#D4AF37", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Ajustes</div>
+            <MenuItem icon="🎯" text="Mi Meta de Ahorro" onClick={() => { setShowMenu(false); setTab("config"); }} />
+            <MenuItem icon="🎨" text="Apariencia (Tema Claro / Oscuro)" />
+            <MenuItem icon="📊" text="Exportar Reportes" onClick={() => { setShowMenu(false); setShowEmailModal(true); }} />
+            <MenuItem icon="🎧" text="Centro de ayuda" />
+          </div>
+
+          {/* Bloque: ZONA DE SEGURIDAD */}
+          <div style={{ marginTop: "auto", paddingTop: 32 }}>
+            <MenuItem icon="🚪" text="Cerrar sesión" color="#E85A5A" />
+            <MenuItem icon="🗑️" text="Eliminar mi cuenta" color="#E85A5A" />
+          </div>
+        </div>
       )}
 
       {/* ── Toast GLOBAL ── */}
