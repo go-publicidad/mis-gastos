@@ -286,8 +286,6 @@ export default function App() {
   const gastosHoy    = gastos.filter(g => g.fecha === fechaHoy && g.tipo === "gasto");
   const ingresosHoy  = gastos.filter(g => g.fecha === fechaHoy && g.tipo === "ingreso");
   const totalGastadoHoy = gastosHoy.reduce((a, g) => a + g.monto, 0);
-  
-  // NUEVO: Total de ingresos del día
   const totalIngresosHoy = ingresosHoy.reduce((a, g) => a + g.monto, 0);
 
   const totalGastado  = gastos.filter(g => g.tipo === "gasto").reduce((a, g) => a + g.monto, 0);
@@ -514,7 +512,6 @@ export default function App() {
 
           {ingMensual > 0 && (
             <div style={s.grid2}>
-              {/* CAJA 1: INGRESOS HOY */}
               <div style={s.card}>
                 <div style={s.label}>Ingresos hoy</div>
                 <div style={{ ...s.greenNum, fontSize: 20 }}>
@@ -522,7 +519,6 @@ export default function App() {
                 </div>
               </div>
               
-              {/* CAJA 2: SALDO DISPONIBLE HOY */}
               <div style={{ ...s.card, background: totalGastadoHoy > presupuestoDiario ? "#1A0A0A" : "#0A1A0A", border: `1px solid ${totalGastadoHoy > presupuestoDiario ? "#3A1000" : "#103A10"}` }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -560,11 +556,16 @@ export default function App() {
               <div style={s.label}>Movimientos de hoy</div>
               {[...gastosHoy, ...ingresosHoy].map(g => {
                 const cat = categorias.find(c => c.id === g.categoria);
+                const { fecha, hora } = formatDateTime(g.created_at); // <-- FECHA Y HORA AÑADIDAS AQUÍ
                 return (
                   <div key={g.id} style={s.itemRow}>
-                    <div style={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0 }}>
-                      {cat && <span style={s.catDot(cat.color)} />}
-                      <span style={{ fontSize: 14, color: "#C0B8A8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.descripcion}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", marginBottom: 2 }}>
+                        {cat && <span style={s.catDot(cat.color)} />}
+                        <span style={{ fontSize: 14, color: "#C0B8A8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.descripcion}</span>
+                      </div>
+                      <div style={{ fontSize: 11, color: "#555" }}>{fecha}</div>
+                      <div style={{ fontSize: 10, color: "#3A3A3A" }}>{hora}</div>
                     </div>
                     <span style={{ fontFamily: "monospace", fontWeight: 600, color: g.tipo === "gasto" ? "#E85A5A" : "#5AE88A", marginRight: 4, flexShrink: 0 }}>
                       {g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}
@@ -924,7 +925,7 @@ export default function App() {
             <div style={{ ...s.label, marginBottom: 12, fontSize: 14 }}>✏️ Editar movimiento</div>
             <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
               <button style={s.tipoBtn(editForm.tipo === "gasto", "#E85A5A")} onClick={() => setEditForm(f => ({ ...f, tipo: "gasto" }))}>− Gasto</button>
-              <button style={s.tipoBtn(editForm.tipo === "ingreso", "#5AE88A")} onClick={() => setEditForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
+              <button style={s.tipoBtn(editForm.tipo === "ingreso", "#5AE88A")} onClick={() => setForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
             </div>
             <input style={{ ...s.input, marginBottom: 8, fontSize: 20, fontWeight: 700 }} type="number" placeholder="0.00" value={editForm.monto} onChange={e => setEditForm(f => ({ ...f, monto: e.target.value }))} />
             {editForm.tipo === "gasto" && (
