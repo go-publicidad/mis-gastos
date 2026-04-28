@@ -631,13 +631,17 @@ export default function App() {
                   <button style={s.tipoBtn(form.tipo === "gasto", "#E85A5A")} onClick={() => setForm(f => ({ ...f, tipo: "gasto" }))}>− Gasto</button>
                   <button style={s.tipoBtn(form.tipo === "ingreso", "#5AE88A")} onClick={() => setForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
                 </div>
+                
                 <input style={{ ...s.input, marginBottom: 8, fontSize: 22, fontWeight: 700 }} type="number" placeholder="0.00" value={form.monto} onChange={e => setForm(f => ({ ...f, monto: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
-                {form.tipo === "gasto" && (
-                  <select style={{ ...s.select, marginBottom: 8 }} value={form.categoria} onChange={e => setForm(f => ({ ...f, categoria: e.target.value }))}>
+                
+                {/* NUEVO: Cajas de Categoría y Descripción juntas en la misma fila */}
+                <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                  <select style={{ ...s.select, flex: 1, marginBottom: 0 }} value={form.categoria} onChange={e => setForm(f => ({ ...f, categoria: e.target.value }))}>
                     {categorias.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
                   </select>
-                )}
-                <input style={{ ...s.input, marginBottom: 10 }} type="text" placeholder="Descripción (opcional)" value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
+                  <input style={{ ...s.input, flex: 1, marginBottom: 0 }} type="text" placeholder="Descripción (opcional)" value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
+                </div>
+
                 <button style={s.btnPrimary} onClick={agregarMovimiento} disabled={saving}>
                   {saving ? "Guardando..." : `Registrar ${form.tipo === "gasto" ? "Gasto" : "Ingreso"}`}
                 </button>
@@ -1026,12 +1030,15 @@ export default function App() {
               <button style={s.tipoBtn(editForm.tipo === "ingreso", "#5AE88A")} onClick={() => setEditForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
             </div>
             <input style={{ ...s.input, marginBottom: 8, fontSize: 20, fontWeight: 700 }} type="number" placeholder="0.00" value={editForm.monto} onChange={e => setEditForm(f => ({ ...f, monto: e.target.value }))} />
-            {editForm.tipo === "gasto" && (
-              <select style={{ ...s.select, marginBottom: 8 }} value={editForm.categoria} onChange={e => setEditForm(f => ({ ...f, categoria: e.target.value }))}>
+            
+            {/* NUEVO: Cajas de Edición en la misma fila */}
+            <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+              <select style={{ ...s.select, flex: 1, marginBottom: 0 }} value={editForm.categoria} onChange={e => setEditForm(f => ({ ...f, categoria: e.target.value }))}>
                 {categorias.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
               </select>
-            )}
-            <input style={{ ...s.input, marginBottom: 14 }} type="text" placeholder="Descripción" value={editForm.descripcion} onChange={e => setEditForm(f => ({ ...f, descripcion: e.target.value }))} />
+              <input style={{ ...s.input, flex: 1, marginBottom: 0 }} type="text" placeholder="Descripción" value={editForm.descripcion} onChange={e => setEditForm(f => ({ ...f, descripcion: e.target.value }))} />
+            </div>
+
             <div style={{ display: "flex", gap: 8 }}>
               <button style={{ ...s.btnSecondary, flex: 1 }} onClick={() => setEditando(null)}>Cancelar</button>
               <button style={{ ...s.btnPrimary, flex: 1 }} onClick={guardarEdicion} disabled={saving}>
