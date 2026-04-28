@@ -170,7 +170,8 @@ export default function App() {
       viewportMeta.name = "viewport";
       document.head.appendChild(viewportMeta);
     }
-    viewportMeta.setAttribute("content", "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0");
+    // NUEVO: Agregado viewport-fit=cover para forzar a iOS a usar toda la pantalla
+    viewportMeta.setAttribute("content", "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover");
 
     (async () => {
       try {
@@ -417,7 +418,7 @@ export default function App() {
 
   const s = {
     app: {
-      background: "#0A0A0A", minHeight: "100vh", color: "#E8E0D0",
+      backgroundColor: "#0A0A0A", minHeight: "100vh", color: "#E8E0D0",
       fontFamily: "'DM Sans','Segoe UI',sans-serif",
       maxWidth: 480, margin: "0 auto",
       paddingBottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
@@ -482,14 +483,15 @@ export default function App() {
   if (!loaded) return (
     <div style={{ background: "#0A0A0A", height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
       <div style={{ width: 32, height: 32, border: "2px solid #1A1A1A", borderTop: "2px solid #D4AF37", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } } *{box-sizing:border-box} html,body{background:#0A0A0A!important;margin:0;padding:0;overscroll-behavior-y:none;width:100vw;max-width:100%;overflow-x:hidden} #root{background:#0A0A0A;min-height:100vh;width:100%;max-width:100%;overflow-x:hidden}`}</style>
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } } *{box-sizing:border-box} html,body{background-color:#0A0A0A!important;margin:0;padding:0;overscroll-behavior-y:none;width:100%;height:100%;overflow-x:hidden;-webkit-font-smoothing:antialiased} #root{background-color:#0A0A0A;min-height:100vh;width:100%;overflow-x:hidden}`}</style>
       <span style={{ color: "#555", fontSize: 13 }}>Conectando...</span>
     </div>
   );
 
   return (
     <div style={s.app}>
-      <style>{`*{box-sizing:border-box} html,body{background:#0A0A0A!important;margin:0;padding:0;overscroll-behavior-y:none;width:100vw;max-width:100%;overflow-x:hidden}#root{background:#0A0A0A;min-height:100vh;width:100%;max-width:100%;overflow-x:hidden}`}</style>
+      {/* NUEVO ESTILO GLOBAL: Se cambia 100vw por 100% para evitar la linea blanca en Safari */}
+      <style>{`*{box-sizing:border-box} html,body{background-color:#0A0A0A!important;margin:0;padding:0;overscroll-behavior-y:none;width:100%;height:100%;overflow-x:hidden;-webkit-font-smoothing:antialiased}#root{background-color:#0A0A0A;min-height:100vh;width:100%;overflow-x:hidden}`}</style>
 
       {/* RENDERIZADO CONDICIONAL: PANTALLA PRINCIPAL vs PANTALLA "VER TODOS" */}
       {viewAll ? (
@@ -685,7 +687,6 @@ export default function App() {
                       </div>
                     );
                   })}
-                  {/* BOTÓN VER TODOS: Se agregó window.scrollTo(0, 0) */}
                   <button style={{ ...s.btnPrimary, marginTop: 12, padding: "10px", fontSize: 13 }} onClick={() => { setViewAll(true); window.scrollTo(0, 0); }}>
                     Ver todos
                   </button>
