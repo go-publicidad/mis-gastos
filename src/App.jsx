@@ -23,7 +23,18 @@ const CATEGORIAS_DEFAULT = [
 
 const COLORES_CUSTOM = ["#FF6B6B","#FFD93D","#6BCB77","#4D96FF","#C77DFF","#FF9F1C","#2EC4B6","#E71D36","#F72585","#B5E48C"];
 
-const hoy = () => new Date().toISOString().split("T")[0];
+// CORRECCIÓN: Función 'hoy' forzada a la zona horaria de Perú, 
+// garantizando que no cambie de día a las 7 PM.
+const hoy = () => {
+  const dt = new Date();
+  const parts = new Intl.DateTimeFormat("es-PE", {
+    timeZone: "America/Lima", year: "numeric", month: "2-digit", day: "2-digit"
+  }).formatToParts(dt);
+  const d = parts.find(p => p.type === 'day').value;
+  const m = parts.find(p => p.type === 'month').value;
+  const y = parts.find(p => p.type === 'year').value;
+  return `${y}-${m}-${d}`;
+};
 
 const formatMoney = (n) =>
   `${CURRENCY} ${Number(n || 0).toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -43,10 +54,13 @@ const formatDateTime = (isoStr) => {
   return { fecha, hora };
 };
 
+// CORRECCIÓN: Calcula la diferencia usando días calendario locales y no milisegundos brutos.
 const diasTranscurridos = (inicio) => {
   if (!inicio) return 1;
-  const diff = Math.floor((Date.now() - new Date(inicio).getTime()) / 86400000);
-  return Math.max(1, diff + 1);
+  const [y1, m1, d1] = inicio.split("-");
+  const [y2, m2, d2] = hoy().split("-");
+  const dif = Math.round((new Date(y2, m2 - 1, d2) - new Date(y1, m1 - 1, d1)) / 86400000);
+  return Math.max(1, dif + 1);
 };
 
 const exportarCSV = (gastos, categorias) => {
@@ -121,7 +135,6 @@ export default function App() {
   const [nuevaCatLabel, setNuevaCatLabel] = useState("");
   const [nuevaCatColor, setNuevaCatColor] = useState(COLORES_CUSTOM[0]);
 
-  // NUEVOS ESTADOS PARA EDITAR CATEGORÍAS
   const [editandoCat,  setEditandoCat]  = useState(null);
   const [editCatLabel, setEditCatLabel] = useState("");
   const [editCatColor, setEditCatColor] = useState("");
@@ -142,7 +155,6 @@ export default function App() {
   };
 
   useEffect(() => {
-    // --- TRUCO: Forzar el bloqueo de zoom para iOS dinámicamente ---
     let viewportMeta = document.querySelector("meta[name=viewport]");
     if (!viewportMeta) {
       viewportMeta = document.createElement("meta");
@@ -150,7 +162,6 @@ export default function App() {
       document.head.appendChild(viewportMeta);
     }
     viewportMeta.setAttribute("content", "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0");
-    // ---------------------------------------------------------------
 
     (async () => {
       try {
@@ -258,7 +269,6 @@ export default function App() {
     showToast("Categoría eliminada", "#888");
   };
 
-  // NUEVAS FUNCIONES PARA EDITAR CATEGORÍA
   const abrirEdicionCat = (cat) => {
     setEditandoCat(cat.id);
     setEditCatLabel(cat.label);
@@ -384,7 +394,6 @@ export default function App() {
     progressBg: { background: "#1A1A1A", borderRadius: 4, height: 8, margin: "12px 0 4px", overflow: "hidden" },
     progressFill: (p) => ({ height: "100%", width: `${p}%`, background: p >= 100 ? "#5AE88A" : p >= 50 ? "#D4AF37" : "#E85A5A", borderRadius: 4, transition: "width 0.6s ease" }),
     grid2:      { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 },
-    // CORRECCIÓN: Se actualizó el fontSize a 16px para iOS
     input: { width: "100%", maxWidth: "100%", background: "#111", border: "1px solid #2A2A2A", borderRadius: 8, color: "#E8E0D0", padding: "10px 12px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", WebkitAppearance: "none", minHeight: 44 },
     select: { width: "100%", background: "#111", border: "1px solid #2A2A2A", borderRadius: 8, color: "#E8E0D0", padding: "10px 12px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", cursor: "pointer", WebkitAppearance: "none", minHeight: 44 },
     btnPrimary: { background: "#D4AF37", color: "#000", border: "none", borderRadius: 8, padding: "12px", fontSize: 14, fontWeight: 700, cursor: "pointer", width: "100%", letterSpacing: "0.5px" },
@@ -441,7 +450,7 @@ export default function App() {
           <button onClick={() => window.location.reload()} style={s.refreshBtn} title="Actualizar">🔄</button>
         </div>
         <p style={s.subtitle}>
-          Meta: {formatMoney(META_TOTAL)} en {MESES} meses · Día {diasTrans} de {DIAS_TOTAL}
+          Meta: {formatMoney(META_TOTAL)} en {MESES} meses · Día {diasTranscurridos(fechaInicio)} de {DIAS_TOTAL}
           {saving && <span style={{ color: "#555", marginLeft: 8, fontSize: 11 }}>· Guardando...</span>}
         </p>
         <div style={s.tabs}>
