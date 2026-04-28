@@ -23,10 +23,6 @@ const CATEGORIAS_DEFAULT = [
 
 const COLORES_CUSTOM = ["#FF6B6B","#FFD93D","#6BCB77","#4D96FF","#C77DFF","#FF9F1C","#2EC4B6","#E71D36","#F72585","#B5E48C"];
 
-// --------------------------------------------------------------------------
-// MAGIA MATEMÁTICA: Forzamos la zona horaria UTC-5 (Perú) sin depender del celular
-// 18,000,000 ms = 5 horas exactas
-// --------------------------------------------------------------------------
 const getLimaTime = () => new Date(Date.now() - 18000000);
 
 const hoy = () => getLimaTime().toISOString().split("T")[0];
@@ -44,14 +40,10 @@ const formatDateTime = (isoStr) => {
   if (!isoStr) return { fecha: "", hora: "" };
   const validIsoStr = isoStr.includes('Z') || isoStr.includes('+') ? isoStr : `${isoStr}Z`;
   const dt = new Date(validIsoStr);
-  
-  // Restamos 5 horas matemáticamente al dato que viene de Supabase
   const limaDate = new Date(dt.getTime() - 18000000);
-  const iso = limaDate.toISOString(); // "YYYY-MM-DDTHH:mm:ss.sssZ"
-  
+  const iso = limaDate.toISOString(); 
   const fecha = iso.substring(0, 10).split('-').reverse().join('/');
   const hora = iso.substring(11, 19);
-  
   return { fecha, hora };
 };
 
@@ -59,11 +51,9 @@ const diasTranscurridos = (inicio) => {
   if (!inicio) return 1;
   const [y1, m1, d1] = inicio.split("-");
   const [y2, m2, d2] = hoy().split("-");
-  // Date.UTC evita saltos raros al cambiar de meses o años
   const dif = Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 86400000);
   return Math.max(1, dif + 1);
 };
-// --------------------------------------------------------------------------
 
 const exportarCSV = (gastos, categorias) => {
   const header = "Fecha,Hora,Tipo,Categoría,Descripción,Monto\n";
@@ -329,7 +319,6 @@ export default function App() {
     const hoyStr = hoy();
     if (filtroResumen === "hoy") return gastos.filter(g => g.fecha === hoyStr);
     
-    // Filtro Matemático de 7 días
     if (filtroResumen === "semana") {
       const hace7 = new Date(Date.now() - 18000000 - 6 * 86400000);
       const limite = hace7.toISOString().split("T")[0];
@@ -358,17 +347,14 @@ export default function App() {
   })).filter(c => c.total > 0).sort((a, b) => b.total - a.total);
   const maxCatR = porCategoriaR[0]?.total || 1;
 
-  // Gráfico matemático de 7 días
   const gastosUltimos7 = Array.from({ length: 7 }, (_, i) => {
     const msLima = Date.now() - 18000000;
     const d = new Date(msLima - (6 - i) * 86400000);
     const fecha = d.toISOString().split("T")[0];
-    
     const [y, m, day] = fecha.split("-");
     const tempDate = new Date(Date.UTC(y, m - 1, day, 12, 0, 0));
     const diasSemana = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
     const label = diasSemana[tempDate.getUTCDay()];
-    
     const total = gastos.filter(g => g.fecha === fecha && g.tipo === "gasto").reduce((a, g) => a + g.monto, 0);
     return { label, total, fecha };
   });
@@ -383,8 +369,9 @@ export default function App() {
   });
 
   // --------------------------------------------------------------------------
-  // ESTILOS ACTUALIZADOS: 
-  // Anchos forzados a 100% y márgenes purgados para simetría perfecta en todas las vistas.
+  // ESTILOS ESTRICTOS:
+  // Se forzó a la sección a usar Flexbox en columna. Esto garantiza matemáticamente 
+  // que todos los contenedores hereden exactamente el mismo ancho.
   // --------------------------------------------------------------------------
   const s = {
     app: {
@@ -393,7 +380,8 @@ export default function App() {
       maxWidth: 480, margin: "0 auto",
       paddingBottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
       overscrollBehaviorY: "none",
-      overflowX: "hidden"
+      overflowX: "hidden",
+      width: "100%"
     },
     header:     { padding: "24px 20px 0", borderBottom: "1px solid #1E1E1E" },
     title:      { fontFamily: "'Playfair Display','Georgia',serif", fontSize: 28, fontWeight: 700, color: "#D4AF37", margin: 0 },
@@ -402,10 +390,19 @@ export default function App() {
     tabs:       { display: "flex", padding: "16px 20px 0", borderBottom: "1px solid #1A1A1A" },
     tab:    (a) => ({ padding: "8px 14px", background: "none", border: "none", borderBottom: a ? "2px solid #D4AF37" : "2px solid transparent", color: a ? "#D4AF37" : "#555", cursor: "pointer", fontSize: 13, fontWeight: a ? 600 : 400, transition: "all 0.2s" }),
     
-    // Contenedores ajustados
-    section:    { padding: "20px", width: "100%", boxSizing: "border-box" },
-    card:       { width: "100%", background: "#111", border: "1px solid #1E1E1E", borderRadius: 12, padding: "16px", margin: "0 0 12px 0", overflow: "hidden", boxSizing: "border-box" },
-    metaCard:   { width: "100%", background: "linear-gradient(135deg,#1A1500,#0F1000)", border: "1px solid #3A2E00", borderRadius: 16, padding: "20px", margin: "0 0 16px 0", boxSizing: "border-box" },
+    // Contenedor blindado con Flexbox
+    section:    { 
+      padding: "20px", 
+      width: "100%", 
+      maxWidth: "100%", 
+      boxSizing: "border-box",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "stretch" // ← Hace que todos los hijos se estiren al mismo ancho exacto
+    },
+    
+    card:       { width: "100%", background: "#111", border: "1px solid #1E1E1E", borderRadius: 12, padding: "16px", marginBottom: 12, overflow: "hidden", boxSizing: "border-box" },
+    metaCard:   { width: "100%", background: "linear-gradient(135deg,#1A1500,#0F1000)", border: "1px solid #3A2E00", borderRadius: 16, padding: "20px", marginBottom: 16, boxSizing: "border-box" },
     
     label:      { fontSize: 11, color: "#666", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 4 },
     bigNum:     { fontFamily: "monospace", fontSize: 30, fontWeight: 700, color: "#D4AF37", lineHeight: 1 },
@@ -414,7 +411,7 @@ export default function App() {
     greenNum:   { fontFamily: "monospace", fontSize: 22, fontWeight: 600, color: "#5AE88A" },
     progressBg: { background: "#1A1A1A", borderRadius: 4, height: 8, margin: "12px 0 4px", overflow: "hidden" },
     progressFill: (p) => ({ height: "100%", width: `${p}%`, background: p >= 100 ? "#5AE88A" : p >= 50 ? "#D4AF37" : "#E85A5A", borderRadius: 4, transition: "width 0.6s ease" }),
-    grid2:      { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, margin: "0 0 12px 0", width: "100%" },
+    grid2:      { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12, width: "100%" },
     input: { width: "100%", maxWidth: "100%", background: "#111", border: "1px solid #2A2A2A", borderRadius: 8, color: "#E8E0D0", padding: "10px 12px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", WebkitAppearance: "none", minHeight: 44 },
     select: { width: "100%", background: "#111", border: "1px solid #2A2A2A", borderRadius: 8, color: "#E8E0D0", padding: "10px 12px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", cursor: "pointer", WebkitAppearance: "none", minHeight: 44 },
     btnPrimary: { background: "#D4AF37", color: "#000", border: "none", borderRadius: 8, padding: "12px", fontSize: 14, fontWeight: 700, cursor: "pointer", width: "100%", letterSpacing: "0.5px" },
@@ -448,22 +445,21 @@ export default function App() {
     },
     modal: {
       background: "#111", border: "1px solid #2A2A2A", borderRadius: 16,
-      padding: "20px", width: "100%", maxWidth: 400,
-      boxSizing: "border-box"
+      padding: "20px", width: "100%", maxWidth: 400, boxSizing: "border-box"
     },
   };
 
   if (!loaded) return (
     <div style={{ background: "#0A0A0A", height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
       <div style={{ width: 32, height: 32, border: "2px solid #1A1A1A", borderTop: "2px solid #D4AF37", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } } *{box-sizing:border-box} html,body{background:#0A0A0A!important;margin:0;padding:0;overscroll-behavior-y:none;width:100%;max-width:100%} #root{background:#0A0A0A;min-height:100vh;width:100%}`}</style>
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } } *{box-sizing:border-box} html,body{background:#0A0A0A!important;margin:0;padding:0;overscroll-behavior-y:none;width:100vw;max-width:100%;overflow-x:hidden} #root{background:#0A0A0A;min-height:100vh;width:100%;max-width:100%;overflow-x:hidden}`}</style>
       <span style={{ color: "#555", fontSize: 13 }}>Conectando...</span>
     </div>
   );
 
   return (
     <div style={s.app}>
-      <style>{`*{box-sizing:border-box} html,body{background:#0A0A0A!important;margin:0;padding:0;overscroll-behavior-y:none;width:100%;max-width:100%}#root{background:#0A0A0A;min-height:100vh;width:100%}`}</style>
+      <style>{`*{box-sizing:border-box} html,body{background:#0A0A0A!important;margin:0;padding:0;overscroll-behavior-y:none;width:100vw;max-width:100%;overflow-x:hidden}#root{background:#0A0A0A;min-height:100vh;width:100%;max-width:100%;overflow-x:hidden}`}</style>
 
       {/* HEADER */}
       <div style={s.header}>
@@ -517,7 +513,7 @@ export default function App() {
           </div>
 
           {ingMensual > 0 && (
-            <div style={{ ...s.card, background: totalGastadoHoy > presupuestoDiario ? "#1A0A0A" : "#0A1A0A", border: `1px solid ${totalGastadoHoy > presupuestoDiario ? "#3A1000" : "#103A10"}` }}>
+            <div style={{ ...s.card, marginBottom: 16, background: totalGastadoHoy > presupuestoDiario ? "#1A0A0A" : "#0A1A0A", border: `1px solid ${totalGastadoHoy > presupuestoDiario ? "#3A1000" : "#103A10"}` }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
                   <div style={s.label}>Saldo disponible hoy</div>
@@ -590,7 +586,7 @@ export default function App() {
             ))}
           </div>
           {filtroResumen === "rango" && (
-            <div style={{ ...s.card, padding: 12 }}>
+            <div style={{ ...s.card, padding: 12, marginBottom: 12 }}>
               <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
                 <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
                   <div style={{ ...s.label, marginBottom: 5 }}>Del</div>
@@ -625,7 +621,7 @@ export default function App() {
             <div style={s.card}><div style={s.label}>Gasto prom/día</div><div style={s.smallNum}>{formatMoney(gastoDiarioProm)}</div></div>
           </div>
 
-          <div style={{ ...s.card, background: "#0F1A0F", border: "1px solid #1A3A1A" }}>
+          <div style={{ ...s.card, background: "#0F1A0F", border: "1px solid #1A3A1A", marginBottom: 12 }}>
             <div style={s.label}>Proyección inteligente</div>
             <div style={{ fontSize: 15, color: "#D4AF37", fontWeight: 700, marginTop: 6 }}>
               📈 A este ritmo llegarás a tu meta {proyeccionTexto}
@@ -737,7 +733,7 @@ export default function App() {
                 const cat = categorias.find(c => c.id === g.categoria);
                 const { fecha, hora } = formatDateTime(g.created_at);
                 return (
-                  <div key={g.id} style={{ ...s.card, padding: "12px 14px" }}>
+                  <div key={g.id} style={{ ...s.card, padding: "12px 14px", marginBottom: 6 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: "flex", alignItems: "center", marginBottom: 2 }}>
@@ -831,6 +827,7 @@ export default function App() {
               </div>
             )}
 
+            {/* LISTA Y EDICIÓN DE CATEGORÍAS */}
             {categoriasExtra.length === 0 ? (
               <div style={{ color: "#333", fontSize: 13, textAlign: "center", padding: "8px 0" }}>Aún no hay categorías personalizadas</div>
             ) : (
