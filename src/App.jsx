@@ -198,7 +198,11 @@ export default function App() {
     setSaving(false);
   };
 
+  // NUEVO: Agregada confirmación antes de eliminar
   const eliminar = async (id) => {
+    const confirmacion = window.confirm("¿Seguro que deseas eliminar este movimiento?");
+    if (!confirmacion) return;
+
     const { error: err } = await supabase.from("gastos").delete().eq("id", id);
     if (err) { showToast("Error al eliminar", "#E85A5A"); return; }
     setGastos(prev => prev.filter(g => g.id !== id));
@@ -368,11 +372,6 @@ export default function App() {
     return matchCat && matchDesde && matchHasta;
   });
 
-  // --------------------------------------------------------------------------
-  // ESTILOS ESTRICTOS:
-  // Se forzó a la sección a usar Flexbox en columna. Esto garantiza matemáticamente 
-  // que todos los contenedores hereden exactamente el mismo ancho.
-  // --------------------------------------------------------------------------
   const s = {
     app: {
       background: "#0A0A0A", minHeight: "100vh", color: "#E8E0D0",
@@ -390,7 +389,6 @@ export default function App() {
     tabs:       { display: "flex", padding: "16px 20px 0", borderBottom: "1px solid #1A1A1A" },
     tab:    (a) => ({ padding: "8px 14px", background: "none", border: "none", borderBottom: a ? "2px solid #D4AF37" : "2px solid transparent", color: a ? "#D4AF37" : "#555", cursor: "pointer", fontSize: 13, fontWeight: a ? 600 : 400, transition: "all 0.2s" }),
     
-    // Contenedor blindado con Flexbox
     section:    { 
       padding: "20px", 
       width: "100%", 
@@ -398,7 +396,7 @@ export default function App() {
       boxSizing: "border-box",
       display: "flex",
       flexDirection: "column",
-      alignItems: "stretch" // ← Hace que todos los hijos se estiren al mismo ancho exacto
+      alignItems: "stretch" 
     },
     
     card:       { width: "100%", background: "#111", border: "1px solid #1E1E1E", borderRadius: 12, padding: "16px", marginBottom: 12, overflow: "hidden", boxSizing: "border-box" },
@@ -513,7 +511,7 @@ export default function App() {
           </div>
 
           {ingMensual > 0 && (
-            <div style={{ ...s.card, marginBottom: 16, background: totalGastadoHoy > presupuestoDiario ? "#1A0A0A" : "#0A1A0A", border: `1px solid ${totalGastadoHoy > presupuestoDiario ? "#3A1000" : "#103A10"}` }}>
+            <div style={{ ...s.card, background: totalGastadoHoy > presupuestoDiario ? "#1A0A0A" : "#0A1A0A", border: `1px solid ${totalGastadoHoy > presupuestoDiario ? "#3A1000" : "#103A10"}` }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
                   <div style={s.label}>Saldo disponible hoy</div>
@@ -586,7 +584,7 @@ export default function App() {
             ))}
           </div>
           {filtroResumen === "rango" && (
-            <div style={{ ...s.card, padding: 12, marginBottom: 12 }}>
+            <div style={{ ...s.card, padding: 12 }}>
               <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
                 <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
                   <div style={{ ...s.label, marginBottom: 5 }}>Del</div>
@@ -621,7 +619,7 @@ export default function App() {
             <div style={s.card}><div style={s.label}>Gasto prom/día</div><div style={s.smallNum}>{formatMoney(gastoDiarioProm)}</div></div>
           </div>
 
-          <div style={{ ...s.card, background: "#0F1A0F", border: "1px solid #1A3A1A", marginBottom: 12 }}>
+          <div style={{ ...s.card, background: "#0F1A0F", border: "1px solid #1A3A1A" }}>
             <div style={s.label}>Proyección inteligente</div>
             <div style={{ fontSize: 15, color: "#D4AF37", fontWeight: 700, marginTop: 6 }}>
               📈 A este ritmo llegarás a tu meta {proyeccionTexto}
