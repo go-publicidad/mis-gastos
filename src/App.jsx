@@ -27,6 +27,14 @@ const getLimaTime = () => new Date(Date.now() - 18000000);
 
 const hoy = () => getLimaTime().toISOString().split("T")[0];
 
+// NUEVO: Función para calcular la fecha local exacta desde la BD para filtros
+const getFechaLocal = (isoStr) => {
+  if (!isoStr) return hoy();
+  const validIsoStr = isoStr.includes('Z') || isoStr.includes('+') ? isoStr : `${isoStr}Z`;
+  const dt = new Date(validIsoStr);
+  return new Date(dt.getTime() - 18000000).toISOString().split("T")[0];
+};
+
 const formatMoney = (n) =>
   `${CURRENCY} ${Number(n || 0).toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -159,7 +167,14 @@ export default function App() {
       try {
         const { data: movimientos, error: err1 } = await supabase.from("gastos").select("*").order("created_at", { ascending: false });
         if (err1) throw err1;
-        setGastos(movimientos || []);
+        
+        // PARCHE RETROACTIVO: Calculamos la fecha real exacta a partir del timestamp de Supabase
+        const movimientosCorregidos = (movimientos || []).map(m => ({
+          ...m,
+          fecha: getFechaLocal(m.created_at)
+        }));
+        
+        setGastos(movimientosCorregidos);
 
         const { data: cfg, error: err2 } = await supabase.from("config").select("*");
         if (err2) throw err2;
@@ -184,7 +199,7 @@ export default function App() {
     if (!monto || monto <= 0) { showToast("Ingresa un monto válido", "#E85A5A"); return; }
     setSaving(true);
     const nuevo = {
-      fecha:       hoy(),
+      fecha:       hoy(), // Se envía hoy() normal, pero luego forzamos el render exacto
       monto,
       descripcion: form.descripcion || categorias.find(c => c.id === form.categoria)?.label || "Movimiento",
       categoria:   form.categoria,
@@ -192,7 +207,11 @@ export default function App() {
     };
     const { data, error: err } = await supabase.from("gastos").insert([nuevo]).select();
     if (err) { showToast("Error al guardar", "#E85A5A"); setSaving(false); return; }
-    setGastos(prev => [data[0], ...prev]);
+    
+    // Normalizamos el nuevo registro recién guardado
+    const movGuardado = { ...data[0], fecha: getFechaLocal(data[0].created_at) };
+    
+    setGastos(prev => [movGuardado, ...prev]);
     setForm(f => ({ ...f, monto: "", descripcion: "" }));
     showToast(form.tipo === "gasto" ? "Gasto registrado ✓" : "Ingreso registrado ✓");
     setSaving(false);
@@ -556,7 +575,7 @@ export default function App() {
               <div style={s.label}>Movimientos de hoy</div>
               {[...gastosHoy, ...ingresosHoy].map(g => {
                 const cat = categorias.find(c => c.id === g.categoria);
-                const { fecha, hora } = formatDateTime(g.created_at); // <-- FECHA Y HORA AÑADIDAS AQUÍ
+                const { fecha, hora } = formatDateTime(g.created_at);
                 return (
                   <div key={g.id} style={s.itemRow}>
                     <div style={{ flex: 1, minWidth: 0 }}>
