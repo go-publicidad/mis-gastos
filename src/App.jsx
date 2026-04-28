@@ -634,12 +634,12 @@ export default function App() {
                 
                 <input style={{ ...s.input, marginBottom: 8, fontSize: 22, fontWeight: 700 }} type="number" placeholder="0.00" value={form.monto} onChange={e => setForm(f => ({ ...f, monto: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
                 
-                {/* NUEVO: Cajas de Categoría y Descripción juntas en la misma fila */}
+                {/* CAJAS DE CATEGORÍA Y DESCRIPCIÓN CON TAMAÑO AJUSTADO */}
                 <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
                   <select style={{ ...s.select, flex: 1, marginBottom: 0 }} value={form.categoria} onChange={e => setForm(f => ({ ...f, categoria: e.target.value }))}>
                     {categorias.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
                   </select>
-                  <input style={{ ...s.input, flex: 1, marginBottom: 0 }} type="text" placeholder="Descripción (opcional)" value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
+                  <input style={{ ...s.input, flex: 1, marginBottom: 0, fontSize: 13, padding: "10px 8px" }} type="text" placeholder="Descripción (opcional)" value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
                 </div>
 
                 <button style={s.btnPrimary} onClick={agregarMovimiento} disabled={saving}>
@@ -1031,12 +1031,12 @@ export default function App() {
             </div>
             <input style={{ ...s.input, marginBottom: 8, fontSize: 20, fontWeight: 700 }} type="number" placeholder="0.00" value={editForm.monto} onChange={e => setEditForm(f => ({ ...f, monto: e.target.value }))} />
             
-            {/* NUEVO: Cajas de Edición en la misma fila */}
+            {/* CAJAS DE EDICIÓN CON TAMAÑO AJUSTADO */}
             <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
               <select style={{ ...s.select, flex: 1, marginBottom: 0 }} value={editForm.categoria} onChange={e => setEditForm(f => ({ ...f, categoria: e.target.value }))}>
                 {categorias.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
               </select>
-              <input style={{ ...s.input, flex: 1, marginBottom: 0 }} type="text" placeholder="Descripción" value={editForm.descripcion} onChange={e => setEditForm(f => ({ ...f, descripcion: e.target.value }))} />
+              <input style={{ ...s.input, flex: 1, marginBottom: 0, fontSize: 13, padding: "10px 8px" }} type="text" placeholder="Descripción" value={editForm.descripcion} onChange={e => setEditForm(f => ({ ...f, descripcion: e.target.value }))} />
             </div>
 
             <div style={{ display: "flex", gap: 8 }}>
