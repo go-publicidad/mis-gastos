@@ -420,9 +420,10 @@ export default function App() {
       background: "#0A0A0A", minHeight: "100vh", color: "#E8E0D0",
       fontFamily: "'DM Sans','Segoe UI',sans-serif",
       maxWidth: 480, margin: "0 auto",
-      paddingBottom: "calc(100px + env(safe-area-inset-bottom, 0px))", // Mantiene el arreglo de SafeArea
-      overscrollBehaviorY: "none",
+      paddingBottom: "calc(100px + env(safe-area-inset-bottom, 0px))",
       overflowX: "hidden",
+      overflowY: "auto", // <-- SOLUCION PARA EL SCROLL EN ANDROID
+      WebkitOverflowScrolling: "touch", // Para mantener suavidad en iOS
       width: "100%"
     },
     header:     { padding: "24px 20px 0", borderBottom: "1px solid #1E1E1E" },
@@ -460,7 +461,7 @@ export default function App() {
       background: "#0D0D0D", borderTop: "1px solid #1A1A1A",
       display: "flex", zIndex: 100,
       paddingTop: "6px",
-      paddingBottom: "calc(12px + env(safe-area-inset-bottom, 0px))", // Mantiene el arreglo de SafeArea
+      paddingBottom: "calc(12px + env(safe-area-inset-bottom, 0px))",
     },
     navBtn: (a) => ({
       flex: 1, paddingTop: 12, paddingBottom: 10,
@@ -483,14 +484,16 @@ export default function App() {
   if (!loaded) return (
     <div style={{ background: "#0A0A0A", height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
       <div style={{ width: 32, height: 32, border: "2px solid #1A1A1A", borderTop: "2px solid #D4AF37", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } } *{box-sizing:border-box} html,body{background:#0A0A0A!important;margin:0;padding:0;overscroll-behavior-y:none;width:100vw;max-width:100%;overflow-x:hidden} #root{background:#0A0A0A;min-height:100vh;width:100%;max-width:100%;overflow-x:hidden}`}</style>
+      {/* SOLUCION PARA EL SCROLL EN ANDROID - Se removió overscroll-behavior y se añadió overflow-y: auto */}
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } } *{box-sizing:border-box} html,body{background:#0A0A0A!important;margin:0;padding:0;width:100vw;max-width:100%;overflow-x:hidden;overflow-y:auto;} #root{background:#0A0A0A;min-height:100vh;width:100%;max-width:100%;overflow-x:hidden;overflow-y:auto;}`}</style>
       <span style={{ color: "#555", fontSize: 13 }}>Conectando...</span>
     </div>
   );
 
   return (
     <div style={s.app}>
-      <style>{`*{box-sizing:border-box} html,body{background:#0A0A0A!important;margin:0;padding:0;overscroll-behavior-y:none;width:100vw;max-width:100%;overflow-x:hidden}#root{background:#0A0A0A;min-height:100vh;width:100%;max-width:100%;overflow-x:hidden}`}</style>
+      {/* SOLUCION PARA EL SCROLL EN ANDROID - Se removió overscroll-behavior y se añadió overflow-y: auto */}
+      <style>{`*{box-sizing:border-box} html,body{background:#0A0A0A!important;margin:0;padding:0;width:100vw;max-width:100%;overflow-x:hidden;overflow-y:auto;}#root{background:#0A0A0A;min-height:100vh;width:100%;max-width:100%;overflow-x:hidden;overflow-y:auto;}`}</style>
 
       {/* RENDERIZADO CONDICIONAL: PANTALLA PRINCIPAL vs PANTALLA "VER TODOS" */}
       {viewAll ? (
@@ -570,7 +573,6 @@ export default function App() {
         <>
           {/* HEADER NORMAL DE LA APP */}
           <div style={s.header}>
-            {/* AQUI SE CENTRARON EL TITULO Y EL SUBTITULO */}
             <div style={{ display: "flex", justifyContent: "center", alignItems: "center", position: "relative", marginBottom: 4 }}>
               <h1 style={{ ...s.title, textAlign: "center" }}>Ahorro Meta</h1>
               <button onClick={() => window.location.reload()} style={{ ...s.refreshBtn, position: "absolute", right: 0 }} title="Actualizar">🔄</button>
@@ -593,7 +595,6 @@ export default function App() {
             <div style={s.section}>
 
               <div style={s.metaCard}>
-                {/* AQUI SE CENTRO: PROGRESO HACIA TU META */}
                 <div style={{ ...s.label, textAlign: "center" }}>Progreso hacia tu meta</div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                   <span style={s.bigNum}>{formatMoney(Math.max(0, ahorroAcumulado))}</span>
@@ -749,7 +750,6 @@ export default function App() {
                 <div style={s.card}><div style={s.label}>Gasto prom/día</div><div style={s.smallNum}>{formatMoney(gastoDiarioProm)}</div></div>
               </div>
 
-              {/* AQUI SE CENTRO: PROYECCION INTELIGENTE Y SUS TEXTOS */}
               <div style={{ ...s.card, background: "#0F1A0F", border: "1px solid #1A3A1A", marginBottom: 12, textAlign: "center" }}>
                 <div style={{ ...s.label, textAlign: "center" }}>Proyección inteligente</div>
                 <div style={{ fontSize: 15, color: "#D4AF37", fontWeight: 700, marginTop: 6 }}>
@@ -762,7 +762,6 @@ export default function App() {
 
               {ingMensual > 0 && (
                 <div style={s.metaCard}>
-                  {/* AQUI SE CENTRO: PARA LOGRAR TU META */}
                   <div style={{ ...s.label, textAlign: "center" }}>Para lograr tu meta</div>
                   <div style={{ fontSize: 13, color: "#888", lineHeight: 1.9, marginTop: 8 }}>
                     <div>💰 Ahorra <strong style={{ color: "#D4AF37" }}>{formatMoney(ahorroMetaDiario)}/día</strong></div>
@@ -774,7 +773,6 @@ export default function App() {
               )}
 
               <div style={s.card}>
-                {/* AQUI SE CENTRO: GASTOS ULTIMOS 7 DIAS */}
                 <div style={{ ...s.label, marginBottom: 14, textAlign: "center" }}>Gastos últimos 7 días</div>
                 <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 80 }}>
                   {gastosUltimos7.map((d, i) => (
@@ -821,7 +819,6 @@ export default function App() {
               </div>
 
               <div style={s.card}>
-                {/* AQUI SE CENTRO: FILTRAR POR CATEGORIA */}
                 <div style={{ ...s.label, marginBottom: 6, textAlign: "center" }}>Filtrar por categoría</div>
                 <div style={{ ...s.filterRow, marginBottom: 12 }}>
                   <button style={s.filterBtn(filtroHistCat === "todas")} onClick={() => setFiltroHistCat("todas")}>Todas</button>
@@ -829,7 +826,6 @@ export default function App() {
                     <button key={c.id} style={s.filterBtn(filtroHistCat === c.id)} onClick={() => setFiltroHistCat(c.id)}>{c.label}</button>
                   ))}
                 </div>
-                {/* AQUI SE CENTRO: FILTRAR POR RANGO DE FECHA */}
                 <div style={{ ...s.label, marginBottom: 6, marginTop: 8, textAlign: "center" }}>Filtrar por rango de fecha</div>
                 <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 6 }}>
                   <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
@@ -937,7 +933,7 @@ export default function App() {
 
               {ingMensual > 0 && metaTotalNum > 0 && (
                 <div style={s.metaCard}>
-                  <div style={s.label}>Tu plan para {formatMoney(metaTotalNum)}</div>
+                  <div style={{ ...s.label, textAlign: "center" }}>Tu plan para {formatMoney(metaTotalNum)}</div>
                   <div style={{ fontSize: 13, color: "#888", lineHeight: 2, marginTop: 8 }}>
                     <div>📥 Ingreso mensual: <strong style={{ color: "#E8E0D0" }}>{formatMoney(ingMensual)}</strong></div>
                     <div>🎯 Ahorro necesario/mes: <strong style={{ color: "#D4AF37" }}>{formatMoney(ahorroMetaDiario * 30)}</strong></div>
