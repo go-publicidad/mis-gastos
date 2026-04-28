@@ -7,9 +7,6 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const CURRENCY = "S/";
-const META_TOTAL = 100000;
-const MESES = 5;
-const DIAS_TOTAL = MESES * 30;
 
 const CATEGORIAS_DEFAULT = [
   { id: "comida",          label: "🍽️ Comida",           color: "#E8845A" },
@@ -26,6 +23,7 @@ const COLORES_CUSTOM = ["#FF6B6B","#FFD93D","#6BCB77","#4D96FF","#C77DFF","#FF9F
 const getLimaTime = () => new Date(Date.now() - 18000000);
 
 const hoy = () => getLimaTime().toISOString().split("T")[0];
+const calcularFechaFutura = (dias) => new Date(Date.now() - 18000000 + dias * 86400000).toISOString().split("T")[0];
 
 const getFechaLocal = (isoStr) => {
   if (!isoStr) return hoy();
@@ -54,12 +52,12 @@ const formatDateTime = (isoStr) => {
   return { fecha, hora };
 };
 
-const diasTranscurridos = (inicio) => {
-  if (!inicio) return 1;
-  const [y1, m1, d1] = inicio.split("-");
-  const [y2, m2, d2] = hoy().split("-");
-  const dif = Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 86400000);
-  return Math.max(1, dif + 1);
+// Función robusta para calcular diferencia de días exactos
+const diffDias = (d1Str, d2Str) => {
+  if (!d1Str || !d2Str) return 0;
+  const [y1, m1, day1] = d1Str.split("-");
+  const [y2, m2, day2] = d2Str.split("-");
+  return Math.round((Date.UTC(y2, m2 - 1, day2) - Date.UTC(y1, m1 - 1, day1)) / 86400000);
 };
 
 const exportarCSV = (gastos, categorias) => {
@@ -119,9 +117,16 @@ export default function App() {
   const [categoriasExtra, setCategoriasExtra] = useState([]);  
   const [tab,            setTab]            = useState("hoy");
   const [form,           setForm]           = useState({ monto: "", descripcion: "", categoria: "comida", tipo: "gasto" });
-  const [ingresoMensual, setIngresoMensual] = useState("");
+  
+  // ESTADOS DE CONFIGURACIÓN DINÁMICA
+  const [metaAhorro,      setMetaAhorro]      = useState("100000");
+  const [fechaInicioPlan, setFechaInicioPlan] = useState(hoy());
+  const [fechaFinPlan,    setFechaFinPlan]    = useState(calcularFechaFutura(150));
+  const [ingresoMensual,  setIngresoMensual]  = useState("");
+
+  const [isEditingMeta,    setIsEditingMeta]    = useState(false);
   const [isEditingIngreso, setIsEditingIngreso] = useState(false);
-  const [fechaInicio,    setFechaInicio]    = useState(hoy());
+  
   const [loaded,         setLoaded]         = useState(false);
   const [saving,         setSaving]         = useState(false);
   const [toast,          setToast]          = useState(null);
@@ -184,11 +189,16 @@ export default function App() {
         const { data: cfg, error: err2 } = await supabase.from("config").select("*");
         if (err2) throw err2;
         if (cfg) {
+          const meta = cfg.find(c => c.key === "metaAhorro");
+          const fIni = cfg.find(c => c.key === "fechaInicio");
+          const fFin = cfg.find(c => c.key === "fechaFin");
           const ing  = cfg.find(c => c.key === "ingresoMensual");
-          const fi   = cfg.find(c => c.key === "fechaInicio");
           const cats = cfg.find(c => c.key === "categoriasCustom");
+          
+          if (meta) setMetaAhorro(meta.value);
+          if (fIni) setFechaInicioPlan(fIni.value);
+          if (fFin) setFechaFinPlan(fFin.value);
           if (ing)  setIngresoMensual(ing.value);
-          if (fi)   setFechaInicio(fi.value);
           if (cats) { try { setCategoriasExtra(JSON.parse(cats.value)); } catch(_) {} }
         }
         setError(null);
@@ -257,8 +267,10 @@ export default function App() {
   const guardarConfig = async () => {
     setSaving(true);
     const upserts = [
-      { key: "ingresoMensual",  value: ingresoMensual },
-      { key: "fechaInicio",     value: fechaInicio },
+      { key: "metaAhorro",      value: (metaAhorro || "0").toString() },
+      { key: "fechaInicio",     value: fechaInicioPlan },
+      { key: "fechaFin",        value: fechaFinPlan },
+      { key: "ingresoMensual",  value: (ingresoMensual || "0").toString() },
       { key: "categoriasCustom", value: JSON.stringify(categoriasExtra) },
     ];
     const { error: err } = await supabase.from("config").upsert(upserts, { onConflict: "key" });
@@ -305,6 +317,14 @@ export default function App() {
     showToast("Categoría actualizada ✓");
   };
 
+  // CÁLCULOS DINÁMICOS BASADOS EN LA CONFIGURACIÓN DEL USUARIO
+  const metaTotalNum  = parseFloat(metaAhorro) || 0;
+  const ingMensual    = parseFloat(ingresoMensual) || 0;
+  
+  const diasTotalPlan = Math.max(1, diffDias(fechaInicioPlan, fechaFinPlan) + 1);
+  const diasTranscurridosPlan = Math.max(0, Math.min(diasTotalPlan, diffDias(fechaInicioPlan, hoy()) + 1));
+  const diasRestantesPlan = Math.max(0, diasTotalPlan - diasTranscurridosPlan);
+
   const fechaHoy     = hoy();
   const gastosHoy    = gastos.filter(g => g.fecha === fechaHoy && g.tipo === "gasto");
   const ingresosHoy  = gastos.filter(g => g.fecha === fechaHoy && g.tipo === "ingreso");
@@ -313,23 +333,22 @@ export default function App() {
 
   const totalGastado  = gastos.filter(g => g.tipo === "gasto").reduce((a, g) => a + g.monto, 0);
   const totalIngresos = gastos.filter(g => g.tipo === "ingreso").reduce((a, g) => a + g.monto, 0);
-  const ingMensual    = parseFloat(ingresoMensual) || 0;
-  const diasTrans     = diasTranscurridos(fechaInicio);
-  const diasRestantes = Math.max(0, DIAS_TOTAL - diasTrans);
+  
   const ahorroAcumulado = totalIngresos - totalGastado;
-  const progreso      = Math.max(0, Math.min(100, (ahorroAcumulado / META_TOTAL) * 100));
+  const progreso      = metaTotalNum > 0 ? Math.max(0, Math.min(100, (ahorroAcumulado / metaTotalNum) * 100)) : 0;
+  
   const ingDiario     = ingMensual / 30;
-  const ahorroMetaDiario   = META_TOTAL / DIAS_TOTAL;
+  const ahorroMetaDiario   = metaTotalNum / diasTotalPlan;
   const presupuestoDiario  = ingDiario - ahorroMetaDiario;
-  const gastoDiarioProm    = diasTrans > 0 ? totalGastado / diasTrans : 0;
+  const gastoDiarioProm    = diasTranscurridosPlan > 0 ? totalGastado / diasTranscurridosPlan : 0;
 
-  const ahorroDiarioProm = diasTrans > 0 ? ahorroAcumulado / diasTrans : 0;
+  const ahorroDiarioProm = diasTranscurridosPlan > 0 ? ahorroAcumulado / diasTranscurridosPlan : 0;
   let proyeccionTexto = "—";
-  if (ahorroDiarioProm > 0) {
-    const diasNecesarios  = Math.ceil((META_TOTAL - ahorroAcumulado) / ahorroDiarioProm);
+  if (ahorroDiarioProm > 0 && metaTotalNum > 0) {
+    const diasNecesarios  = Math.ceil((metaTotalNum - ahorroAcumulado) / ahorroDiarioProm);
     const mesesProyeccion = Math.floor(diasNecesarios / 30);
     const diasExtra       = diasNecesarios % 30;
-    if (ahorroAcumulado >= META_TOTAL) {
+    if (ahorroAcumulado >= metaTotalNum) {
       proyeccionTexto = "¡Meta alcanzada! 🎉";
     } else if (mesesProyeccion === 0) {
       proyeccionTexto = `en ${diasExtra} día${diasExtra !== 1 ? "s" : ""}`;
@@ -338,7 +357,7 @@ export default function App() {
     } else {
       proyeccionTexto = `en ${mesesProyeccion} mes${mesesProyeccion !== 1 ? "es" : ""} y ${diasExtra} día${diasExtra !== 1 ? "s" : ""}`;
     }
-  } else if (ahorroDiarioProm <= 0 && diasTrans > 1) {
+  } else if (ahorroDiarioProm <= 0 && diasTranscurridosPlan > 1) {
     proyeccionTexto = "Sin ahorro neto aún";
   }
 
@@ -558,7 +577,7 @@ export default function App() {
               <button onClick={() => window.location.reload()} style={s.refreshBtn} title="Actualizar">🔄</button>
             </div>
             <p style={s.subtitle}>
-              Meta: {formatMoney(META_TOTAL)} en {MESES} meses · Día {diasTranscurridos(fechaInicio)} de {DIAS_TOTAL}
+              Meta: {formatMoney(metaTotalNum)} · Día {diasTranscurridosPlan} de {diasTotalPlan}
               {saving && <span style={{ color: "#555", marginLeft: 8, fontSize: 11 }}>· Guardando...</span>}
             </p>
             <div style={s.tabs}>
@@ -578,17 +597,17 @@ export default function App() {
                 <div style={s.label}>Progreso hacia tu meta</div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                   <span style={s.bigNum}>{formatMoney(Math.max(0, ahorroAcumulado))}</span>
-                  <span style={{ color: "#555", fontSize: 13 }}>de {formatMoney(META_TOTAL)}</span>
+                  <span style={{ color: "#555", fontSize: 13 }}>de {formatMoney(metaTotalNum)}</span>
                 </div>
                 <div style={s.progressBg}><div style={s.progressFill(progreso)} /></div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#888", marginBottom: 8 }}>
                   <span>{progreso.toFixed(1)}% completado</span>
-                  <span>{diasRestantes} días restantes</span>
+                  <span>{diasRestantesPlan} días restantes</span>
                 </div>
                 <div style={{ borderTop: "1px solid #2A2000", paddingTop: 8, display: "flex", justifyContent: "space-between", fontSize: 12 }}>
                   <span style={{ color: "#666" }}>Falta ahorrar</span>
                   <span style={{ color: "#E8845A", fontFamily: "monospace", fontWeight: 700 }}>
-                    {formatMoney(Math.max(0, META_TOTAL - ahorroAcumulado))}
+                    {formatMoney(Math.max(0, metaTotalNum - ahorroAcumulado))}
                   </span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginTop: 4 }}>
@@ -597,7 +616,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* NUEVO: CUADRÍCULA 2x2 PARA HOY */}
+              {/* NUEVO: CUADRÍCULA 2x2 REORGANIZADA SEGÚN PETICIÓN */}
               <div style={s.grid2}>
                 {/* 1) Ingresos Hoy */}
                 <div style={s.card}>
@@ -753,7 +772,7 @@ export default function App() {
                     <div>💰 Ahorra <strong style={{ color: "#D4AF37" }}>{formatMoney(ahorroMetaDiario)}/día</strong></div>
                     <div>📅 o <strong style={{ color: "#D4AF37" }}>{formatMoney(ahorroMetaDiario * 30)}/mes</strong></div>
                     <div>💸 Límite de gasto: <strong style={{ color: "#5AE88A" }}>{formatMoney(presupuestoDiario)}/día</strong></div>
-                    <div>🎯 Faltan: <strong style={{ color: "#D4AF37" }}>{formatMoney(Math.max(0, META_TOTAL - ahorroAcumulado))}</strong></div>
+                    <div>🎯 Faltan: <strong style={{ color: "#D4AF37" }}>{formatMoney(Math.max(0, metaTotalNum - ahorroAcumulado))}</strong></div>
                   </div>
                 </div>
               )}
@@ -875,9 +894,35 @@ export default function App() {
           {tab === "config" && (
             <div style={s.section}>
               <div style={s.card}>
+                {/* 1. DEFINIR META DE AHORRO */}
+                <div style={{ ...s.label, marginBottom: 8, textAlign: "center" }}>DEFINIR META DE AHORRO (S/)</div>
+                <input 
+                  style={{ ...s.input, marginBottom: 20, fontSize: 24, fontWeight: 700, textAlign: "center", color: "#D4AF37" }} 
+                  type={isEditingMeta ? "number" : "text"} 
+                  placeholder="Ej: 100000" 
+                  value={isEditingMeta ? metaAhorro : (metaAhorro ? formatMoney(metaAhorro) : "")} 
+                  onFocus={() => setIsEditingMeta(true)}
+                  onBlur={() => setIsEditingMeta(false)}
+                  onChange={e => setMetaAhorro(e.target.value)} 
+                />
+                
+                {/* 2. PERIODO DE AHORRO */}
+                <div style={{ ...s.label, marginBottom: 8, textAlign: "center" }}>PERÍODO DE AHORRO</div>
+                <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 11, color: "#555", marginBottom: 4, textAlign: "center" }}>DEL</div>
+                    <input style={{ ...s.input, textAlign: "center", fontSize: 14 }} type="date" value={fechaInicioPlan} onChange={e => setFechaInicioPlan(e.target.value)} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 11, color: "#555", marginBottom: 4, textAlign: "center" }}>AL</div>
+                    <input style={{ ...s.input, textAlign: "center", fontSize: 14 }} type="date" value={fechaFinPlan} onChange={e => setFechaFinPlan(e.target.value)} />
+                  </div>
+                </div>
+
+                {/* 3. INGRESO MENSUAL */}
                 <div style={{ ...s.label, marginBottom: 8, textAlign: "center" }}>INGRESO MENSUAL (S/)</div>
                 <input 
-                  style={{ ...s.input, marginBottom: 16, fontSize: 24, fontWeight: 700, textAlign: "center", color: "#D4AF37" }} 
+                  style={{ ...s.input, marginBottom: 16, fontSize: 20, fontWeight: 700, textAlign: "center", color: "#5AE88A" }} 
                   type={isEditingIngreso ? "number" : "text"} 
                   placeholder="Ej: 5000" 
                   value={isEditingIngreso ? ingresoMensual : (ingresoMensual ? formatMoney(ingresoMensual) : "")} 
@@ -886,24 +931,21 @@ export default function App() {
                   onChange={e => setIngresoMensual(e.target.value)} 
                 />
                 
-                <div style={{ ...s.label, marginBottom: 8, textAlign: "center" }}>FECHA DE INICIO DEL PLAN</div>
-                <input style={{ ...s.input, marginBottom: 16, textAlign: "center", fontSize: 16 }} type="date" value={fechaInicio} onChange={e => setFechaInicio(e.target.value)} />
-                
                 <button style={s.btnPrimary} onClick={guardarConfig} disabled={saving}>
                   {saving ? "Guardando..." : "Guardar configuración"}
                 </button>
               </div>
 
-              {ingMensual > 0 && (
+              {ingMensual > 0 && metaTotalNum > 0 && (
                 <div style={s.metaCard}>
-                  <div style={s.label}>Tu plan para S/ 100,000</div>
+                  <div style={s.label}>Tu plan para {formatMoney(metaTotalNum)}</div>
                   <div style={{ fontSize: 13, color: "#888", lineHeight: 2, marginTop: 8 }}>
                     <div>📥 Ingreso mensual: <strong style={{ color: "#E8E0D0" }}>{formatMoney(ingMensual)}</strong></div>
-                    <div>🎯 Ahorro necesario/mes: <strong style={{ color: "#D4AF37" }}>{formatMoney(META_TOTAL / MESES)}</strong></div>
-                    <div>💸 Gasto máximo/mes: <strong style={{ color: "#5AE88A" }}>{formatMoney(ingMensual - META_TOTAL / MESES)}</strong></div>
+                    <div>🎯 Ahorro necesario/mes: <strong style={{ color: "#D4AF37" }}>{formatMoney(ahorroMetaDiario * 30)}</strong></div>
+                    <div>💸 Gasto máximo/mes: <strong style={{ color: "#5AE88A" }}>{formatMoney(ingMensual - (ahorroMetaDiario * 30))}</strong></div>
                     <div>📆 Gasto máximo/día: <strong style={{ color: "#5AE88A" }}>{formatMoney(presupuestoDiario)}</strong></div>
-                    {ingMensual < META_TOTAL / MESES && (
-                      <div style={{ marginTop: 8, color: "#E85A5A", fontSize: 12 }}>⚠️ Tu ingreso es menor al ahorro necesario. Considera aumentar ingresos.</div>
+                    {ingMensual < (ahorroMetaDiario * 30) && (
+                      <div style={{ marginTop: 8, color: "#E85A5A", fontSize: 12 }}>⚠️ Tu ingreso es menor al ahorro necesario. Considera aumentar ingresos o extender tu plazo.</div>
                     )}
                   </div>
                 </div>
