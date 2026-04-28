@@ -27,7 +27,7 @@ const getLimaTime = () => new Date(Date.now() - 18000000);
 
 const hoy = () => getLimaTime().toISOString().split("T")[0];
 
-// NUEVO: Función para calcular la fecha local exacta desde la BD para filtros
+// EL PARCHE QUE SE PERDIÓ: Fuerza la fecha local exacta para los filtros
 const getFechaLocal = (isoStr) => {
   if (!isoStr) return hoy();
   const validIsoStr = isoStr.includes('Z') || isoStr.includes('+') ? isoStr : `${isoStr}Z`;
@@ -168,7 +168,7 @@ export default function App() {
         const { data: movimientos, error: err1 } = await supabase.from("gastos").select("*").order("created_at", { ascending: false });
         if (err1) throw err1;
         
-        // PARCHE RETROACTIVO: Calculamos la fecha real exacta a partir del timestamp de Supabase
+        // APLICANDO EL PARCHE PARA SOBRESCRIBIR LA FECHA DE SUPABASE
         const movimientosCorregidos = (movimientos || []).map(m => ({
           ...m,
           fecha: getFechaLocal(m.created_at)
@@ -199,7 +199,7 @@ export default function App() {
     if (!monto || monto <= 0) { showToast("Ingresa un monto válido", "#E85A5A"); return; }
     setSaving(true);
     const nuevo = {
-      fecha:       hoy(), // Se envía hoy() normal, pero luego forzamos el render exacto
+      fecha:       hoy(),
       monto,
       descripcion: form.descripcion || categorias.find(c => c.id === form.categoria)?.label || "Movimiento",
       categoria:   form.categoria,
@@ -208,7 +208,7 @@ export default function App() {
     const { data, error: err } = await supabase.from("gastos").insert([nuevo]).select();
     if (err) { showToast("Error al guardar", "#E85A5A"); setSaving(false); return; }
     
-    // Normalizamos el nuevo registro recién guardado
+    // Normalizamos también el que recién se guarda
     const movGuardado = { ...data[0], fecha: getFechaLocal(data[0].created_at) };
     
     setGastos(prev => [movGuardado, ...prev]);
@@ -944,7 +944,7 @@ export default function App() {
             <div style={{ ...s.label, marginBottom: 12, fontSize: 14 }}>✏️ Editar movimiento</div>
             <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
               <button style={s.tipoBtn(editForm.tipo === "gasto", "#E85A5A")} onClick={() => setEditForm(f => ({ ...f, tipo: "gasto" }))}>− Gasto</button>
-              <button style={s.tipoBtn(editForm.tipo === "ingreso", "#5AE88A")} onClick={() => setForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
+              <button style={s.tipoBtn(editForm.tipo === "ingreso", "#5AE88A")} onClick={() => setEditForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
             </div>
             <input style={{ ...s.input, marginBottom: 8, fontSize: 20, fontWeight: 700 }} type="number" placeholder="0.00" value={editForm.monto} onChange={e => setEditForm(f => ({ ...f, monto: e.target.value }))} />
             {editForm.tipo === "gasto" && (
