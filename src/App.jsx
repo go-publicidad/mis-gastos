@@ -142,6 +142,16 @@ export default function App() {
   };
 
   useEffect(() => {
+    // --- TRUCO: Forzar el bloqueo de zoom para iOS dinámicamente ---
+    let viewportMeta = document.querySelector("meta[name=viewport]");
+    if (!viewportMeta) {
+      viewportMeta = document.createElement("meta");
+      viewportMeta.name = "viewport";
+      document.head.appendChild(viewportMeta);
+    }
+    viewportMeta.setAttribute("content", "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0");
+    // ---------------------------------------------------------------
+
     (async () => {
       try {
         const { data: movimientos, error: err1 } = await supabase.from("gastos").select("*").order("created_at", { ascending: false });
@@ -374,8 +384,9 @@ export default function App() {
     progressBg: { background: "#1A1A1A", borderRadius: 4, height: 8, margin: "12px 0 4px", overflow: "hidden" },
     progressFill: (p) => ({ height: "100%", width: `${p}%`, background: p >= 100 ? "#5AE88A" : p >= 50 ? "#D4AF37" : "#E85A5A", borderRadius: 4, transition: "width 0.6s ease" }),
     grid2:      { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 },
-    input: { width: "100%", maxWidth: "100%", background: "#111", border: "1px solid #2A2A2A", borderRadius: 8, color: "#E8E0D0", padding: "10px 12px", fontSize: 15, outline: "none", boxSizing: "border-box", fontFamily: "inherit", WebkitAppearance: "none", minHeight: 44 },
-    select: { width: "100%", background: "#111", border: "1px solid #2A2A2A", borderRadius: 8, color: "#E8E0D0", padding: "10px 12px", fontSize: 13, outline: "none", boxSizing: "border-box", fontFamily: "inherit", cursor: "pointer", WebkitAppearance: "none", minHeight: 44 },
+    // CORRECCIÓN: Se actualizó el fontSize a 16px para iOS
+    input: { width: "100%", maxWidth: "100%", background: "#111", border: "1px solid #2A2A2A", borderRadius: 8, color: "#E8E0D0", padding: "10px 12px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", WebkitAppearance: "none", minHeight: 44 },
+    select: { width: "100%", background: "#111", border: "1px solid #2A2A2A", borderRadius: 8, color: "#E8E0D0", padding: "10px 12px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", cursor: "pointer", WebkitAppearance: "none", minHeight: 44 },
     btnPrimary: { background: "#D4AF37", color: "#000", border: "none", borderRadius: 8, padding: "12px", fontSize: 14, fontWeight: 700, cursor: "pointer", width: "100%", letterSpacing: "0.5px" },
     btnSecondary:{ background: "#1A1A1A", color: "#D4AF37", border: "1px solid #3A3A00", borderRadius: 8, padding: "10px", fontSize: 13, cursor: "pointer", width: "100%" },
     tipoBtn: (a, c) => ({ flex: 1, padding: "8px", background: a ? c : "#111", border: `1px solid ${a ? c : "#2A2A2A"}`, color: a ? "#000" : "#666", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: a ? 700 : 400, transition: "all 0.2s" }),
@@ -555,7 +566,7 @@ export default function App() {
                   <input
                     type="date" value={filtroFechaResumenDesde}
                     onChange={e => setFiltroFechaResumenDesde(e.target.value)}
-                    style={{ ...s.input, padding: "10px 5px", fontSize: 13 }}
+                    style={{ ...s.input, padding: "10px 5px", fontSize: 16 }}
                   />
                 </div>
                 <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
@@ -563,7 +574,7 @@ export default function App() {
                   <input
                     type="date" value={filtroFechaResumenHasta}
                     onChange={e => setFiltroFechaResumenHasta(e.target.value)}
-                    style={{ ...s.input, padding: "10px 5px", fontSize: 13 }}
+                    style={{ ...s.input, padding: "10px 5px", fontSize: 16 }}
                   />
                 </div>
               </div>
@@ -666,7 +677,7 @@ export default function App() {
                 <input
                   type="date" value={filtroHistFechaDesde}
                   onChange={e => setFiltroHistFechaDesde(e.target.value)}
-                  style={{ ...s.input, padding: "10px 5px", fontSize: 13 }}
+                  style={{ ...s.input, padding: "10px 5px", fontSize: 16 }}
                 />
               </div>
               <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
@@ -674,7 +685,7 @@ export default function App() {
                 <input
                   type="date" value={filtroHistFechaHasta}
                   onChange={e => setFiltroHistFechaHasta(e.target.value)}
-                  style={{ ...s.input, padding: "10px 5px", fontSize: 13 }}
+                  style={{ ...s.input, padding: "10px 5px", fontSize: 16 }}
                 />
               </div>
             </div>
