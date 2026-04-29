@@ -414,7 +414,7 @@ export default function App() {
   const gastosFiltradosHist = gastos.filter(g => (filtroHistCat === "todas" || g.categoria === filtroHistCat) && (!filtroHistFechaDesde || g.fecha >= filtroHistFechaDesde) && (!filtroHistFechaHasta || g.fecha <= filtroHistFechaHasta));
   const gastosVerTodos = gastos.filter(g => (!vtFechaDesde || g.fecha >= vtFechaDesde) && (!vtFechaHasta || g.fecha <= vtFechaHasta));
 
-  // ESTILOS DINAMICOS Y SEGUROS CON MONTSERRAT Y NUEVO AMARILLO
+  // ESTILOS DINAMICOS CON TAMAÑOS AJUSTADOS (30px Y 22px)
   const s = {
     app: { minHeight: "100vh", fontFamily: "'Montserrat', sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: "calc(120px + env(safe-area-inset-bottom, 0px))", width: "100%" },
     header:     { padding: "24px 20px 0", borderBottom: `1px solid ${c.border}` },
@@ -430,10 +430,11 @@ export default function App() {
     metaLabel:  { fontSize: 16, fontWeight: 600, color: "#FFF", marginBottom: 12 },
     label:      { fontSize: 16, fontWeight: 600, color: c.text, marginBottom: 12 },
     
-    bigNum:     { fontSize: 32, fontWeight: 700, color: "#FCB606", lineHeight: 1 },
-    smallNum:   { fontSize: 24, fontWeight: 700, color: c.text },
-    redNum:     { fontSize: 24, fontWeight: 700, color: c.red },
-    greenNum:   { fontSize: 24, fontWeight: 700, color: c.green },
+    // TAMAÑOS DE MONTOS AJUSTADOS SEGÚN PETICIÓN
+    bigNum:     { fontSize: 30, fontWeight: 700, color: "#FCB606", lineHeight: 1 },
+    smallNum:   { fontSize: 22, fontWeight: 700, color: c.text },
+    redNum:     { fontSize: 22, fontWeight: 700, color: c.red },
+    greenNum:   { fontSize: 22, fontWeight: 700, color: c.green },
     
     progressBg: { background: "#333", borderRadius: 4, height: 8, margin: "12px 0 4px", overflow: "hidden" },
     progressFill: (p) => ({ height: "100%", width: `${p}%`, background: p >= 100 ? c.green : p >= 50 ? "#FCB606" : c.red, borderRadius: 4, transition: "width 0.6s ease" }),
@@ -563,7 +564,6 @@ export default function App() {
               <h1 style={s.title}>Ahorro Meta</h1>
               <button onClick={() => window.location.reload()} style={{ ...s.refreshBtn, position: "absolute", right: 0 }}>🔄</button>
             </div>
-            {/* SUBTÍTULO CENTRADO CON PRECISIÓN */}
             <p style={{ ...s.subtitle, textAlign: "center", width: "100%", display: "block" }}>Meta: {formatMoney(metaTotalNum)} · Día {diasTranscurridosPlan} de {diasTotalPlan}</p>
             <div style={s.tabs}>
               {[{ id: "hoy", label: "Hoy" }, { id: "resumen", label: "Resumen" }, { id: "historial", label: "Historial" }, { id: "config", label: "Config" }].map(t => (
@@ -600,8 +600,8 @@ export default function App() {
               <div style={s.grid2}>
                 <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Ingresos hoy</div><div style={s.greenNum}>{formatMoney(totalIngresosHoy)}</div></div>
                 <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Gastado hoy</div><div style={s.redNum}>{formatMoney(totalGastadoHoy)}</div></div>
-                <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Ahorro hoy</div><div style={{ fontSize: 24, fontWeight: 700, color: "#FCB606" }}>{formatMoney(totalIngresosHoy - totalGastadoHoy)}</div></div>
-                <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Límite ahorro / día</div><div style={{ fontSize: 24, fontWeight: 700, color: c.text }}>{formatMoney(ahorroMetaDiario)}</div></div>
+                <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Ahorro hoy</div><div style={{ fontSize: 22, fontWeight: 700, color: "#FCB606" }}>{formatMoney(totalIngresosHoy - totalGastadoHoy)}</div></div>
+                <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Límite ahorro / día</div><div style={{ fontSize: 22, fontWeight: 700, color: c.text }}>{formatMoney(ahorroMetaDiario)}</div></div>
               </div>
 
               <div style={s.card}>
@@ -775,7 +775,7 @@ export default function App() {
             <div style={s.section}>
               <div style={s.card}>
                 <div style={{ ...s.label, textAlign: "center" }}>DEFINIR META DE AHORRO (S/)</div>
-                <input style={{ ...s.input, marginTop: 12, marginBottom: 24, fontSize: 24, textAlign: "center", color: "#FCB606", fontWeight: 700 }} type={isEditingMeta ? "number" : "text"} placeholder="Ej: 100000" value={isEditingMeta ? metaAhorro : (metaAhorro ? formatMoney(metaAhorro) : "")} onFocus={() => setIsEditingMeta(true)} onBlur={() => setIsEditingMeta(false)} onChange={e => setMetaAhorro(e.target.value)} />
+                <input style={{ ...s.input, marginTop: 12, marginBottom: 24, fontSize: 22, textAlign: "center", color: "#FCB606", fontWeight: 700 }} type={isEditingMeta ? "number" : "text"} placeholder="Ej: 100000" value={isEditingMeta ? metaAhorro : (metaAhorro ? formatMoney(metaAhorro) : "")} onFocus={() => setIsEditingMeta(true)} onBlur={() => setIsEditingMeta(false)} onChange={e => setMetaAhorro(e.target.value)} />
                 
                 <div style={{ ...s.label, textAlign: "center" }}>PERÍODO DE AHORRO</div>
                 <div style={{ display: "flex", gap: 12, marginTop: 12, marginBottom: 24 }}>
@@ -788,7 +788,6 @@ export default function App() {
                 <button style={s.btnPrimary} onClick={guardarConfig} disabled={saving}>{saving ? "Guardando..." : "Guardar configuración"}</button>
               </div>
 
-              {/* REQUERIMIENTO 2: SE RESTAURÓ LA CAJA DEL PLAN */}
               {ingMensual > 0 && metaTotalNum > 0 && (
                 <div style={s.metaCard}>
                   <div style={{ ...s.metaLabel, textAlign: "center" }}>Tu plan para {formatMoney(metaTotalNum)}</div>
