@@ -57,9 +57,60 @@ const diffDias = (d1Str, d2Str) => {
   return Math.round((Date.UTC(y2, m2 - 1, day2) - Date.UTC(y1, m1 - 1, day1)) / 86400000);
 };
 
-// COMPONENTE AUXILIAR PARA EL MENÚ
+const exportarCSV = (gastos, categorias) => {
+  const header = "Fecha,Hora,Tipo,Categoría,Descripción,Monto\n";
+  const rows = gastos.map(g => {
+    const { fecha, hora } = formatDateTime(g.created_at);
+    const cat = categorias.find(c => c.id === g.categoria)?.label || g.categoria || "";
+    const desc = (g.descripcion || "").replace(/,/g, ";");
+    return `${fecha},${hora},${g.tipo},${cat},${desc},${g.monto}`;
+  }).join("\n");
+  const blob = new Blob(["\uFEFF" + header + rows], { type: "text/csv;charset=utf-8;" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href     = url;
+  a.download = `ahorro-meta-${hoy()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+const exportarPDF = (gastos, categorias) => {
+  const filas = gastos.map(g => {
+    const { fecha, hora } = formatDateTime(g.created_at);
+    const cat  = categorias.find(c => c.id === g.categoria)?.label || g.categoria || "";
+    const color = g.tipo === "gasto" ? "#c0392b" : "#27ae60";
+    const signo = g.tipo === "gasto" ? "-" : "+";
+    return `<tr>
+      <td>${fecha}<br/><small style="color:#888">${hora}</small></td>
+      <td>${cat}</td>
+      <td>${g.descripcion || ""}</td>
+      <td style="color:${color};font-weight:bold;text-align:right">${signo} S/ ${Number(g.monto).toFixed(2)}</td>
+    </tr>`;
+  }).join("");
+
+  const win = window.open("", "_blank");
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"/>
+    <title>Historial Ahorro Meta</title>
+    <style>
+      body{font-family:Arial,sans-serif;padding:20px;font-size:13px}
+      h2{color:#B8860B}
+      table{width:100%;border-collapse:collapse;margin-top:12px}
+      th{background:#1a1a1a;color:#fff;padding:8px 10px;text-align:left}
+      td{padding:7px 10px;border-bottom:1px solid #eee}
+      tr:nth-child(even){background:#f9f9f9}
+      @media print{button{display:none}}
+    </style></head><body>
+    <h2>Ahorro Meta — Historial de movimientos</h2>
+    <p>Exportado el ${formatFecha(hoy())} · Total registros: ${gastos.length}</p>
+    <button onclick="window.print()" style="margin-bottom:12px;padding:8px 16px;background:#B8860B;color:#fff;border:none;border-radius:6px;cursor:pointer">🖨️ Imprimir / Guardar PDF</button>
+    <table><thead><tr><th>Fecha / Hora</th><th>Categoría</th><th>Descripción</th><th>Monto</th></tr></thead>
+    <tbody>${filas}</tbody></table>
+    </body></html>`);
+  win.document.close();
+};
+
 const MenuItem = ({ icon, text, color, mutedColor, border, onClick }) => (
-  <button onClick={onClick} style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, background: "none", border: "none", padding: "16px 0", cursor: "pointer", color: color, fontSize: 16, borderBottom: `1px solid ${border}`, textAlign: "left" }}>
+  <button onClick={onClick} style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", padding: "16px 0", cursor: "pointer", color: color, fontSize: 16, borderBottom: `1px solid ${border}`, textAlign: "left" }}>
     <span style={{ fontSize: 22 }}>{icon}</span>
     <span style={{ flex: 1, fontWeight: 500 }}>{text}</span>
     <span style={{ color: mutedColor, fontSize: 20 }}>›</span>
@@ -115,21 +166,22 @@ export default function App() {
   const [vtFechaDesde, setVtFechaDesde] = useState("");
   const [vtFechaHasta, setVtFechaHasta] = useState("");
   
-  // Modales adicionales
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailDestino, setEmailDestino] = useState("");
   const [showMenu, setShowMenu] = useState(false);
   const [showApariencia, setShowApariencia] = useState(false);
 
-  // NUEVOS ESTADOS DE APARIENCIA
-  const [theme, setTheme] = useState("dark"); // "dark" | "light"
+  const [theme, setTheme] = useState("dark");
   const [isAutoTheme, setIsAutoTheme] = useState(false);
   const [useBold, setUseBold] = useState(false);
 
-  const categorias = [...categoriasBase, ...categoriasExtra];
+  // UNION SEGURA DE CATEGORÍAS PARA EVITAR PANTALLA NEGRA
+  const safeBase = categoriasBase || [];
+  const safeExtra = categoriasExtra || [];
+  const categorias = [...safeBase, ...safeExtra];
   const isDark = theme === "dark";
 
-  // PALETA DE COLORES DINÁMICA (Aquí ocurre la magia claro/oscuro)
+  // PALETA DINÁMICA
   const c = {
     bg: isDark ? "#0A0A0A" : "#F4F5F7",
     card: isDark ? "#111111" : "#FFFFFF",
@@ -166,15 +218,28 @@ export default function App() {
         const { data: cfg, error: err2 } = await supabase.from("config").select("*");
         if (err2) throw err2;
         if (cfg) {
-          const getVal = (k) => cfg.find(c => c.key === k)?.value;
+          const getVal = (k) => cfg.find(item => item.key === k)?.value;
+          
           if (getVal("metaAhorro")) setMetaAhorro(getVal("metaAhorro"));
           if (getVal("fechaInicio")) setFechaInicioPlan(getVal("fechaInicio"));
           if (getVal("fechaFin")) setFechaFinPlan(getVal("fechaFin"));
           if (getVal("ingresoMensual")) setIngresoMensual(getVal("ingresoMensual"));
-          if (getVal("categoriasCustom")) try { setCategoriasExtra(JSON.parse(getVal("categoriasCustom"))); } catch(_) {}
-          if (getVal("categoriasBase")) try { setCategoriasBase(JSON.parse(getVal("categoriasBase"))); } catch(_) {}
           if (getVal("themePref")) setTheme(getVal("themePref"));
           if (getVal("useBoldPref")) setUseBold(getVal("useBoldPref") === "true");
+
+          // Recuperación SEGURA para evitar crashes
+          if (getVal("categoriasCustom")) {
+            try { 
+              const p = JSON.parse(getVal("categoriasCustom")); 
+              if(Array.isArray(p)) setCategoriasExtra(p);
+            } catch(_) {}
+          }
+          if (getVal("categoriasBase")) {
+            try { 
+              const p = JSON.parse(getVal("categoriasBase")); 
+              if(Array.isArray(p)) setCategoriasBase(p);
+            } catch(_) {}
+          }
         }
         setError(null);
       } catch (e) {
@@ -188,7 +253,7 @@ export default function App() {
     const monto = parseFloat(form.monto);
     if (!monto || monto <= 0) { showToast("Ingresa un monto válido", c.red); return; }
     setSaving(true);
-    const nuevo = { fecha: hoy(), monto, descripcion: form.descripcion || categorias.find(c => c.id === form.categoria)?.label || "Movimiento", categoria: form.categoria, tipo: form.tipo };
+    const nuevo = { fecha: hoy(), monto, descripcion: form.descripcion || categorias.find(cat => cat.id === form.categoria)?.label || "Movimiento", categoria: form.categoria, tipo: form.tipo };
     const { data, error: err } = await supabase.from("gastos").insert([nuevo]).select();
     if (err) { showToast("Error al guardar", c.red); setSaving(false); return; }
     setGastos(prev => [{ ...data[0], fecha: getFechaLocal(data[0].created_at) }, ...prev]);
@@ -211,7 +276,7 @@ export default function App() {
     const monto = parseFloat(editForm.monto);
     if (!monto || monto <= 0) { showToast("Monto inválido", c.red); return; }
     setSaving(true);
-    const updates = { monto, descripcion: editForm.descripcion || categorias.find(c => c.id === editForm.categoria)?.label || "Movimiento", categoria: editForm.categoria, tipo: editForm.tipo };
+    const updates = { monto, descripcion: editForm.descripcion || categorias.find(cat => cat.id === editForm.categoria)?.label || "Movimiento", categoria: editForm.categoria, tipo: editForm.tipo };
     const { error: err } = await supabase.from("gastos").update(updates).eq("id", editando.id);
     if (err) { showToast("Error", c.red); setSaving(false); return; }
     setGastos(prev => prev.map(g => g.id === editando.id ? { ...g, ...updates } : g));
@@ -228,14 +293,68 @@ export default function App() {
       { key: "fechaFin", value: fechaFinPlan },
       { key: "ingresoMensual", value: (ingresoMensual || "0").toString() },
       { key: "themePref", value: theme },
-      { key: "useBoldPref", value: useBold.toString() }
+      { key: "useBoldPref", value: useBold.toString() },
+      { key: "categoriasCustom", value: JSON.stringify(safeExtra) },
+      { key: "categoriasBase", value: JSON.stringify(safeBase) }
     ];
     await supabase.from("config").upsert(upserts, { onConflict: "key" });
     setSaving(false);
     showToast("Configuración guardada ✓");
   };
 
-  // Lógica de cálculo (idéntica a la anterior)
+  const agregarCategoria = async () => {
+    const label = nuevaCatLabel.trim();
+    if (!label) { showToast("Escribe un nombre", c.red); return; }
+    const id = "custom_" + Date.now();
+    const nueva = { id, label, color: nuevaCatColor };
+    const updated = [...safeExtra, nueva];
+    setCategoriasExtra(updated);
+    await supabase.from("config").upsert([{ key: "categoriasCustom", value: JSON.stringify(updated) }], { onConflict: "key" });
+    setNuevaCatLabel("");
+    setShowNuevaCat(false);
+    showToast(`Categoría "${label}" creada ✓`);
+  };
+
+  const eliminarCategoria = async (id) => {
+    if (!window.confirm("¿Seguro que deseas eliminar esta categoría?")) return;
+    const updated = safeExtra.filter(cat => cat.id !== id);
+    setCategoriasExtra(updated);
+    await supabase.from("config").upsert([{ key: "categoriasCustom", value: JSON.stringify(updated) }], { onConflict: "key" });
+    showToast("Categoría eliminada", c.muted);
+  };
+
+  const abrirEdicionCat = (cat) => { setEditandoCat(cat.id); setEditCatLabel(cat.label); setEditCatColor(cat.color); };
+
+  const guardarEdicionCat = async () => {
+    const label = editCatLabel.trim();
+    if (!label) { showToast("Escribe un nombre", c.red); return; }
+    const updated = safeExtra.map(cat => cat.id === editandoCat ? { ...cat, label, color: editCatColor } : cat);
+    setCategoriasExtra(updated);
+    await supabase.from("config").upsert([{ key: "categoriasCustom", value: JSON.stringify(updated) }], { onConflict: "key" });
+    setEditandoCat(null);
+    showToast("Categoría actualizada ✓");
+  };
+
+  const abrirEdicionCatBase = (cat) => { setEditandoCatBase(cat.id); setEditCatBaseLabel(cat.label); setEditCatBaseColor(cat.color); };
+
+  const guardarEdicionCatBase = async () => {
+    const label = editCatBaseLabel.trim();
+    if (!label) { showToast("Escribe un nombre", c.red); return; }
+    const updated = safeBase.map(cat => cat.id === editandoCatBase ? { ...cat, label, color: editCatBaseColor } : cat);
+    setCategoriasBase(updated);
+    await supabase.from("config").upsert([{ key: "categoriasBase", value: JSON.stringify(updated) }], { onConflict: "key" });
+    setEditandoCatBase(null);
+    showToast("Categoría base actualizada ✓");
+  };
+
+  const eliminarCategoriaBase = async (id) => {
+    if (!window.confirm("¿Seguro que deseas eliminar esta categoría base?")) return;
+    const updated = safeBase.filter(cat => cat.id !== id);
+    setCategoriasBase(updated);
+    await supabase.from("config").upsert([{ key: "categoriasBase", value: JSON.stringify(updated) }], { onConflict: "key" });
+    showToast("Categoría eliminada", c.muted);
+  };
+
   const metaTotalNum = parseFloat(metaAhorro) || 0;
   const ingMensual = parseFloat(ingresoMensual) || 0;
   const diasTotalPlan = Math.max(1, diffDias(fechaInicioPlan, fechaFinPlan) + 1);
@@ -268,7 +387,7 @@ export default function App() {
   } else if (ahorroDiarioProm <= 0 && diasTranscurridosPlan > 1) proyeccionTexto = "Sin ahorro neto aún";
 
   const getFiltradosResumen = () => {
-    if (filtroResumen === "hoy") return gastos.filter(g => g.fecha === hoyStr);
+    if (filtroResumen === "hoy") return gastos.filter(g => g.fecha === hoy());
     if (filtroResumen === "semana") return gastos.filter(g => g.fecha >= new Date(Date.now() - 18000000 - 6 * 86400000).toISOString().split("T")[0]);
     if (filtroResumen === "mes") return gastos.filter(g => g.fecha.startsWith(hoy().slice(0, 7)));
     if (filtroResumen === "rango") return gastos.filter(g => (!filtroFechaResumenDesde || g.fecha >= filtroFechaResumenDesde) && (!filtroFechaResumenHasta || g.fecha <= filtroFechaResumenHasta));
@@ -296,41 +415,40 @@ export default function App() {
   const gastosFiltradosHist = gastos.filter(g => (filtroHistCat === "todas" || g.categoria === filtroHistCat) && (!filtroHistFechaDesde || g.fecha >= filtroHistFechaDesde) && (!filtroHistFechaHasta || g.fecha <= filtroHistFechaHasta));
   const gastosVerTodos = gastos.filter(g => (!vtFechaDesde || g.fecha >= vtFechaDesde) && (!vtFechaHasta || g.fecha <= vtFechaHasta));
 
-  // OBJETOS DE ESTILOS DINÁMICOS
+  // ESTILOS DINAMICOS Y SEGUROS (Sin fondos blancos feos en botones)
   const s = {
-    app: {
-      minHeight: "100vh", fontFamily: "'DM Sans','Segoe UI',sans-serif",
-      maxWidth: 480, margin: "0 auto", paddingBottom: "calc(100px + env(safe-area-inset-bottom, 0px))",
-      width: "100%"
-    },
+    app: { minHeight: "100vh", fontFamily: "'DM Sans','Segoe UI',sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: "calc(120px + env(safe-area-inset-bottom, 0px))", width: "100%" },
     header:     { padding: "24px 20px 0", borderBottom: `1px solid ${c.border}` },
     title:      { fontFamily: "'Playfair Display','Georgia',serif", fontSize: 28, color: "#D4AF37", margin: 0 },
-    refreshBtn: { background: c.card, border: `1px solid ${c.border}`, borderRadius: "50%", width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 18, boxShadow: c.shadow },
+    refreshBtn: { backgroundColor: "transparent", WebkitAppearance: "none", border: "none", width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 18 },
     subtitle:   { color: c.muted, fontSize: 13, margin: "4px 0 0" },
     tabs:       { display: "flex", padding: "16px 20px 0", borderBottom: `1px solid ${c.border}` },
-    tab:    (a) => ({ padding: "8px 14px", background: "none", border: "none", borderBottom: a ? "2px solid #D4AF37" : "2px solid transparent", color: a ? "#D4AF37" : c.muted, cursor: "pointer", fontSize: 13, fontWeight: a ? 600 : 400, transition: "all 0.2s" }),
-    section:    { padding: "20px", width: "100%", maxWidth: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "stretch" },
+    tab:    (a) => ({ backgroundColor: "transparent", WebkitAppearance: "none", padding: "8px 14px", border: "none", borderBottom: a ? "2px solid #D4AF37" : "2px solid transparent", color: a ? "#D4AF37" : c.muted, cursor: "pointer", fontSize: 13, transition: "all 0.2s" }),
+    section:    { padding: "20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "stretch" },
     card:       { width: "100%", background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: "16px", marginBottom: 12, overflow: "hidden", boxSizing: "border-box", boxShadow: c.shadow },
-    
-    // El metaCard siempre será oscuro para que resalte como en tu imagen
     metaCard:   { width: "100%", background: "linear-gradient(135deg,#1A1A1A,#050505)", borderRadius: 16, padding: "20px", marginBottom: 16, boxSizing: "border-box", color: "#FFF", boxShadow: isDark ? "none" : "0 8px 24px rgba(0,0,0,0.15)" },
     metaLabel:  { fontSize: 11, color: "#AAA", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 4 },
-    
     label:      { fontSize: 11, color: c.muted, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 4 },
-    bigNum:     { fontFamily: "monospace", fontSize: 30, fontWeight: 700, color: "#D4AF37", lineHeight: 1 },
-    smallNum:   { fontFamily: "monospace", fontSize: 18, fontWeight: 600, color: c.text },
-    redNum:     { fontFamily: "monospace", fontSize: 22, fontWeight: 600, color: c.red },
-    greenNum:   { fontFamily: "monospace", fontSize: 22, fontWeight: 600, color: c.green },
+    bigNum:     { fontFamily: "monospace", fontSize: 30, color: "#D4AF37", lineHeight: 1 },
+    smallNum:   { fontFamily: "monospace", fontSize: 18, color: c.text },
+    redNum:     { fontFamily: "monospace", fontSize: 22, color: c.red },
+    greenNum:   { fontFamily: "monospace", fontSize: 22, color: c.green },
     progressBg: { background: "#333", borderRadius: 4, height: 8, margin: "12px 0 4px", overflow: "hidden" },
     progressFill: (p) => ({ height: "100%", width: `${p}%`, background: p >= 100 ? c.green : p >= 50 ? "#D4AF37" : c.red, borderRadius: 4, transition: "width 0.6s ease" }),
     grid2:      { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12, width: "100%" },
-    input: { width: "100%", maxWidth: "100%", background: c.input, border: `1px solid ${c.border}`, borderRadius: 10, color: c.text, padding: "10px 12px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", WebkitAppearance: "none", minHeight: 44 },
+    input: { width: "100%", background: c.input, border: `1px solid ${c.border}`, borderRadius: 10, color: c.text, padding: "10px 12px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", WebkitAppearance: "none", minHeight: 44 },
     select: { width: "100%", background: c.input, border: `1px solid ${c.border}`, borderRadius: 10, color: c.text, padding: "10px 12px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", cursor: "pointer", WebkitAppearance: "none", minHeight: 44 },
-    btnPrimary: { background: "#D4AF37", color: "#000", border: "none", borderRadius: 10, padding: "12px", fontSize: 14, fontWeight: 700, cursor: "pointer", width: "100%", letterSpacing: "0.5px", boxShadow: "0 4px 12px rgba(212, 175, 55, 0.2)" },
+    btnPrimary: { background: "#D4AF37", color: "#000", border: "none", borderRadius: 10, padding: "12px", fontSize: 14, cursor: "pointer", width: "100%", boxShadow: "0 4px 12px rgba(212, 175, 55, 0.2)" },
     btnSecondary:{ background: c.input, color: c.text, border: `1px solid ${c.border}`, borderRadius: 10, padding: "10px", fontSize: 13, cursor: "pointer", width: "100%" },
-    tipoBtn: (a, col) => ({ flex: 1, padding: "8px", background: a ? col : c.input, border: `1px solid ${a ? col : c.border}`, color: a ? "#FFF" : c.muted, borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: a ? 700 : 400, transition: "all 0.2s" }),
+    tipoBtn: (a, col) => ({ flex: 1, padding: "8px", background: a ? col : c.input, border: `1px solid ${a ? col : c.border}`, color: a ? "#FFF" : c.muted, borderRadius: 10, cursor: "pointer", fontSize: 13, transition: "all 0.2s" }),
     itemRow:    { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: `1px solid ${c.border}` },
     catDot: (col) => ({ width: 8, height: 8, borderRadius: "50%", background: col, display: "inline-block", marginRight: 8, flexShrink: 0 }),
+    
+    // AQUÍ ESTÁ LA SOLUCIÓN AL FONDO BLANCO EN EL MODO OSCURO (iOS)
+    deleteBtn:  { backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: c.red, cursor: "pointer", fontSize: 18, padding: "4px 6px" },
+    editBtn:    { backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#D4AF37", cursor: "pointer", fontSize: 15, padding: "4px 6px" },
+    
+    errorCard:  { background: isDark ? "#1A0A0A" : "#FEF2F2", border: `1px solid ${c.red}`, borderRadius: 12, padding: "16px", margin: "20px", color: c.red, fontSize: 13 },
     filterRow:  { display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" },
     filterBtn: (a) => ({ padding: "6px 14px", borderRadius: 20, border: `1px solid ${a ? "#D4AF37" : c.border}`, background: a ? "#D4AF37" : c.card, color: a ? "#000" : c.muted, fontSize: 12, cursor: "pointer" }),
     navBar: {
@@ -339,7 +457,7 @@ export default function App() {
       paddingTop: "6px", paddingBottom: "calc(12px + env(safe-area-inset-bottom, 0px))", boxShadow: isDark ? "none" : "0 -4px 12px rgba(0,0,0,0.05)"
     },
     navBtn: (a) => ({
-      flex: 1, paddingTop: 12, paddingBottom: 10, background: "none", border: "none",
+      flex: 1, paddingTop: 12, paddingBottom: 10, backgroundColor: "transparent", WebkitAppearance: "none", border: "none",
       color: a ? "#D4AF37" : c.muted, fontSize: 10, cursor: "pointer",
       display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
     }),
@@ -359,21 +477,19 @@ export default function App() {
       <style>{`
         *{box-sizing:border-box} 
         html,body{background:${c.bg}!important; color:${c.text}; margin:0;padding:0;width:100vw;max-width:100%;overflow-x:hidden;overflow-y:auto; transition: background 0.3s ease, color 0.3s ease;}
-        body { font-weight: ${useBold ? '700' : 'normal'}; }
-        input, select, button { font-weight: inherit; }
+        body * { font-weight: ${useBold ? '700' : 'inherit'}; }
         #root{background:${c.bg};min-height:100vh;width:100%;max-width:100%;overflow-x:hidden;overflow-y:auto;}
         @keyframes spin { to { transform: rotate(360deg) } }
       `}</style>
 
-      {/* RENDERIZADO PANTALLA "VER TODOS" */}
       {viewAll ? (
         <>
           <div style={{ padding: "16px 20px", borderBottom: `1px solid ${c.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: c.bg, position: "sticky", top: 0, zIndex: 10 }}>
-            <button style={{ background: "none", border: "none", color: "#D4AF37", fontSize: 24, cursor: "pointer", padding: 0 }} onClick={() => { setViewAll(false); window.scrollTo(0, 0); }}>←</button>
+            <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#D4AF37", fontSize: 24, cursor: "pointer", padding: 0 }} onClick={() => { setViewAll(false); window.scrollTo(0, 0); }}>←</button>
             <h2 style={{ margin: 0, fontSize: 18, color: c.text }}>Movimientos</h2>
             <div style={{ display: "flex", gap: 16 }}>
-              <button style={{ background: "none", border: "none", color: "#D4AF37", fontSize: 20, cursor: "pointer", padding: 0 }} onClick={() => setShowEmailModal(true)}>✉️</button>
-              <button style={{ background: "none", border: "none", color: "#D4AF37", fontSize: 20, cursor: "pointer", padding: 0 }} onClick={() => setShowVtFiltro(!showVtFiltro)}>📅</button>
+              <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#D4AF37", fontSize: 20, cursor: "pointer", padding: 0 }} onClick={() => setShowEmailModal(true)}>✉️</button>
+              <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#D4AF37", fontSize: 20, cursor: "pointer", padding: 0 }} onClick={() => setShowVtFiltro(!showVtFiltro)}>📅</button>
             </div>
           </div>
           {showVtFiltro && (
@@ -390,7 +506,7 @@ export default function App() {
                 </div>
               </div>
               {(vtFechaDesde || vtFechaHasta) && (
-                <button style={{ width: "100%", fontSize: 12, color: c.red, background: "none", border: "none", cursor: "pointer", padding: "12px 0 0", marginTop: 4 }} onClick={() => { setVtFechaDesde(""); setVtFechaHasta(""); }}>× Limpiar fechas</button>
+                <button style={{ width: "100%", fontSize: 12, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", padding: "12px 0 0", marginTop: 4 }} onClick={() => { setVtFechaDesde(""); setVtFechaHasta(""); }}>× Limpiar fechas</button>
               )}
             </div>
           )}
@@ -414,7 +530,7 @@ export default function App() {
                       </div>
                       <span style={{ fontFamily: "monospace", color: g.tipo === "gasto" ? c.red : c.green, marginRight: 4 }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
                       <button style={s.editBtn} onClick={() => abrirEdicion(g)}>✏️</button>
-                      <button style={{ ...s.deleteBtn, color: c.muted }} onClick={() => eliminar(g.id)}>×</button>
+                      <button style={s.deleteBtn} onClick={() => eliminar(g.id)}>×</button>
                     </div>
                   </div>
                 );
@@ -424,11 +540,10 @@ export default function App() {
         </>
       ) : (
         <>
-          {/* HEADER PRINCIPAL */}
           <div style={s.header}>
             <div style={{ display: "flex", justifyContent: "center", alignItems: "center", position: "relative", marginBottom: 4 }}>
-              <button onClick={() => setShowMenu(true)} style={{ background: "transparent", border: "none", color: c.green, fontSize: 26, cursor: "pointer", position: "absolute", left: 0, padding: 0 }}>☰</button>
-              <h1 style={s.title}>Ahorro Meta</h1>
+              <button onClick={() => setShowMenu(true)} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: c.green, fontSize: 26, cursor: "pointer", position: "absolute", left: 0, padding: 0 }}>☰</button>
+              <h1 style={{ ...s.title, fontWeight: "700" }}>Ahorro Meta</h1>
               <button onClick={() => window.location.reload()} style={{ ...s.refreshBtn, position: "absolute", right: 0 }}>🔄</button>
             </div>
             <p style={{ ...s.subtitle, textAlign: "center" }}>Meta: {formatMoney(metaTotalNum)} · Día {diasTranscurridosPlan} de {diasTotalPlan}</p>
@@ -441,13 +556,12 @@ export default function App() {
 
           {error && <div style={s.errorCard}>⚠️ {error}</div>}
 
-          {/* TAB: HOY */}
           {tab === "hoy" && (
             <div style={s.section}>
               <div style={s.metaCard}>
                 <div style={{ ...s.metaLabel, textAlign: "center" }}>Progreso hacia tu meta</div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                  <span style={s.bigNum}>{formatMoney(Math.max(0, ahorroAcumulado))}</span>
+                  <span style={{ ...s.bigNum, fontWeight: "700" }}>{formatMoney(Math.max(0, ahorroAcumulado))}</span>
                   <span style={{ color: "#AAA", fontSize: 13 }}>de {formatMoney(metaTotalNum)}</span>
                 </div>
                 <div style={s.progressBg}><div style={s.progressFill(progreso)} /></div>
@@ -457,19 +571,19 @@ export default function App() {
                 </div>
                 <div style={{ borderTop: "1px solid #2A2000", paddingTop: 8, display: "flex", justifyContent: "space-between", fontSize: 12 }}>
                   <span style={{ color: "#AAA" }}>Falta ahorrar</span>
-                  <span style={{ color: "#E8845A", fontFamily: "monospace" }}>{formatMoney(Math.max(0, metaTotalNum - ahorroAcumulado))}</span>
+                  <span style={{ color: "#E8845A", fontFamily: "monospace", fontWeight: "700" }}>{formatMoney(Math.max(0, metaTotalNum - ahorroAcumulado))}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginTop: 4 }}>
                   <span style={{ color: "#AAA" }}>A este ritmo llegarás</span>
-                  <span style={{ color: "#D4AF37" }}>{proyeccionTexto}</span>
+                  <span style={{ color: "#D4AF37", fontWeight: "700" }}>{proyeccionTexto}</span>
                 </div>
               </div>
 
               <div style={s.grid2}>
                 <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Ingresos hoy</div><div style={s.greenNum}>{formatMoney(totalIngresosHoy)}</div></div>
                 <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Gastado hoy</div><div style={s.redNum}>{formatMoney(totalGastadoHoy)}</div></div>
-                <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Ahorro hoy</div><div style={{ fontFamily: "monospace", fontSize: 20, color: "#D4AF37" }}>{formatMoney(totalIngresosHoy - totalGastadoHoy)}</div></div>
-                <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Límite ahorro / día</div><div style={{ fontFamily: "monospace", fontSize: 20, color: c.text }}>{formatMoney(ahorroMetaDiario)}</div></div>
+                <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Ahorro hoy</div><div style={{ fontFamily: "monospace", fontSize: 20, color: "#D4AF37", fontWeight: "600" }}>{formatMoney(totalIngresosHoy - totalGastadoHoy)}</div></div>
+                <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Límite ahorro / día</div><div style={{ fontFamily: "monospace", fontSize: 20, color: c.text, fontWeight: "600" }}>{formatMoney(ahorroMetaDiario)}</div></div>
               </div>
 
               <div style={s.card}>
@@ -502,7 +616,7 @@ export default function App() {
                         </div>
                         <span style={{ fontFamily: "monospace", color: g.tipo === "gasto" ? c.red : c.green, marginRight: 4 }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
                         <button style={s.editBtn} onClick={() => abrirEdicion(g)}>✏️</button>
-                        <button style={{ ...s.deleteBtn, color: c.muted }} onClick={() => eliminar(g.id)}>×</button>
+                        <button style={s.deleteBtn} onClick={() => eliminar(g.id)}>×</button>
                       </div>
                     );
                   })}
@@ -514,7 +628,6 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB: RESUMEN */}
           {tab === "resumen" && (
             <div style={s.section}>
               <div style={s.filterRow}>
@@ -535,7 +648,7 @@ export default function App() {
                     </div>
                   </div>
                   {(filtroFechaResumenDesde || filtroFechaResumenHasta) && (
-                    <button style={{ width: "100%", fontSize: 12, color: c.red, background: "none", border: "none", cursor: "pointer", marginTop: 12 }} onClick={() => { setFiltroFechaResumenDesde(""); setFiltroFechaResumenHasta(""); }}>× Limpiar fechas</button>
+                    <button style={{ width: "100%", fontSize: 12, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 12 }} onClick={() => { setFiltroFechaResumenDesde(""); setFiltroFechaResumenHasta(""); }}>× Limpiar fechas</button>
                   )}
                 </div>
               )}
@@ -549,7 +662,7 @@ export default function App() {
 
               <div style={{ ...s.card, background: isDark ? "#0F1A0F" : "#F0FDF4", border: `1px solid ${isDark ? "#1A3A1A" : "#BBF7D0"}`, textAlign: "center" }}>
                 <div style={{ ...s.label, textAlign: "center", color: isDark ? c.muted : "#065F46" }}>Proyección inteligente</div>
-                <div style={{ fontSize: 15, color: isDark ? "#D4AF37" : "#047857", fontWeight: 700, marginTop: 6 }}>📈 A este ritmo llegarás a tu meta {proyeccionTexto}</div>
+                <div style={{ fontSize: 15, color: isDark ? "#D4AF37" : "#047857", fontWeight: "700", marginTop: 6 }}>📈 A este ritmo llegarás a tu meta {proyeccionTexto}</div>
                 <div style={{ fontSize: 12, color: c.muted, marginTop: 4 }}>Basado en un ahorro diario promedio de {formatMoney(ahorroDiarioProm > 0 ? ahorroDiarioProm : 0)}</div>
               </div>
 
@@ -557,10 +670,10 @@ export default function App() {
                 <div style={s.metaCard}>
                   <div style={{ ...s.metaLabel, textAlign: "center" }}>Para lograr tu meta</div>
                   <div style={{ fontSize: 13, color: "#CCC", lineHeight: 1.9, marginTop: 8, textAlign: "center" }}>
-                    <div>💰 Ahorra <strong style={{ color: "#D4AF37" }}>{formatMoney(ahorroMetaDiario)}/día</strong></div>
-                    <div>📅 o <strong style={{ color: "#D4AF37" }}>{formatMoney(ahorroMetaDiario * 30)}/mes</strong></div>
-                    <div>💸 Límite de gasto: <strong style={{ color: c.green }}>{formatMoney(presupuestoDiario)}/día</strong></div>
-                    <div>🎯 Faltan: <strong style={{ color: "#D4AF37" }}>{formatMoney(Math.max(0, metaTotalNum - ahorroAcumulado))}</strong></div>
+                    <div>💰 Ahorra <strong style={{ color: "#D4AF37", fontWeight: "700" }}>{formatMoney(ahorroMetaDiario)}/día</strong></div>
+                    <div>📅 o <strong style={{ color: "#D4AF37", fontWeight: "700" }}>{formatMoney(ahorroMetaDiario * 30)}/mes</strong></div>
+                    <div>💸 Límite de gasto: <strong style={{ color: c.green, fontWeight: "700" }}>{formatMoney(presupuestoDiario)}/día</strong></div>
+                    <div>🎯 Faltan: <strong style={{ color: "#D4AF37", fontWeight: "700" }}>{formatMoney(Math.max(0, metaTotalNum - ahorroAcumulado))}</strong></div>
                   </div>
                 </div>
               )}
@@ -596,7 +709,6 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB: HISTORIAL */}
           {tab === "historial" && (
             <div style={s.section}>
               <div style={{ display: "flex", gap: 8, marginBottom: 12, width: "100%" }}>
@@ -615,7 +727,7 @@ export default function App() {
                   <div style={{ flex: 1 }}><div style={{ ...s.label, textAlign: "center" }}>Del</div><input type="date" value={filtroHistFechaDesde} onChange={e => setFiltroHistFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center" }} /></div>
                   <div style={{ flex: 1 }}><div style={{ ...s.label, textAlign: "center" }}>Al</div><input type="date" value={filtroHistFechaHasta} onChange={e => setFiltroHistFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center" }} /></div>
                 </div>
-                {(filtroHistFechaDesde || filtroHistFechaHasta) && <button style={{ width: "100%", fontSize: 12, color: c.red, background: "none", border: "none", cursor: "pointer", marginTop: 4 }} onClick={() => { setFiltroHistFechaDesde(""); setFiltroHistFechaHasta(""); }}>× Limpiar fechas</button>}
+                {(filtroHistFechaDesde || filtroHistFechaHasta) && <button style={{ width: "100%", fontSize: 12, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 4 }} onClick={() => { setFiltroHistFechaDesde(""); setFiltroHistFechaHasta(""); }}>× Limpiar fechas</button>}
               </div>
 
               {gastosFiltradosHist.length === 0 ? <div style={{ ...s.card, textAlign: "center", color: c.muted, padding: "32px" }}>Sin movimientos</div> : (
@@ -641,25 +753,24 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB: CONFIG */}
           {tab === "config" && (
             <div style={s.section}>
               <div style={s.card}>
                 <div style={{ ...s.label, marginBottom: 8, textAlign: "center" }}>DEFINIR META DE AHORRO (S/)</div>
-                <input style={{ ...s.input, marginBottom: 20, fontSize: 24, textAlign: "center", color: "#D4AF37" }} type={isEditingMeta ? "number" : "text"} placeholder="Ej: 100000" value={isEditingMeta ? metaAhorro : (metaAhorro ? formatMoney(metaAhorro) : "")} onFocus={() => setIsEditingMeta(true)} onBlur={() => setIsEditingMeta(false)} onChange={e => setMetaAhorro(e.target.value)} />
+                <input style={{ ...s.input, marginBottom: 20, fontSize: 24, textAlign: "center", color: "#D4AF37", fontWeight: "700" }} type={isEditingMeta ? "number" : "text"} placeholder="Ej: 100000" value={isEditingMeta ? metaAhorro : (metaAhorro ? formatMoney(metaAhorro) : "")} onFocus={() => setIsEditingMeta(true)} onBlur={() => setIsEditingMeta(false)} onChange={e => setMetaAhorro(e.target.value)} />
                 <div style={{ ...s.label, marginBottom: 8, textAlign: "center" }}>PERÍODO DE AHORRO</div>
                 <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
                   <div style={{ flex: 1 }}><div style={{ ...s.label, textAlign: "center" }}>DEL</div><input style={{ ...s.input, textAlign: "center" }} type="date" value={fechaInicioPlan} onChange={e => setFechaInicioPlan(e.target.value)} /></div>
                   <div style={{ flex: 1 }}><div style={{ ...s.label, textAlign: "center" }}>AL</div><input style={{ ...s.input, textAlign: "center" }} type="date" value={fechaFinPlan} onChange={e => setFechaFinPlan(e.target.value)} /></div>
                 </div>
                 <div style={{ ...s.label, marginBottom: 8, textAlign: "center" }}>INGRESO MENSUAL (S/)</div>
-                <input style={{ ...s.input, marginBottom: 16, fontSize: 20, textAlign: "center", color: c.green }} type={isEditingIngreso ? "number" : "text"} placeholder="Ej: 5000" value={isEditingIngreso ? ingresoMensual : (ingresoMensual ? formatMoney(ingresoMensual) : "")} onFocus={() => setIsEditingIngreso(true)} onBlur={() => setIsEditingIngreso(false)} onChange={e => setIngresoMensual(e.target.value)} />
+                <input style={{ ...s.input, marginBottom: 16, fontSize: 20, textAlign: "center", color: c.green, fontWeight: "700" }} type={isEditingIngreso ? "number" : "text"} placeholder="Ej: 5000" value={isEditingIngreso ? ingresoMensual : (ingresoMensual ? formatMoney(ingresoMensual) : "")} onFocus={() => setIsEditingIngreso(true)} onBlur={() => setIsEditingIngreso(false)} onChange={e => setIngresoMensual(e.target.value)} />
                 <button style={s.btnPrimary} onClick={guardarConfig} disabled={saving}>{saving ? "Guardando..." : "Guardar configuración"}</button>
               </div>
 
               <div style={s.card}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}><div style={s.label}>Categorías Base</div></div>
-                {categoriasBase.length === 0 ? <div style={{ color: c.muted, fontSize: 13, textAlign: "center" }}>No hay categorías base</div> : categoriasBase.map(cat => (
+                {safeBase.length === 0 ? <div style={{ color: c.muted, fontSize: 13, textAlign: "center" }}>No hay categorías base</div> : safeBase.map(cat => (
                   editandoCatBase === cat.id ? (
                     <div key={cat.id} style={{ background: c.input, borderRadius: 8, padding: 12, margin: "8px 0" }}>
                       <input style={{ ...s.input, marginBottom: 8 }} value={editCatBaseLabel} onChange={e => setEditCatBaseLabel(e.target.value)} />
@@ -672,14 +783,14 @@ export default function App() {
                   ) : (
                     <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: `1px solid ${c.border}` }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={s.catDot(cat.color)} /><span style={{ fontSize: 14 }}>{cat.label}</span></div>
-                      <div><button style={{ ...s.editBtn, marginRight: 8 }} onClick={() => abrirEdicionCatBase(cat)}>✏️</button><button style={{ ...s.deleteBtn, color: c.red }} onClick={() => eliminarCategoriaBase(cat.id)}>×</button></div>
+                      <div><button style={s.editBtn} onClick={() => abrirEdicionCatBase(cat)}>✏️</button><button style={s.deleteBtn} onClick={() => eliminarCategoriaBase(cat.id)}>×</button></div>
                     </div>
                   )
                 ))}
               </div>
 
               <div style={s.card}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}><div style={s.label}>Categorías personalizadas</div><button style={{ background: "#D4AF37", color: "#000", border: "none", borderRadius: 6, padding: "4px 12px", cursor: "pointer" }} onClick={() => setShowNuevaCat(v => !v)}>+ Nueva</button></div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}><div style={s.label}>Categorías personalizadas</div><button style={{ backgroundColor: "#D4AF37", WebkitAppearance: "none", color: "#000", border: "none", borderRadius: 6, padding: "4px 12px", cursor: "pointer" }} onClick={() => setShowNuevaCat(v => !v)}>+ Nueva</button></div>
                 {showNuevaCat && (
                   <div style={{ background: c.input, borderRadius: 8, padding: 12, marginBottom: 12 }}>
                     <input style={{ ...s.input, marginBottom: 8 }} placeholder="Ej: 🛍️ Compras" value={nuevaCatLabel} onChange={e => setNuevaCatLabel(e.target.value)} />
@@ -688,7 +799,7 @@ export default function App() {
                     <div style={{ display: "flex", gap: 8 }}><button style={s.btnSecondary} onClick={() => setShowNuevaCat(false)}>Cancelar</button><button style={s.btnPrimary} onClick={agregarCategoria}>Agregar</button></div>
                   </div>
                 )}
-                {categoriasExtra.length === 0 ? <div style={{ color: c.muted, fontSize: 13, textAlign: "center" }}>Aún no hay categorías</div> : categoriasExtra.map(cat => (
+                {safeExtra.length === 0 ? <div style={{ color: c.muted, fontSize: 13, textAlign: "center", padding: "8px 0" }}>Aún no hay categorías</div> : safeExtra.map(cat => (
                   editandoCat === cat.id ? (
                     <div key={cat.id} style={{ background: c.input, borderRadius: 8, padding: 12, margin: "8px 0" }}>
                       <input style={{ ...s.input, marginBottom: 8 }} value={editCatLabel} onChange={e => setEditCatLabel(e.target.value)} />
@@ -699,7 +810,7 @@ export default function App() {
                   ) : (
                     <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: `1px solid ${c.border}` }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={s.catDot(cat.color)} /><span style={{ fontSize: 14 }}>{cat.label}</span></div>
-                      <div><button style={{ ...s.editBtn, marginRight: 8 }} onClick={() => abrirEdicionCat(cat)}>✏️</button><button style={{ ...s.deleteBtn, color: c.red }} onClick={() => eliminarCategoria(cat.id)}>×</button></div>
+                      <div><button style={s.editBtn} onClick={() => abrirEdicionCat(cat)}>✏️</button><button style={s.deleteBtn} onClick={() => eliminarCategoria(cat.id)}>×</button></div>
                     </div>
                   )
                 ))}
@@ -728,45 +839,41 @@ export default function App() {
         </>
       )}
 
-      {/* ── PANTALLA DE APARIENCIA (NUEVO) ── */}
+      {/* ── PANTALLA DE APARIENCIA ── */}
       {showApariencia && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
-            <button onClick={() => { setShowApariencia(false); setShowMenu(true); }} style={{ background: "none", border: "none", color: "#D4AF37", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
-            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Pantalla y brillo</h2>
+            <button onClick={() => { setShowApariencia(false); setShowMenu(true); }} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#D4AF37", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: "700" }}>Pantalla y brillo</h2>
           </div>
 
-          <div style={{ fontSize: 13, color: c.muted, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 12, fontWeight: 700 }}>Aspecto</div>
+          <div style={{ fontSize: 13, color: c.muted, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 12, fontWeight: "700" }}>Aspecto</div>
           <div style={{ background: c.card, borderRadius: 16, padding: "20px 20px 0", marginBottom: 24, border: `1px solid ${c.border}`, boxShadow: c.shadow }}>
             
-            {/* SELECCIÓN CLARO/OSCURO */}
             <div style={{ display: "flex", justifyContent: "space-around", paddingBottom: 24 }}>
-              {/* Opción Claro */}
               <div onClick={() => { setTheme("light"); showToast("Tema Claro activado"); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer" }}>
                 <div style={{ width: 66, height: 130, borderRadius: 12, background: "#FFF", border: theme === "light" ? "3px solid #34C759" : "1px solid #CCC", position: "relative", overflow: "hidden" }}>
                   <div style={{ position: "absolute", top: 12, left: 6, right: 6, height: 24, background: "#E5E5E5", borderRadius: 4 }} />
                   <div style={{ position: "absolute", top: 44, left: 6, right: 6, height: 18, background: "#E5E5E5", borderRadius: 4 }} />
                 </div>
-                <span style={{ fontSize: 15, fontWeight: 500 }}>Claro</span>
+                <span style={{ fontSize: 15, fontWeight: "500" }}>Claro</span>
                 <div style={{ width: 22, height: 22, borderRadius: "50%", border: theme === "light" ? "none" : `1px solid ${c.muted}`, background: theme === "light" ? "#34C759" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   {theme === "light" && <span style={{ color: "#FFF", fontSize: 14 }}>✓</span>}
                 </div>
               </div>
 
-              {/* Opción Oscuro */}
               <div onClick={() => { setTheme("dark"); showToast("Tema Oscuro activado"); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer" }}>
                 <div style={{ width: 66, height: 130, borderRadius: 12, background: "#111", border: theme === "dark" ? "3px solid #34C759" : "1px solid #444", position: "relative", overflow: "hidden" }}>
                   <div style={{ position: "absolute", top: 12, left: 6, right: 6, height: 24, background: "#333", borderRadius: 4 }} />
                   <div style={{ position: "absolute", top: 44, left: 6, right: 6, height: 18, background: "#333", borderRadius: 4 }} />
                 </div>
-                <span style={{ fontSize: 15, fontWeight: 500 }}>Oscuro</span>
+                <span style={{ fontSize: 15, fontWeight: "500" }}>Oscuro</span>
                 <div style={{ width: 22, height: 22, borderRadius: "50%", border: theme === "dark" ? "none" : `1px solid ${c.muted}`, background: theme === "dark" ? "#34C759" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   {theme === "dark" && <span style={{ color: "#FFF", fontSize: 14 }}>✓</span>}
                 </div>
               </div>
             </div>
 
-            {/* AUTOMÁTICO */}
             <div style={{ borderTop: `1px solid ${c.border}`, padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontSize: 16 }}>Automático</span>
               <div onClick={() => setIsAutoTheme(!isAutoTheme)} style={{ width: 50, height: 30, background: isAutoTheme ? "#34C759" : c.border, borderRadius: 15, position: "relative", cursor: "pointer", transition: "0.3s" }}>
@@ -774,7 +881,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* OPCIONES DE HORARIO */}
             {isAutoTheme && (
               <div style={{ borderTop: `1px solid ${c.border}`, padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
                 <span style={{ fontSize: 16 }}>Opciones</span>
@@ -807,19 +913,19 @@ export default function App() {
       {showMenu && !showApariencia && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 9999, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
-            <button onClick={() => setShowMenu(false)} style={{ background: "none", border: "none", color: "#D4AF37", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
-            <h2 style={{ margin: 0, fontSize: 22, color: c.text, fontWeight: 700 }}>Mi Perfil</h2>
+            <button onClick={() => setShowMenu(false)} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#D4AF37", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <h2 style={{ margin: 0, fontSize: 22, color: c.text, fontWeight: "700" }}>Mi Perfil</h2>
           </div>
 
           <div style={{ marginBottom: 32 }}>
-            <div style={{ fontSize: 12, color: "#D4AF37", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Mi cuenta</div>
+            <div style={{ fontSize: 12, color: "#D4AF37", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: "700" }}>Mi cuenta</div>
             <MenuItem icon="🪪" text="Mis datos" color={c.text} mutedColor={c.muted} border={c.border} />
             <MenuItem icon="🔒" text="Cambiar mi clave" color={c.text} mutedColor={c.muted} border={c.border} />
             <MenuItem icon="🏆" text="Mis logros / Insignias" color={c.text} mutedColor={c.muted} border={c.border} />
           </div>
 
           <div style={{ marginBottom: 32 }}>
-            <div style={{ fontSize: 12, color: "#D4AF37", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Ajustes</div>
+            <div style={{ fontSize: 12, color: "#D4AF37", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: "700" }}>Ajustes</div>
             <MenuItem icon="🎯" text="Mi Meta de Ahorro" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowMenu(false); setTab("config"); }} />
             <MenuItem icon="🎨" text="Apariencia (Tema Claro/Oscuro)" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowApariencia(true); setShowMenu(false); }} />
             <MenuItem icon="📊" text="Exportar Reportes" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowMenu(false); setShowEmailModal(true); }} />
@@ -864,8 +970,8 @@ export default function App() {
             <p style={{ margin: "0 0 16px", fontSize: 13, color: c.muted }}>Ingresa el e-mail del destinatario.</p>
             <input style={{ ...s.input, marginBottom: 16, textAlign: "center" }} type="email" placeholder="correo@ejemplo.com" value={emailDestino} onChange={e => setEmailDestino(e.target.value)} />
             <div style={{ display: "flex", gap: 8, borderTop: `1px solid ${c.border}`, paddingTop: 12 }}>
-              <button style={{ flex: 1, background: "none", border: "none", color: "#D4AF37", fontSize: 15, cursor: "pointer", padding: "8px 0" }} onClick={() => setShowEmailModal(false)}>Cancelar</button>
-              <button style={{ flex: 1, background: "none", border: "none", color: "#4D96FF", fontSize: 15, cursor: "pointer", padding: "8px 0", fontWeight: 600 }} onClick={() => { showToast("Enviado con éxito", c.green); setShowEmailModal(false); setEmailDestino(""); }}>Enviar</button>
+              <button style={{ flex: 1, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#D4AF37", fontSize: 15, cursor: "pointer", padding: "8px 0" }} onClick={() => setShowEmailModal(false)}>Cancelar</button>
+              <button style={{ flex: 1, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#4D96FF", fontSize: 15, cursor: "pointer", padding: "8px 0", fontWeight: "600" }} onClick={() => { showToast("Enviado con éxito", c.green); setShowEmailModal(false); setEmailDestino(""); }}>Enviar</button>
             </div>
           </div>
         </div>
