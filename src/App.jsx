@@ -111,7 +111,6 @@ const exportarPDF = (gastos, categorias) => {
   win.document.close();
 };
 
-// COMPONENTE AUXILIAR PARA LOS BOTONES DEL MENÚ
 const MenuItem = ({ icon, text, color = "#E8E0D0", onClick }) => (
   <button onClick={onClick} style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, background: "none", border: "none", padding: "16px 0", cursor: "pointer", color: color, fontSize: 16, borderBottom: "1px solid #161616", textAlign: "left" }}>
     <span style={{ fontSize: 22 }}>{icon}</span>
@@ -122,7 +121,11 @@ const MenuItem = ({ icon, text, color = "#E8E0D0", onClick }) => (
 
 export default function App() {
   const [gastos,         setGastos]         = useState([]);
+  
+  // NUEVO: Estado para categorías base para que sean editables
+  const [categoriasBase, setCategoriasBase] = useState(CATEGORIAS_DEFAULT);
   const [categoriasExtra, setCategoriasExtra] = useState([]);  
+  
   const [tab,            setTab]            = useState("hoy");
   const [form,           setForm]           = useState({ monto: "", descripcion: "", categoria: "comida", tipo: "gasto" });
   
@@ -146,9 +149,15 @@ export default function App() {
   const [nuevaCatLabel, setNuevaCatLabel] = useState("");
   const [nuevaCatColor, setNuevaCatColor] = useState(COLORES_CUSTOM[0]);
 
+  // Estados para edición de Categorías Extra
   const [editandoCat,  setEditandoCat]  = useState(null);
   const [editCatLabel, setEditCatLabel] = useState("");
   const [editCatColor, setEditCatColor] = useState("");
+
+  // NUEVO: Estados para edición de Categorías Base
+  const [editandoCatBase, setEditandoCatBase] = useState(null);
+  const [editCatBaseLabel, setEditCatBaseLabel] = useState("");
+  const [editCatBaseColor, setEditCatBaseColor] = useState("");
 
   const [filtroHistCat,        setFiltroHistCat]        = useState("todas");
   const [filtroHistFechaDesde, setFiltroHistFechaDesde] = useState("");
@@ -165,10 +174,10 @@ export default function App() {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailDestino, setEmailDestino] = useState("");
 
-  // NUEVO ESTADO PARA CONTROLAR EL MENÚ LATERAL
   const [showMenu, setShowMenu] = useState(false);
 
-  const categorias = [...CATEGORIAS_DEFAULT, ...categoriasExtra];
+  // COMBINAMOS LAS CATEGORÍAS BASE Y EXTRA
+  const categorias = [...categoriasBase, ...categoriasExtra];
 
   const showToast = (msg, color = "#D4AF37") => {
     setToast({ msg, color });
@@ -204,12 +213,14 @@ export default function App() {
           const fFin = cfg.find(c => c.key === "fechaFin");
           const ing  = cfg.find(c => c.key === "ingresoMensual");
           const cats = cfg.find(c => c.key === "categoriasCustom");
+          const catsBase = cfg.find(c => c.key === "categoriasBase"); // Cargamos base custom
           
           if (meta) setMetaAhorro(meta.value);
           if (fIni) setFechaInicioPlan(fIni.value);
           if (fFin) setFechaFinPlan(fFin.value);
           if (ing)  setIngresoMensual(ing.value);
           if (cats) { try { setCategoriasExtra(JSON.parse(cats.value)); } catch(_) {} }
+          if (catsBase) { try { setCategoriasBase(JSON.parse(catsBase.value)); } catch(_) {} }
         }
         setError(null);
       } catch (e) {
@@ -282,6 +293,7 @@ export default function App() {
       { key: "fechaFin",        value: fechaFinPlan },
       { key: "ingresoMensual",  value: (ingresoMensual || "0").toString() },
       { key: "categoriasCustom", value: JSON.stringify(categoriasExtra) },
+      { key: "categoriasBase",   value: JSON.stringify(categoriasBase) }, // Guardar también las base editadas
     ];
     const { error: err } = await supabase.from("config").upsert(upserts, { onConflict: "key" });
     setSaving(false);
@@ -289,6 +301,7 @@ export default function App() {
     showToast("Configuración guardada ✓");
   };
 
+  // ----- LOGICA PARA CATEGORÍAS PERSONALIZADAS -----
   const agregarCategoria = async () => {
     const label = nuevaCatLabel.trim();
     if (!label) { showToast("Escribe un nombre", "#E85A5A"); return; }
@@ -303,6 +316,8 @@ export default function App() {
   };
 
   const eliminarCategoria = async (id) => {
+    const confirm = window.confirm("¿Seguro que deseas eliminar esta categoría?");
+    if (!confirm) return;
     const updated = categoriasExtra.filter(c => c.id !== id);
     setCategoriasExtra(updated);
     await supabase.from("config").upsert([{ key: "categoriasCustom", value: JSON.stringify(updated) }], { onConflict: "key" });
@@ -325,6 +340,34 @@ export default function App() {
     await supabase.from("config").upsert([{ key: "categoriasCustom", value: JSON.stringify(updated) }], { onConflict: "key" });
     setEditandoCat(null);
     showToast("Categoría actualizada ✓");
+  };
+
+  // ----- NUEVA LOGICA PARA CATEGORÍAS BASE -----
+  const abrirEdicionCatBase = (cat) => {
+    setEditandoCatBase(cat.id);
+    setEditCatBaseLabel(cat.label);
+    setEditCatBaseColor(cat.color);
+  };
+
+  const guardarEdicionCatBase = async () => {
+    const label = editCatBaseLabel.trim();
+    if (!label) { showToast("Escribe un nombre", "#E85A5A"); return; }
+    const updated = categoriasBase.map(c => 
+      c.id === editandoCatBase ? { ...c, label, color: editCatBaseColor } : c
+    );
+    setCategoriasBase(updated);
+    await supabase.from("config").upsert([{ key: "categoriasBase", value: JSON.stringify(updated) }], { onConflict: "key" });
+    setEditandoCatBase(null);
+    showToast("Categoría base actualizada ✓");
+  };
+
+  const eliminarCategoriaBase = async (id) => {
+    const confirm = window.confirm("¿Seguro que deseas eliminar esta categoría base?");
+    if (!confirm) return;
+    const updated = categoriasBase.filter(c => c.id !== id);
+    setCategoriasBase(updated);
+    await supabase.from("config").upsert([{ key: "categoriasBase", value: JSON.stringify(updated) }], { onConflict: "key" });
+    showToast("Categoría eliminada", "#888");
   };
 
   const metaTotalNum  = parseFloat(metaAhorro) || 0;
@@ -584,7 +627,6 @@ export default function App() {
           {/* HEADER NORMAL DE LA APP */}
           <div style={s.header}>
             <div style={{ display: "flex", justifyContent: "center", alignItems: "center", position: "relative", marginBottom: 4 }}>
-              {/* BOTON DE HAMBURGUESA PARA ABRIR EL MENU */}
               <button 
                 onClick={() => setShowMenu(true)} 
                 style={{ background: "transparent", border: "none", color: "#5AE88A", fontSize: 26, cursor: "pointer", position: "absolute", left: 0, padding: 0 }}
@@ -966,6 +1008,52 @@ export default function App() {
                 </div>
               )}
 
+              {/* ----- NUEVA CAJA: CATEGORÍAS BASE ----- */}
+              <div style={s.card}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                  <div style={s.label}>Categorías Base</div>
+                </div>
+                
+                {categoriasBase.length === 0 ? (
+                  <div style={{ color: "#333", fontSize: 13, textAlign: "center", padding: "8px 0" }}>No hay categorías base</div>
+                ) : (
+                  categoriasBase.map(cat => (
+                    editandoCatBase === cat.id ? (
+                      <div key={cat.id} style={{ background: "#161616", borderRadius: 8, padding: 12, margin: "8px 0" }}>
+                        <input
+                          style={{ ...s.input, marginBottom: 8 }}
+                          value={editCatBaseLabel}
+                          onChange={e => setEditCatBaseLabel(e.target.value)}
+                        />
+                        <div style={{ ...s.label, marginBottom: 6 }}>Elige un color</div>
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+                          {COLORES_CUSTOM.map(c => (
+                            <div key={c} onClick={() => setEditCatBaseColor(c)}
+                              style={{ width: 24, height: 24, borderRadius: "50%", background: c, cursor: "pointer", border: editCatBaseColor === c ? "3px solid #fff" : "3px solid transparent" }} />
+                          ))}
+                        </div>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button style={{ ...s.btnSecondary, flex: 1 }} onClick={() => setEditandoCatBase(null)}>Cancelar</button>
+                          <button style={{ ...s.btnPrimary, flex: 1, padding: "10px" }} onClick={guardarEdicionCatBase}>Guardar</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #1A1A1A" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ width: 10, height: 10, borderRadius: "50%", background: cat.color, display: "inline-block" }} />
+                          <span style={{ fontSize: 14 }}>{cat.label}</span>
+                        </div>
+                        <div>
+                          <button style={{ ...s.editBtn, marginRight: 8 }} onClick={() => abrirEdicionCatBase(cat)}>✏️</button>
+                          <button style={{ ...s.deleteBtn, color: "#E85A5A" }} onClick={() => eliminarCategoriaBase(cat.id)}>×</button>
+                        </div>
+                      </div>
+                    )
+                  ))
+                )}
+              </div>
+
+              {/* ----- CAJA: CATEGORÍAS PERSONALIZADAS ----- */}
               <div style={s.card}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                   <div style={s.label}>Categorías personalizadas</div>
@@ -998,7 +1086,6 @@ export default function App() {
                   </div>
                 )}
 
-                {/* LISTA Y EDICIÓN DE CATEGORÍAS */}
                 {categoriasExtra.length === 0 ? (
                   <div style={{ color: "#333", fontSize: 13, textAlign: "center", padding: "8px 0" }}>Aún no hay categorías personalizadas</div>
                 ) : (
