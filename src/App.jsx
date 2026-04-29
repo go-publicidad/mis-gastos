@@ -462,6 +462,7 @@ export default function App() {
   const gastosFiltradosHist = gastos.filter(g => (filtroHistCat === "todas" || g.categoria === filtroHistCat) && (!filtroHistFechaDesde || g.fecha >= filtroHistFechaDesde) && (!filtroHistFechaHasta || g.fecha <= filtroHistFechaHasta));
   const gastosVerTodos = gastos.filter(g => (!vtFechaDesde || g.fecha >= vtFechaDesde) && (!vtFechaHasta || g.fecha <= vtFechaHasta));
 
+  // SISTEMA DE ESPACIADO UNIFICADO: 24px entre bloques, 12px títulos
   const s = {
     app: { minHeight: "100vh", fontFamily: "'Montserrat', sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: "calc(160px + env(safe-area-inset-bottom, 0px))", width: "100%" },
     header:     { padding: "24px 20px 16px", borderBottom: `1px solid ${c.border}`, position: "sticky", top: 0, background: c.bg, zIndex: 90 },
@@ -469,7 +470,7 @@ export default function App() {
     refreshBtn: { backgroundColor: "transparent", WebkitAppearance: "none", border: "none", width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 18 },
     subtitle:   { color: c.muted, fontSize: 13, margin: "4px 0 0", fontWeight: 400 },
     section:    { padding: "20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "stretch" },
-    card:       { width: "100%", background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: "16px", marginBottom: 12, overflow: "hidden", boxSizing: "border-box", boxShadow: c.shadow },
+    card:       { width: "100%", background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: "16px", marginBottom: 24, overflow: "hidden", boxSizing: "border-box", boxShadow: c.shadow },
     metaCard:   { width: "100%", background: "linear-gradient(135deg,#1A1A1A,#050505)", borderRadius: 16, padding: "24px", marginBottom: 24, boxSizing: "border-box", color: "#FFF", boxShadow: isDark ? "none" : "0 8px 24px rgba(0,0,0,0.15)" },
     
     metaLabel:  { fontSize: 16, color: "#FFF", marginBottom: 12 }, 
@@ -482,7 +483,8 @@ export default function App() {
     
     progressBg: { background: "#333", borderRadius: 4, height: 8, margin: "16px 0", overflow: "hidden" },
     progressFill: (p) => ({ height: "100%", width: `${p}%`, background: p >= 100 ? c.green : p >= 50 ? "#FCB606" : c.red, borderRadius: 4, transition: "width 0.6s ease" }),
-    grid2:      { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 24, width: "100%" },
+    
+    grid2:      { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 24, width: "100%" },
     
     input: { width: "100%", background: c.input, border: `1px solid ${c.border}`, borderRadius: 10, color: c.text, padding: "12px 14px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", fontWeight: 500, WebkitAppearance: "none", minHeight: 48 },
     select: { width: "100%", background: c.input, border: `1px solid ${c.border}`, borderRadius: 10, color: c.text, padding: "12px 14px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", fontWeight: 500, cursor: "pointer", WebkitAppearance: "none", minHeight: 48 },
@@ -496,7 +498,7 @@ export default function App() {
     
     errorCard:  { background: isDark ? "#1A0A0A" : "#FEF2F2", border: `1px solid ${c.red}`, borderRadius: 12, padding: "16px", margin: "20px", color: c.red, fontSize: 14, fontWeight: 400 },
     
-    filterRow:  { display: "flex", gap: 6, marginBottom: 14, flexWrap: "nowrap", overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" },
+    filterRow:  { display: "flex", gap: 6, marginBottom: 24, flexWrap: "nowrap", overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" },
     filterBtn: (a) => ({ whiteSpace: "nowrap", flexShrink: 0, padding: "8px 16px", borderRadius: 20, border: `1px solid ${a ? "#FCB606" : c.border}`, background: a ? "#FCB606" : c.card, color: a ? "#000" : c.muted, fontSize: 13, fontWeight: a ? 600 : 500, cursor: "pointer", fontFamily: "inherit" }),
     
     navBar: {
@@ -666,7 +668,7 @@ export default function App() {
               </div>
 
               <div style={s.grid2}>
-                <div style={{ ...s.card, padding: "16px 12px" }}>
+                <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                     <IconBadge emoji="⬇️" bg={c.iconBgGreen} color={c.green} />
                     <span style={{ fontSize: 13, fontWeight: 600, color: c.muted }}>Ingresos hoy</span>
@@ -674,7 +676,7 @@ export default function App() {
                   <div style={{ ...s.greenNum, textAlign: "center", marginTop: 8 }}>{formatMoney(totalIngresosHoy)}</div>
                 </div>
                 
-                <div style={{ ...s.card, padding: "16px 12px" }}>
+                <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                     <IconBadge emoji="⬆️" bg={c.iconBgRed} color={c.red} />
                     <span style={{ fontSize: 13, fontWeight: 600, color: c.muted }}>Gastos hoy</span>
@@ -682,7 +684,7 @@ export default function App() {
                   <div style={{ ...s.redNum, textAlign: "center", marginTop: 8 }}>{formatMoney(totalGastadoHoy)}</div>
                 </div>
 
-                <div style={{ ...s.card, padding: "16px 12px" }}>
+                <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                     <IconBadge emoji="🐷" bg={c.iconBgYellow} color="#FCB606" />
                     <span style={{ fontSize: 13, fontWeight: 600, color: c.muted }}>Ahorro hoy</span>
@@ -690,7 +692,7 @@ export default function App() {
                   <div style={{ fontSize: 22, fontWeight: 700, color: "#FCB606", textAlign: "center", marginTop: 8 }}>{formatMoney(totalIngresosHoy - totalGastadoHoy)}</div>
                 </div>
 
-                <div style={{ ...s.card, padding: "16px 12px" }}>
+                <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                     <IconBadge emoji="🎯" bg={c.iconBgPurple} color={c.iconTextPurple} />
                     <span style={{ fontSize: 13, fontWeight: 600, color: c.muted }}>Límite / día</span>
@@ -699,7 +701,7 @@ export default function App() {
                 </div>
               </div>
 
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12, marginBottom: 12 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                 <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>Últimos movimientos</h3>
                 <button onClick={() => { setViewAll(true); window.scrollTo(0, 0); }} style={{ background: "none", border: "none", color: c.muted, fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>
                   Ver todos
@@ -771,34 +773,40 @@ export default function App() {
                 </div>
               )}
 
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>General</h3>
+              </div>
+
               <div style={s.grid2}>
-                <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Total gastado</div><div style={s.redNum}>{formatMoney(totalGastadoR)}</div></div>
-                <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Total ingresos</div><div style={s.greenNum}>{formatMoney(totalIngresosR)}</div></div>
-                <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Ahorro período</div><div style={{ ...s.smallNum, color: ahorroR >= 0 ? "#FCB606" : c.red }}>{formatMoney(ahorroR)}</div></div>
-                <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Gasto prom/día</div><div style={s.smallNum}>{formatMoney(gastoDiarioProm)}</div></div>
+                <div style={{ ...s.card, textAlign: "center", marginBottom: 0 }}><div style={s.label}>Total gastado</div><div style={s.redNum}>{formatMoney(totalGastadoR)}</div></div>
+                <div style={{ ...s.card, textAlign: "center", marginBottom: 0 }}><div style={s.label}>Total ingresos</div><div style={s.greenNum}>{formatMoney(totalIngresosR)}</div></div>
+                <div style={{ ...s.card, textAlign: "center", marginBottom: 0 }}><div style={s.label}>Ahorro período</div><div style={{ ...s.smallNum, color: ahorroR >= 0 ? "#FCB606" : c.red }}>{formatMoney(ahorroR)}</div></div>
+                <div style={{ ...s.card, textAlign: "center", marginBottom: 0 }}><div style={s.label}>Gasto prom/día</div><div style={s.smallNum}>{formatMoney(gastoDiarioProm)}</div></div>
               </div>
 
               <div style={{ ...s.card, background: isDark ? "#0F1A0F" : "#F0FDF4", border: `1px solid ${isDark ? "#1A3A1A" : "#BBF7D0"}`, textAlign: "center", padding: "24px 16px" }}>
-                <div style={{ ...s.label, textAlign: "center", color: isDark ? c.muted : "#065F46" }}>Proyección inteligente</div>
+                <div style={{ ...s.label, textAlign: "center", color: isDark ? c.muted : "#065F46", marginBottom: 0 }}>Proyección inteligente</div>
                 <div style={{ fontSize: 16, color: isDark ? "#FCB606" : "#047857", fontWeight: 700, marginTop: 8 }}>📈 A este ritmo llegarás a tu meta {proyeccionTexto}</div>
                 <div style={{ fontSize: 13, color: c.muted, marginTop: 6, fontWeight: 500 }}>Basado en un ahorro diario promedio de {formatMoney(ahorroDiarioProm > 0 ? ahorroDiarioProm : 0)}</div>
               </div>
 
               {ingMensual > 0 && (
                 <div style={s.metaCard}>
-                  <div style={{ ...s.metaLabel, textAlign: "center" }}>Para lograr tu meta</div>
-                  <div style={{ fontSize: 14, color: "#CCC", lineHeight: 1.9, marginTop: 8, textAlign: "center", fontWeight: 500 }}>
-                    <div>💰 Ahorra <strong style={{ color: "#FCB606", fontWeight: 700 }}>{formatMoney(ahorroMetaDiario)}/día</strong></div>
-                    <div>📅 o <strong style={{ color: "#FCB606", fontWeight: 700 }}>{formatMoney(ahorroMetaDiario * 30)}/mes</strong></div>
-                    <div>💸 Límite de gasto: <strong style={{ color: c.green, fontWeight: 700 }}>{formatMoney(presupuestoDiario)}/día</strong></div>
-                    <div>🎯 Faltan: <strong style={{ color: "#FCB606", fontWeight: 700 }}>{formatMoney(Math.max(0, metaTotalNum - ahorroAcumulado))}</strong></div>
+                  <div style={{ ...s.metaLabel, textAlign: "center", marginBottom: 0 }}>Para lograr tu meta</div>
+                  <div style={{ fontSize: 14, color: "#CCC", lineHeight: 1.9, marginTop: 12, textAlign: "center", fontWeight: 500 }}>
+                    <div>📥 Ingreso mensual: <strong style={{ color: "#E8E0D0", fontWeight: 700 }}>{formatMoney(ingMensual)}</strong></div>
+                    <div>🎯 Ahorro necesario/mes: <strong style={{ color: "#FCB606", fontWeight: 700 }}>{formatMoney(ahorroMetaDiario * 30)}</strong></div>
+                    <div>💸 Gasto máximo/mes: <strong style={{ color: c.green, fontWeight: 700 }}>{formatMoney(ingMensual - (ahorroMetaDiario * 30))}</strong></div>
+                    <div>📆 Gasto máximo/día: <strong style={{ color: c.green, fontWeight: 700 }}>{formatMoney(presupuestoDiario)}</strong></div>
                   </div>
                 </div>
               )}
 
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>Gastos últimos 7 días</h3>
+              </div>
               <div style={s.card}>
-                <div style={{ ...s.label, textAlign: "center" }}>Gastos últimos 7 días</div>
-                <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 100, marginTop: 20 }}>
+                <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 100, marginTop: 8 }}>
                   {gastosUltimos7.map((d, i) => (
                     <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
                       <div style={{ width: "100%", height: `${d.total ? Math.max(8, (d.total / maxBar) * 80) : 4}px`, background: d.fecha === fechaHoy ? "#FCB606" : c.border, borderRadius: "4px 4px 0 0" }} />
@@ -809,29 +817,37 @@ export default function App() {
               </div>
 
               {porCategoriaR.length > 0 && (
-                <div style={s.card}>
-                  <div style={{...s.label, marginBottom: 20}}>Por categoría</div>
-                  {porCategoriaR.map(cat => (
-                    <div key={cat.id} style={{ marginBottom: 16 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                        <span style={{ fontSize: 14, fontWeight: 600, color: c.text }}>{cat.label}</span>
-                        <span style={{ fontSize: 15, fontWeight: 700, color: cat.color }}>{formatMoney(cat.total)}</span>
+                <>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                    <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>Por categoría</h3>
+                  </div>
+                  <div style={s.card}>
+                    {porCategoriaR.map((cat, i, arr) => (
+                      <div key={cat.id} style={{ marginBottom: i === arr.length - 1 ? 0 : 16 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                          <span style={{ fontSize: 14, fontWeight: 600, color: c.text }}>{cat.label}</span>
+                          <span style={{ fontSize: 15, fontWeight: 700, color: cat.color }}>{formatMoney(cat.total)}</span>
+                        </div>
+                        <div style={{ background: c.border, borderRadius: 4, height: 6, overflow: "hidden" }}>
+                          <div style={{ height: "100%", width: `${(cat.total / maxCatR) * 100}%`, background: cat.color, borderRadius: 4 }} />
+                        </div>
                       </div>
-                      <div style={{ background: c.border, borderRadius: 4, height: 6, overflow: "hidden" }}>
-                        <div style={{ height: "100%", width: `${(cat.total / maxCatR) * 100}%`, background: cat.color, borderRadius: 4 }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           )}
 
           {tab === "historial" && (
             <div style={s.section}>
-              <div style={{ display: "flex", gap: 12, marginBottom: 20, width: "100%" }}>
+              <div style={{ display: "flex", gap: 12, marginBottom: 24, width: "100%" }}>
                 <button style={s.btnSecondary} onClick={() => exportarCSV(gastosFiltradosHist, categorias)}>📊 Excel</button>
                 <button style={s.btnSecondary} onClick={() => exportarPDF(gastosFiltradosHist, categorias)}>📄 PDF</button>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>Filtros</h3>
               </div>
 
               <div style={s.card}>
@@ -848,38 +864,45 @@ export default function App() {
                 {(filtroHistFechaDesde || filtroHistFechaHasta) && <button style={{ width: "100%", fontSize: 14, fontWeight: 700, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 16, fontFamily: "inherit" }} onClick={() => { setFiltroHistFechaDesde(""); setFiltroHistFechaHasta(""); }}>× Limpiar fechas</button>}
               </div>
 
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>{gastosFiltradosHist.length} Movimientos</h3>
+              </div>
+
               {gastosFiltradosHist.length === 0 ? <div style={{ ...s.card, textAlign: "center", color: c.muted, padding: "40px 20px", fontWeight: 500 }}>Sin movimientos con estos filtros</div> : (
-                <>
-                  <div style={{ ...s.label, textAlign: "center", marginTop: 24, marginBottom: 16 }}>{gastosFiltradosHist.length} movimientos</div>
-                  {gastosFiltradosHist.map(g => {
+                <div style={{...s.card, padding: "8px 16px"}}>
+                  {gastosFiltradosHist.map((g, i, arr) => {
                     const cat = categorias.find(c => c.id === g.categoria);
                     const { fecha, hora } = formatDateTime(g.created_at);
+                    const isLast = i === arr.length - 1;
                     return (
-                      <div key={g.id} style={{ ...s.card, padding: "14px 16px", marginBottom: 8 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12 }}>
-                            {cat && (
-                              <div style={{ width: 40, height: 40, borderRadius: 12, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
-                                {cat.label.split(" ")[0]}
-                              </div>
-                            )}
-                            <div style={{ minWidth: 0 }}>
-                              <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4 }}>{g.descripcion}</div>
-                              <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{fecha} | {hora}</div>
+                      <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: isLast ? "none" : `1px solid ${c.border}` }}>
+                        <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12 }}>
+                          {cat && (
+                            <div style={{ width: 40, height: 40, borderRadius: 12, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
+                              {cat.label.split(" ")[0]}
                             </div>
+                          )}
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4 }}>{g.descripcion}</div>
+                            <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{fecha} | {hora}</div>
                           </div>
-                          <span style={{ fontSize: 16, fontWeight: 700, color: g.tipo === "gasto" ? c.text : c.green }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
                         </div>
+                        <span style={{ fontSize: 16, fontWeight: 700, color: g.tipo === "gasto" ? c.text : c.green }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
                       </div>
                     );
                   })}
-                </>
+                </div>
               )}
             </div>
           )}
 
           {tab === "config" && (
             <div style={s.section}>
+              
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>Plan actual</h3>
+              </div>
+
               <div style={s.card}>
                 <div style={{ ...s.label, textAlign: "center" }}>DEFINIR META DE AHORRO (S/)</div>
                 <input style={{ ...s.input, marginTop: 12, marginBottom: 24, fontSize: 24, textAlign: "center", color: "#FCB606", fontWeight: 700 }} type={isEditingMeta ? "number" : "text"} placeholder="Ej: 100000" value={isEditingMeta ? metaAhorro : (metaAhorro ? formatMoney(metaAhorro) : "")} onFocus={() => setIsEditingMeta(true)} onBlur={() => setIsEditingMeta(false)} onChange={e => setMetaAhorro(e.target.value)} />
@@ -897,8 +920,8 @@ export default function App() {
 
               {ingMensual > 0 && metaTotalNum > 0 && (
                 <div style={s.metaCard}>
-                  <div style={{ ...s.metaLabel, textAlign: "center" }}>Tu plan para {formatMoney(metaTotalNum)}</div>
-                  <div style={{ fontSize: 14, color: "#CCC", lineHeight: 1.9, marginTop: 8, textAlign: "center", fontWeight: 500 }}>
+                  <div style={{ ...s.metaLabel, textAlign: "center", marginBottom: 0 }}>Tu plan para {formatMoney(metaTotalNum)}</div>
+                  <div style={{ fontSize: 14, color: "#CCC", lineHeight: 1.9, marginTop: 12, textAlign: "center", fontWeight: 500 }}>
                     <div>📥 Ingreso mensual: <strong style={{ color: "#E8E0D0", fontWeight: 700 }}>{formatMoney(ingMensual)}</strong></div>
                     <div>🎯 Ahorro necesario/mes: <strong style={{ color: "#FCB606", fontWeight: 700 }}>{formatMoney(ahorroMetaDiario * 30)}</strong></div>
                     <div>💸 Gasto máximo/mes: <strong style={{ color: c.green, fontWeight: 700 }}>{formatMoney(ingMensual - (ahorroMetaDiario * 30))}</strong></div>
@@ -907,9 +930,13 @@ export default function App() {
                 </div>
               )}
 
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>Categorías</h3>
+              </div>
+
               <div style={s.card}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}><div style={{...s.label, marginBottom:0}}>Categorías Base</div></div>
-                {safeBase.length === 0 ? <div style={{ color: c.muted, fontSize: 14, fontWeight: 500, textAlign: "center", padding: "12px 0" }}>No hay categorías base</div> : safeBase.map(cat => (
+                {safeBase.length === 0 ? <div style={{ color: c.muted, fontSize: 14, fontWeight: 500, textAlign: "center", padding: "12px 0" }}>No hay categorías base</div> : safeBase.map((cat, i, arr) => (
                   editandoCatBase === cat.id ? (
                     <div key={cat.id} style={{ background: c.input, borderRadius: 12, padding: 16, margin: "8px 0" }}>
                       <input style={{ ...s.input, marginBottom: 12 }} value={editCatBaseLabel} onChange={e => setEditCatBaseLabel(e.target.value)} />
@@ -920,7 +947,7 @@ export default function App() {
                       <div style={{ display: "flex", gap: 10 }}><button style={s.btnSecondary} onClick={() => setEditandoCatBase(null)}>Cancelar</button><button style={s.btnPrimary} onClick={guardarEdicionCatBase}>Guardar</button></div>
                     </div>
                   ) : (
-                    <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: `1px solid ${c.border}` }}>
+                    <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: i === arr.length - 1 ? "none" : `1px solid ${c.border}` }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                         <div style={{ width: 36, height: 36, borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
                            {cat.label.split(" ")[0]}
@@ -943,7 +970,7 @@ export default function App() {
                     <div style={{ display: "flex", gap: 10 }}><button style={s.btnSecondary} onClick={() => setShowNuevaCat(false)}>Cancelar</button><button style={s.btnPrimary} onClick={agregarCategoria}>Agregar</button></div>
                   </div>
                 )}
-                {safeExtra.length === 0 ? <div style={{ color: c.muted, fontSize: 14, fontWeight: 500, textAlign: "center", padding: "12px 0" }}>Aún no hay categorías</div> : safeExtra.map(cat => (
+                {safeExtra.length === 0 ? <div style={{ color: c.muted, fontSize: 14, fontWeight: 500, textAlign: "center", padding: "12px 0" }}>Aún no hay categorías</div> : safeExtra.map((cat, i, arr) => (
                   editandoCat === cat.id ? (
                     <div key={cat.id} style={{ background: c.input, borderRadius: 12, padding: 16, margin: "8px 0" }}>
                       <input style={{ ...s.input, marginBottom: 12 }} value={editCatLabel} onChange={e => setEditCatLabel(e.target.value)} />
@@ -952,7 +979,7 @@ export default function App() {
                       <div style={{ display: "flex", gap: 10 }}><button style={s.btnSecondary} onClick={() => setEditandoCat(null)}>Cancelar</button><button style={s.btnPrimary} onClick={guardarEdicionCat}>Guardar</button></div>
                     </div>
                   ) : (
-                    <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: `1px solid ${c.border}` }}>
+                    <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: i === arr.length - 1 ? "none" : `1px solid ${c.border}` }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                         <div style={{ width: 36, height: 36, borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
                            {cat.label.split(" ")[0]}
@@ -965,8 +992,12 @@ export default function App() {
                 ))}
               </div>
 
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, marginTop: 24 }}>
+                <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0, color: c.red }}>Opciones avanzadas</h3>
+              </div>
+
               <div style={{ ...s.card, borderColor: isDark ? "#3A1A1A" : "#FECACA", padding: 20 }}>
-                <div style={{ ...s.label, marginBottom: 12, color: c.red, textAlign: "center" }}>Zona de peligro</div>
+                <div style={{ ...s.label, marginBottom: 16, color: c.red, textAlign: "center" }}>Zona de peligro</div>
                 <button style={{ ...s.btnSecondary, padding: 14, color: c.red, borderColor: isDark ? "#5A1A1A" : "#F87171", fontWeight: 700 }} onClick={async () => {
                   if (window.prompt("Escribe BORRAR TODO para confirmar:") === "BORRAR TODO") {
                     await supabase.from("gastos").delete().neq("id", "00000000-0000-0000-0000-000000000000");
@@ -988,7 +1019,6 @@ export default function App() {
         </>
       )}
 
-      {/* ── PANTALLA DE APARIENCIA ── */}
       {showApariencia && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
@@ -1058,7 +1088,6 @@ export default function App() {
         </div>
       )}
 
-      {/* ── PANTALLA PRINCIPAL DE PERFIL Y SUBPANTALLAS ── */}
       {showMenu && !showApariencia && !profileScreen && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 9999, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
@@ -1088,7 +1117,6 @@ export default function App() {
         </div>
       )}
 
-      {/* ── SUBPANTALLA: MIS DATOS ── */}
       {showMenu && profileScreen === "datos" && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
@@ -1117,7 +1145,6 @@ export default function App() {
         </div>
       )}
 
-      {/* ── SUBPANTALLA: CAMBIAR CLAVE ── */}
       {showMenu && profileScreen === "clave" && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
@@ -1144,7 +1171,6 @@ export default function App() {
         </div>
       )}
 
-      {/* ── SUBPANTALLA: MIS LOGROS / INSIGNIAS ── */}
       {showMenu && profileScreen === "logros" && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 24, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
@@ -1180,7 +1206,6 @@ export default function App() {
         </div>
       )}
 
-      {/* ── SUBPANTALLA: CENTRO DE AYUDA ── */}
       {showMenu && profileScreen === "ayuda" && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 24, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
@@ -1209,7 +1234,6 @@ export default function App() {
         </div>
       )}
 
-      {/* ── MODAL FLOTANTE: NUEVO MOVIMIENTO ── */}
       {showAddModal && (
         <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setShowAddModal(false); }}>
           <div style={{...s.modal, animation: "slideUp 0.3s ease-out"}}>
@@ -1237,7 +1261,6 @@ export default function App() {
         </div>
       )}
 
-      {/* ── MODAL: EDITAR ── */}
       {editando && (
         <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setEditando(null); }}>
           <div style={{...s.modal, animation: "slideUp 0.3s ease-out"}}>
@@ -1261,7 +1284,6 @@ export default function App() {
         </div>
       )}
 
-      {/* ── MODAL DE CORREO ── */}
       {showEmailModal && (
         <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setShowEmailModal(false); }}>
           <div style={{ ...s.modal, textAlign: "center", animation: "slideUp 0.3s ease-out" }}>
