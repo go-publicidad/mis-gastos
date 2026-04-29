@@ -110,9 +110,9 @@ const exportarPDF = (gastos, categorias) => {
 };
 
 const MenuItem = ({ icon, text, color, mutedColor, border, onClick }) => (
-  <button onClick={onClick} style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", padding: "16px 0", cursor: "pointer", color: color, fontSize: 16, borderBottom: `1px solid ${border}`, textAlign: "left" }}>
+  <button onClick={onClick} style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", padding: "16px 0", cursor: "pointer", color: color, fontSize: 16, fontWeight: 400, borderBottom: `1px solid ${border}`, textAlign: "left", fontFamily: "inherit" }}>
     <span style={{ fontSize: 22 }}>{icon}</span>
-    <span style={{ flex: 1, fontWeight: 500 }}>{text}</span>
+    <span style={{ flex: 1, fontWeight: 400 }}>{text}</span>
     <span style={{ color: mutedColor, fontSize: 20 }}>›</span>
   </button>
 );
@@ -415,42 +415,50 @@ export default function App() {
   const gastosFiltradosHist = gastos.filter(g => (filtroHistCat === "todas" || g.categoria === filtroHistCat) && (!filtroHistFechaDesde || g.fecha >= filtroHistFechaDesde) && (!filtroHistFechaHasta || g.fecha <= filtroHistFechaHasta));
   const gastosVerTodos = gastos.filter(g => (!vtFechaDesde || g.fecha >= vtFechaDesde) && (!vtFechaHasta || g.fecha <= vtFechaHasta));
 
-  // ESTILOS DINAMICOS Y SEGUROS (Sin fondos blancos feos en botones)
+  // ESTILOS DINAMICOS Y SEGUROS CON MONTSERRAT
   const s = {
-    app: { minHeight: "100vh", fontFamily: "'DM Sans','Segoe UI',sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: "calc(120px + env(safe-area-inset-bottom, 0px))", width: "100%" },
+    app: { minHeight: "100vh", fontFamily: "'Montserrat', sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: "calc(120px + env(safe-area-inset-bottom, 0px))", width: "100%" },
     header:     { padding: "24px 20px 0", borderBottom: `1px solid ${c.border}` },
-    title:      { fontFamily: "'Playfair Display','Georgia',serif", fontSize: 28, color: "#D4AF37", margin: 0 },
+    title:      { fontSize: 24, fontWeight: 700, color: "#D4AF37", margin: 0, fontFamily: "'Montserrat', sans-serif" },
     refreshBtn: { backgroundColor: "transparent", WebkitAppearance: "none", border: "none", width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 18 },
-    subtitle:   { color: c.muted, fontSize: 13, margin: "4px 0 0" },
+    subtitle:   { color: c.muted, fontSize: 13, margin: "4px 0 0", fontWeight: 400 },
     tabs:       { display: "flex", padding: "16px 20px 0", borderBottom: `1px solid ${c.border}` },
-    tab:    (a) => ({ backgroundColor: "transparent", WebkitAppearance: "none", padding: "8px 14px", border: "none", borderBottom: a ? "2px solid #D4AF37" : "2px solid transparent", color: a ? "#D4AF37" : c.muted, cursor: "pointer", fontSize: 13, transition: "all 0.2s" }),
+    tab:    (a) => ({ backgroundColor: "transparent", WebkitAppearance: "none", padding: "8px 14px", border: "none", borderBottom: a ? "2px solid #D4AF37" : "2px solid transparent", color: a ? "#D4AF37" : c.muted, cursor: "pointer", fontSize: 14, fontWeight: a ? 600 : 400, transition: "all 0.2s", fontFamily: "inherit" }),
     section:    { padding: "20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "stretch" },
     card:       { width: "100%", background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: "16px", marginBottom: 12, overflow: "hidden", boxSizing: "border-box", boxShadow: c.shadow },
     metaCard:   { width: "100%", background: "linear-gradient(135deg,#1A1A1A,#050505)", borderRadius: 16, padding: "20px", marginBottom: 16, boxSizing: "border-box", color: "#FFF", boxShadow: isDark ? "none" : "0 8px 24px rgba(0,0,0,0.15)" },
-    metaLabel:  { fontSize: 11, color: "#AAA", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 4 },
-    label:      { fontSize: 11, color: c.muted, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 4 },
-    bigNum:     { fontFamily: "monospace", fontSize: 30, color: "#D4AF37", lineHeight: 1 },
-    smallNum:   { fontFamily: "monospace", fontSize: 18, color: c.text },
-    redNum:     { fontFamily: "monospace", fontSize: 22, color: c.red },
-    greenNum:   { fontFamily: "monospace", fontSize: 22, color: c.green },
+    
+    // Títulos de jerarquía (16px, weight 600)
+    metaLabel:  { fontSize: 16, fontWeight: 600, color: "#FFF", marginBottom: 12 },
+    label:      { fontSize: 16, fontWeight: 600, color: c.text, marginBottom: 12 },
+    
+    // Saldos y números grandes (32px / 24px, weight 700)
+    bigNum:     { fontSize: 32, fontWeight: 700, color: "#D4AF37", lineHeight: 1 },
+    smallNum:   { fontSize: 24, fontWeight: 700, color: c.text },
+    redNum:     { fontSize: 24, fontWeight: 700, color: c.red },
+    greenNum:   { fontSize: 24, fontWeight: 700, color: c.green },
+    
     progressBg: { background: "#333", borderRadius: 4, height: 8, margin: "12px 0 4px", overflow: "hidden" },
     progressFill: (p) => ({ height: "100%", width: `${p}%`, background: p >= 100 ? c.green : p >= 50 ? "#D4AF37" : c.red, borderRadius: 4, transition: "width 0.6s ease" }),
     grid2:      { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12, width: "100%" },
-    input: { width: "100%", background: c.input, border: `1px solid ${c.border}`, borderRadius: 10, color: c.text, padding: "10px 12px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", WebkitAppearance: "none", minHeight: 44 },
-    select: { width: "100%", background: c.input, border: `1px solid ${c.border}`, borderRadius: 10, color: c.text, padding: "10px 12px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", cursor: "pointer", WebkitAppearance: "none", minHeight: 44 },
-    btnPrimary: { background: "#D4AF37", color: "#000", border: "none", borderRadius: 10, padding: "12px", fontSize: 14, cursor: "pointer", width: "100%", boxShadow: "0 4px 12px rgba(212, 175, 55, 0.2)" },
-    btnSecondary:{ background: c.input, color: c.text, border: `1px solid ${c.border}`, borderRadius: 10, padding: "10px", fontSize: 13, cursor: "pointer", width: "100%" },
-    tipoBtn: (a, col) => ({ flex: 1, padding: "8px", background: a ? col : c.input, border: `1px solid ${a ? col : c.border}`, color: a ? "#FFF" : c.muted, borderRadius: 10, cursor: "pointer", fontSize: 13, transition: "all 0.2s" }),
+    
+    input: { width: "100%", background: c.input, border: `1px solid ${c.border}`, borderRadius: 10, color: c.text, padding: "10px 12px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", fontWeight: 400, WebkitAppearance: "none", minHeight: 44 },
+    select: { width: "100%", background: c.input, border: `1px solid ${c.border}`, borderRadius: 10, color: c.text, padding: "10px 12px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", fontWeight: 400, cursor: "pointer", WebkitAppearance: "none", minHeight: 44 },
+    
+    btnPrimary: { background: "#D4AF37", color: "#000", border: "none", borderRadius: 10, padding: "12px", fontSize: 14, fontWeight: 700, cursor: "pointer", width: "100%", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(212, 175, 55, 0.2)" },
+    btnSecondary:{ background: c.input, color: c.text, border: `1px solid ${c.border}`, borderRadius: 10, padding: "10px", fontSize: 14, fontWeight: 600, cursor: "pointer", width: "100%", fontFamily: "inherit" },
+    tipoBtn: (a, col) => ({ flex: 1, padding: "8px", background: a ? col : c.input, border: `1px solid ${a ? col : c.border}`, color: a ? "#FFF" : c.muted, borderRadius: 10, cursor: "pointer", fontSize: 14, fontWeight: a ? 700 : 400, transition: "all 0.2s", fontFamily: "inherit" }),
+    
     itemRow:    { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: `1px solid ${c.border}` },
     catDot: (col) => ({ width: 8, height: 8, borderRadius: "50%", background: col, display: "inline-block", marginRight: 8, flexShrink: 0 }),
     
-    // AQUÍ ESTÁ LA SOLUCIÓN AL FONDO BLANCO EN EL MODO OSCURO (iOS)
+    // BOTONES SEGUROS PARA iOS
     deleteBtn:  { backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: c.red, cursor: "pointer", fontSize: 18, padding: "4px 6px" },
     editBtn:    { backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#D4AF37", cursor: "pointer", fontSize: 15, padding: "4px 6px" },
     
-    errorCard:  { background: isDark ? "#1A0A0A" : "#FEF2F2", border: `1px solid ${c.red}`, borderRadius: 12, padding: "16px", margin: "20px", color: c.red, fontSize: 13 },
+    errorCard:  { background: isDark ? "#1A0A0A" : "#FEF2F2", border: `1px solid ${c.red}`, borderRadius: 12, padding: "16px", margin: "20px", color: c.red, fontSize: 14, fontWeight: 400 },
     filterRow:  { display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" },
-    filterBtn: (a) => ({ padding: "6px 14px", borderRadius: 20, border: `1px solid ${a ? "#D4AF37" : c.border}`, background: a ? "#D4AF37" : c.card, color: a ? "#000" : c.muted, fontSize: 12, cursor: "pointer" }),
+    filterBtn: (a) => ({ padding: "6px 14px", borderRadius: 20, border: `1px solid ${a ? "#D4AF37" : c.border}`, background: a ? "#D4AF37" : c.card, color: a ? "#000" : c.muted, fontSize: 13, fontWeight: a ? 600 : 400, cursor: "pointer", fontFamily: "inherit" }),
     navBar: {
       position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480,
       background: c.nav, borderTop: `1px solid ${c.border}`, display: "flex", zIndex: 100,
@@ -458,8 +466,8 @@ export default function App() {
     },
     navBtn: (a) => ({
       flex: 1, paddingTop: 12, paddingBottom: 10, backgroundColor: "transparent", WebkitAppearance: "none", border: "none",
-      color: a ? "#D4AF37" : c.muted, fontSize: 10, cursor: "pointer",
-      display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
+      color: a ? "#D4AF37" : c.muted, fontSize: 11, fontWeight: a ? 600 : 400, cursor: "pointer",
+      display: "flex", flexDirection: "column", alignItems: "center", gap: 3, fontFamily: "inherit"
     }),
     overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: "20px", backdropFilter: "blur(4px)" },
     modal: { background: c.card, border: `1px solid ${c.border}`, borderRadius: 20, padding: "24px", width: "100%", maxWidth: 400, boxSizing: "border-box", boxShadow: "0 10px 30px rgba(0,0,0,0.2)" },
@@ -468,17 +476,26 @@ export default function App() {
   if (!loaded) return (
     <div style={{ background: c.bg, height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
       <div style={{ width: 32, height: 32, border: `2px solid ${c.border}`, borderTop: "2px solid #D4AF37", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-      <span style={{ color: c.muted, fontSize: 13 }}>Conectando...</span>
+      <span style={{ color: c.muted, fontSize: 14, fontFamily: "'Montserrat', sans-serif" }}>Conectando...</span>
     </div>
   );
 
   return (
     <div style={s.app}>
       <style>{`
-        *{box-sizing:border-box} 
-        html,body{background:${c.bg}!important; color:${c.text}; margin:0;padding:0;width:100vw;max-width:100%;overflow-x:hidden;overflow-y:auto; transition: background 0.3s ease, color 0.3s ease;}
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+        * { box-sizing: border-box; } 
+        html, body {
+          background: ${c.bg} !important; 
+          color: ${c.text}; 
+          margin: 0; padding: 0; 
+          width: 100vw; max-width: 100%; 
+          overflow-x: hidden; overflow-y: auto; 
+          font-family: 'Montserrat', sans-serif;
+          transition: background 0.3s ease, color 0.3s ease;
+        }
         body * { font-weight: ${useBold ? '700' : 'inherit'}; }
-        #root{background:${c.bg};min-height:100vh;width:100%;max-width:100%;overflow-x:hidden;overflow-y:auto;}
+        #root { background: ${c.bg}; min-height: 100vh; width: 100%; max-width: 100%; overflow-x: hidden; overflow-y: auto; }
         @keyframes spin { to { transform: rotate(360deg) } }
       `}</style>
 
@@ -486,7 +503,7 @@ export default function App() {
         <>
           <div style={{ padding: "16px 20px", borderBottom: `1px solid ${c.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: c.bg, position: "sticky", top: 0, zIndex: 10 }}>
             <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#D4AF37", fontSize: 24, cursor: "pointer", padding: 0 }} onClick={() => { setViewAll(false); window.scrollTo(0, 0); }}>←</button>
-            <h2 style={{ margin: 0, fontSize: 18, color: c.text }}>Movimientos</h2>
+            <h2 style={{ margin: 0, fontSize: 18, color: c.text, fontWeight: 600 }}>Movimientos</h2>
             <div style={{ display: "flex", gap: 16 }}>
               <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#D4AF37", fontSize: 20, cursor: "pointer", padding: 0 }} onClick={() => setShowEmailModal(true)}>✉️</button>
               <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#D4AF37", fontSize: 20, cursor: "pointer", padding: 0 }} onClick={() => setShowVtFiltro(!showVtFiltro)}>📅</button>
@@ -494,26 +511,26 @@ export default function App() {
           </div>
           {showVtFiltro && (
             <div style={{ padding: "16px 20px", background: c.card, borderBottom: `1px solid ${c.border}` }}>
-              <div style={{ ...s.label, marginBottom: 6, textAlign: "center" }}>Filtrar por rango de fecha</div>
+              <div style={{ ...s.label, textAlign: "center" }}>Filtrar por rango de fecha</div>
               <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                 <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                  <div style={{ ...s.label, marginBottom: 3, textAlign: "center" }}>Del</div>
+                  <div style={{ fontSize: 12, color: c.muted, marginBottom: 3, textAlign: "center", fontWeight: 400 }}>Del</div>
                   <input type="date" value={vtFechaDesde} onChange={e => setVtFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
                 </div>
                 <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                  <div style={{ ...s.label, marginBottom: 3, textAlign: "center" }}>Al</div>
+                  <div style={{ fontSize: 12, color: c.muted, marginBottom: 3, textAlign: "center", fontWeight: 400 }}>Al</div>
                   <input type="date" value={vtFechaHasta} onChange={e => setVtFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
                 </div>
               </div>
               {(vtFechaDesde || vtFechaHasta) && (
-                <button style={{ width: "100%", fontSize: 12, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", padding: "12px 0 0", marginTop: 4 }} onClick={() => { setVtFechaDesde(""); setVtFechaHasta(""); }}>× Limpiar fechas</button>
+                <button style={{ width: "100%", fontSize: 14, fontWeight: 600, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", padding: "12px 0 0", marginTop: 4, fontFamily: "inherit" }} onClick={() => { setVtFechaDesde(""); setVtFechaHasta(""); }}>× Limpiar fechas</button>
               )}
             </div>
           )}
           <div style={s.section}>
-            <div style={{ ...s.label, marginBottom: 12, textAlign: "center" }}>{gastosVerTodos.length} movimientos</div>
+            <div style={{ ...s.label, textAlign: "center" }}>{gastosVerTodos.length} movimientos</div>
             {gastosVerTodos.length === 0 ? (
-              <div style={{ ...s.card, textAlign: "center", color: c.muted, padding: "32px" }}>No se encontraron movimientos</div>
+              <div style={{ ...s.card, textAlign: "center", color: c.muted, padding: "32px", fontWeight: 400 }}>No se encontraron movimientos</div>
             ) : (
               gastosVerTodos.map(g => {
                 const cat = categorias.find(c => c.id === g.categoria);
@@ -524,11 +541,11 @@ export default function App() {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: "flex", alignItems: "center", marginBottom: 2 }}>
                           {cat && <span style={s.catDot(cat.color)} />}
-                          <span style={{ fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.descripcion}</span>
+                          <span style={{ fontSize: 14, fontWeight: 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.descripcion}</span>
                         </div>
-                        <div style={{ fontSize: 11, color: c.muted }}>{fecha} | {hora}</div>
+                        <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{fecha} | {hora}</div>
                       </div>
-                      <span style={{ fontFamily: "monospace", color: g.tipo === "gasto" ? c.red : c.green, marginRight: 4 }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
+                      <span style={{ fontSize: 16, fontWeight: 700, color: g.tipo === "gasto" ? c.red : c.green, marginRight: 4 }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
                       <button style={s.editBtn} onClick={() => abrirEdicion(g)}>✏️</button>
                       <button style={s.deleteBtn} onClick={() => eliminar(g.id)}>×</button>
                     </div>
@@ -543,10 +560,10 @@ export default function App() {
           <div style={s.header}>
             <div style={{ display: "flex", justifyContent: "center", alignItems: "center", position: "relative", marginBottom: 4 }}>
               <button onClick={() => setShowMenu(true)} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: c.green, fontSize: 26, cursor: "pointer", position: "absolute", left: 0, padding: 0 }}>☰</button>
-              <h1 style={{ ...s.title, fontWeight: "700" }}>Ahorro Meta</h1>
+              <h1 style={s.title}>Ahorro Meta</h1>
               <button onClick={() => window.location.reload()} style={{ ...s.refreshBtn, position: "absolute", right: 0 }}>🔄</button>
             </div>
-            <p style={{ ...s.subtitle, textAlign: "center" }}>Meta: {formatMoney(metaTotalNum)} · Día {diasTranscurridosPlan} de {diasTotalPlan}</p>
+            <p style={s.subtitle}>Meta: {formatMoney(metaTotalNum)} · Día {diasTranscurridosPlan} de {diasTotalPlan}</p>
             <div style={s.tabs}>
               {[{ id: "hoy", label: "Hoy" }, { id: "resumen", label: "Resumen" }, { id: "historial", label: "Historial" }, { id: "config", label: "Config" }].map(t => (
                 <button key={t.id} style={s.tab(tab === t.id)} onClick={() => setTab(t.id)}>{t.label}</button>
@@ -561,43 +578,43 @@ export default function App() {
               <div style={s.metaCard}>
                 <div style={{ ...s.metaLabel, textAlign: "center" }}>Progreso hacia tu meta</div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                  <span style={{ ...s.bigNum, fontWeight: "700" }}>{formatMoney(Math.max(0, ahorroAcumulado))}</span>
-                  <span style={{ color: "#AAA", fontSize: 13 }}>de {formatMoney(metaTotalNum)}</span>
+                  <span style={s.bigNum}>{formatMoney(Math.max(0, ahorroAcumulado))}</span>
+                  <span style={{ color: "#AAA", fontSize: 13, fontWeight: 400 }}>de {formatMoney(metaTotalNum)}</span>
                 </div>
                 <div style={s.progressBg}><div style={s.progressFill(progreso)} /></div>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#888", marginBottom: 8 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#888", marginBottom: 8, fontWeight: 400 }}>
                   <span>{progreso.toFixed(1)}% completado</span>
                   <span>{diasRestantesPlan} días restantes</span>
                 </div>
-                <div style={{ borderTop: "1px solid #2A2000", paddingTop: 8, display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+                <div style={{ borderTop: "1px solid #2A2000", paddingTop: 8, display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 400 }}>
                   <span style={{ color: "#AAA" }}>Falta ahorrar</span>
-                  <span style={{ color: "#E8845A", fontFamily: "monospace", fontWeight: "700" }}>{formatMoney(Math.max(0, metaTotalNum - ahorroAcumulado))}</span>
+                  <span style={{ color: "#E8845A", fontWeight: 700 }}>{formatMoney(Math.max(0, metaTotalNum - ahorroAcumulado))}</span>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginTop: 4 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginTop: 4, fontWeight: 400 }}>
                   <span style={{ color: "#AAA" }}>A este ritmo llegarás</span>
-                  <span style={{ color: "#D4AF37", fontWeight: "700" }}>{proyeccionTexto}</span>
+                  <span style={{ color: "#D4AF37", fontWeight: 700 }}>{proyeccionTexto}</span>
                 </div>
               </div>
 
               <div style={s.grid2}>
                 <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Ingresos hoy</div><div style={s.greenNum}>{formatMoney(totalIngresosHoy)}</div></div>
                 <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Gastado hoy</div><div style={s.redNum}>{formatMoney(totalGastadoHoy)}</div></div>
-                <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Ahorro hoy</div><div style={{ fontFamily: "monospace", fontSize: 20, color: "#D4AF37", fontWeight: "600" }}>{formatMoney(totalIngresosHoy - totalGastadoHoy)}</div></div>
-                <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Límite ahorro / día</div><div style={{ fontFamily: "monospace", fontSize: 20, color: c.text, fontWeight: "600" }}>{formatMoney(ahorroMetaDiario)}</div></div>
+                <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Ahorro hoy</div><div style={{ fontSize: 24, fontWeight: 700, color: "#D4AF37" }}>{formatMoney(totalIngresosHoy - totalGastadoHoy)}</div></div>
+                <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Límite ahorro / día</div><div style={{ fontSize: 24, fontWeight: 700, color: c.text }}>{formatMoney(ahorroMetaDiario)}</div></div>
               </div>
 
               <div style={s.card}>
-                <div style={{ ...s.label, textAlign: "center", marginBottom: 16 }}>Registrar movimiento</div>
+                <div style={{ ...s.label, textAlign: "center" }}>Registrar movimiento</div>
                 <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
                   <button style={s.tipoBtn(form.tipo === "gasto", c.red)} onClick={() => setForm(f => ({ ...f, tipo: "gasto" }))}>− Gasto</button>
                   <button style={s.tipoBtn(form.tipo === "ingreso", c.green)} onClick={() => setForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
                 </div>
-                <input style={{ ...s.input, marginBottom: 8, fontSize: 22, textAlign: "center" }} type="number" placeholder="0.00" value={form.monto} onChange={e => setForm(f => ({ ...f, monto: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
+                <input style={{ ...s.input, marginBottom: 8, fontSize: 22, fontWeight: 700, textAlign: "center" }} type="number" placeholder="0.00" value={form.monto} onChange={e => setForm(f => ({ ...f, monto: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
                 <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
                   <select style={{ ...s.select, flex: 1, marginBottom: 0 }} value={form.categoria} onChange={e => setForm(f => ({ ...f, categoria: e.target.value }))}>
                     {categorias.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
                   </select>
-                  <input style={{ ...s.input, flex: 1, marginBottom: 0, fontSize: 13 }} type="text" placeholder="Descripción" value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
+                  <input style={{ ...s.input, flex: 1, marginBottom: 0, fontSize: 14 }} type="text" placeholder="Descripción" value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
                 </div>
                 <button style={s.btnPrimary} onClick={agregarMovimiento} disabled={saving}>{saving ? "Guardando..." : `Registrar ${form.tipo === "gasto" ? "Gasto" : "Ingreso"}`}</button>
               </div>
@@ -611,19 +628,19 @@ export default function App() {
                     return (
                       <div key={g.id} style={s.itemRow}>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: "flex", alignItems: "center", marginBottom: 2 }}>{cat && <span style={s.catDot(cat.color)} />}<span style={{ fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.descripcion}</span></div>
-                          <div style={{ fontSize: 11, color: c.muted }}>{fecha} | {hora}</div>
+                          <div style={{ display: "flex", alignItems: "center", marginBottom: 2 }}>{cat && <span style={s.catDot(cat.color)} />}<span style={{ fontSize: 14, fontWeight: 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.descripcion}</span></div>
+                          <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{fecha} | {hora}</div>
                         </div>
-                        <span style={{ fontFamily: "monospace", color: g.tipo === "gasto" ? c.red : c.green, marginRight: 4 }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
+                        <span style={{ fontSize: 16, fontWeight: 700, color: g.tipo === "gasto" ? c.red : c.green, marginRight: 4 }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
                         <button style={s.editBtn} onClick={() => abrirEdicion(g)}>✏️</button>
                         <button style={s.deleteBtn} onClick={() => eliminar(g.id)}>×</button>
                       </div>
                     );
                   })}
-                  <button style={{ ...s.btnPrimary, marginTop: 12, padding: "10px", fontSize: 13 }} onClick={() => { setViewAll(true); window.scrollTo(0, 0); }}>Ver todos</button>
+                  <button style={{ ...s.btnPrimary, marginTop: 12, padding: "10px", fontSize: 14 }} onClick={() => { setViewAll(true); window.scrollTo(0, 0); }}>Ver todos</button>
                 </div>
               ) : (
-                <div style={{ ...s.card, textAlign: "center", color: c.muted, padding: "24px" }}>Sin movimientos hoy</div>
+                <div style={{ ...s.card, textAlign: "center", color: c.muted, padding: "24px", fontWeight: 400 }}>Sin movimientos hoy</div>
               )}
             </div>
           )}
@@ -639,16 +656,16 @@ export default function App() {
                 <div style={{ ...s.card, padding: 12 }}>
                   <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
                     <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                      <div style={{ ...s.label, marginBottom: 5, textAlign: "center" }}>Del</div>
+                      <div style={{ fontSize: 12, color: c.muted, marginBottom: 5, textAlign: "center", fontWeight: 400 }}>Del</div>
                       <input type="date" value={filtroFechaResumenDesde} onChange={e => setFiltroFechaResumenDesde(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
                     </div>
                     <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                      <div style={{ ...s.label, marginBottom: 5, textAlign: "center" }}>Al</div>
+                      <div style={{ fontSize: 12, color: c.muted, marginBottom: 5, textAlign: "center", fontWeight: 400 }}>Al</div>
                       <input type="date" value={filtroFechaResumenHasta} onChange={e => setFiltroFechaResumenHasta(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
                     </div>
                   </div>
                   {(filtroFechaResumenDesde || filtroFechaResumenHasta) && (
-                    <button style={{ width: "100%", fontSize: 12, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 12 }} onClick={() => { setFiltroFechaResumenDesde(""); setFiltroFechaResumenHasta(""); }}>× Limpiar fechas</button>
+                    <button style={{ width: "100%", fontSize: 14, fontWeight: 600, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 12, fontFamily: "inherit" }} onClick={() => { setFiltroFechaResumenDesde(""); setFiltroFechaResumenHasta(""); }}>× Limpiar fechas</button>
                   )}
                 </div>
               )}
@@ -662,29 +679,29 @@ export default function App() {
 
               <div style={{ ...s.card, background: isDark ? "#0F1A0F" : "#F0FDF4", border: `1px solid ${isDark ? "#1A3A1A" : "#BBF7D0"}`, textAlign: "center" }}>
                 <div style={{ ...s.label, textAlign: "center", color: isDark ? c.muted : "#065F46" }}>Proyección inteligente</div>
-                <div style={{ fontSize: 15, color: isDark ? "#D4AF37" : "#047857", fontWeight: "700", marginTop: 6 }}>📈 A este ritmo llegarás a tu meta {proyeccionTexto}</div>
-                <div style={{ fontSize: 12, color: c.muted, marginTop: 4 }}>Basado en un ahorro diario promedio de {formatMoney(ahorroDiarioProm > 0 ? ahorroDiarioProm : 0)}</div>
+                <div style={{ fontSize: 16, color: isDark ? "#D4AF37" : "#047857", fontWeight: 700, marginTop: 6 }}>📈 A este ritmo llegarás a tu meta {proyeccionTexto}</div>
+                <div style={{ fontSize: 12, color: c.muted, marginTop: 4, fontWeight: 400 }}>Basado en un ahorro diario promedio de {formatMoney(ahorroDiarioProm > 0 ? ahorroDiarioProm : 0)}</div>
               </div>
 
               {ingMensual > 0 && (
                 <div style={s.metaCard}>
                   <div style={{ ...s.metaLabel, textAlign: "center" }}>Para lograr tu meta</div>
-                  <div style={{ fontSize: 13, color: "#CCC", lineHeight: 1.9, marginTop: 8, textAlign: "center" }}>
-                    <div>💰 Ahorra <strong style={{ color: "#D4AF37", fontWeight: "700" }}>{formatMoney(ahorroMetaDiario)}/día</strong></div>
-                    <div>📅 o <strong style={{ color: "#D4AF37", fontWeight: "700" }}>{formatMoney(ahorroMetaDiario * 30)}/mes</strong></div>
-                    <div>💸 Límite de gasto: <strong style={{ color: c.green, fontWeight: "700" }}>{formatMoney(presupuestoDiario)}/día</strong></div>
-                    <div>🎯 Faltan: <strong style={{ color: "#D4AF37", fontWeight: "700" }}>{formatMoney(Math.max(0, metaTotalNum - ahorroAcumulado))}</strong></div>
+                  <div style={{ fontSize: 14, color: "#CCC", lineHeight: 1.9, marginTop: 8, textAlign: "center", fontWeight: 400 }}>
+                    <div>💰 Ahorra <strong style={{ color: "#D4AF37", fontWeight: 700 }}>{formatMoney(ahorroMetaDiario)}/día</strong></div>
+                    <div>📅 o <strong style={{ color: "#D4AF37", fontWeight: 700 }}>{formatMoney(ahorroMetaDiario * 30)}/mes</strong></div>
+                    <div>💸 Límite de gasto: <strong style={{ color: c.green, fontWeight: 700 }}>{formatMoney(presupuestoDiario)}/día</strong></div>
+                    <div>🎯 Faltan: <strong style={{ color: "#D4AF37", fontWeight: 700 }}>{formatMoney(Math.max(0, metaTotalNum - ahorroAcumulado))}</strong></div>
                   </div>
                 </div>
               )}
 
               <div style={s.card}>
-                <div style={{ ...s.label, marginBottom: 14, textAlign: "center" }}>Gastos últimos 7 días</div>
-                <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 80 }}>
+                <div style={{ ...s.label, textAlign: "center" }}>Gastos últimos 7 días</div>
+                <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 80, marginTop: 14 }}>
                   {gastosUltimos7.map((d, i) => (
                     <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
                       <div style={{ width: "100%", height: `${d.total ? Math.max(8, (d.total / maxBar) * 70) : 3}px`, background: d.fecha === fechaHoy ? "#D4AF37" : c.border, borderRadius: "3px 3px 0 0" }} />
-                      <span style={{ fontSize: 9, color: d.fecha === fechaHoy ? "#D4AF37" : c.muted }}>{d.label}</span>
+                      <span style={{ fontSize: 10, fontWeight: 400, color: d.fecha === fechaHoy ? "#D4AF37" : c.muted }}>{d.label}</span>
                     </div>
                   ))}
                 </div>
@@ -692,12 +709,12 @@ export default function App() {
 
               {porCategoriaR.length > 0 && (
                 <div style={s.card}>
-                  <div style={{ ...s.label, marginBottom: 14 }}>Por categoría</div>
+                  <div style={s.label}>Por categoría</div>
                   {porCategoriaR.map(cat => (
                     <div key={cat.id} style={{ marginBottom: 12 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                        <span style={{ fontSize: 13 }}>{cat.label}</span>
-                        <span style={{ fontFamily: "monospace", fontSize: 13, color: cat.color }}>{formatMoney(cat.total)}</span>
+                        <span style={{ fontSize: 14, fontWeight: 400 }}>{cat.label}</span>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: cat.color }}>{formatMoney(cat.total)}</span>
                       </div>
                       <div style={{ background: c.border, borderRadius: 3, height: 4, overflow: "hidden" }}>
                         <div style={{ height: "100%", width: `${(cat.total / maxCatR) * 100}%`, background: cat.color, borderRadius: 3 }} />
@@ -717,20 +734,20 @@ export default function App() {
               </div>
 
               <div style={s.card}>
-                <div style={{ ...s.label, marginBottom: 6, textAlign: "center" }}>Filtrar por categoría</div>
-                <div style={{ ...s.filterRow, marginBottom: 12 }}>
+                <div style={{ ...s.label, textAlign: "center" }}>Filtrar por categoría</div>
+                <div style={{ ...s.filterRow, marginTop: 12 }}>
                   <button style={s.filterBtn(filtroHistCat === "todas")} onClick={() => setFiltroHistCat("todas")}>Todas</button>
                   {categorias.map(c => <button key={c.id} style={s.filterBtn(filtroHistCat === c.id)} onClick={() => setFiltroHistCat(c.id)}>{c.label}</button>)}
                 </div>
-                <div style={{ ...s.label, marginBottom: 8, marginTop: 12, textAlign: "center" }}>Filtrar por rango de fecha</div>
-                <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 6 }}>
-                  <div style={{ flex: 1 }}><div style={{ ...s.label, textAlign: "center" }}>Del</div><input type="date" value={filtroHistFechaDesde} onChange={e => setFiltroHistFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center" }} /></div>
-                  <div style={{ flex: 1 }}><div style={{ ...s.label, textAlign: "center" }}>Al</div><input type="date" value={filtroHistFechaHasta} onChange={e => setFiltroHistFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center" }} /></div>
+                <div style={{ ...s.label, marginTop: 24, textAlign: "center" }}>Filtrar por rango de fecha</div>
+                <div style={{ display: "flex", gap: 12, alignItems: "center", marginTop: 12 }}>
+                  <div style={{ flex: 1 }}><div style={{ fontSize: 12, color: c.muted, marginBottom: 4, textAlign: "center", fontWeight: 400 }}>Del</div><input type="date" value={filtroHistFechaDesde} onChange={e => setFiltroHistFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center" }} /></div>
+                  <div style={{ flex: 1 }}><div style={{ fontSize: 12, color: c.muted, marginBottom: 4, textAlign: "center", fontWeight: 400 }}>Al</div><input type="date" value={filtroHistFechaHasta} onChange={e => setFiltroHistFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center" }} /></div>
                 </div>
-                {(filtroHistFechaDesde || filtroHistFechaHasta) && <button style={{ width: "100%", fontSize: 12, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 4 }} onClick={() => { setFiltroHistFechaDesde(""); setFiltroHistFechaHasta(""); }}>× Limpiar fechas</button>}
+                {(filtroHistFechaDesde || filtroHistFechaHasta) && <button style={{ width: "100%", fontSize: 14, fontWeight: 600, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 12, fontFamily: "inherit" }} onClick={() => { setFiltroHistFechaDesde(""); setFiltroHistFechaHasta(""); }}>× Limpiar fechas</button>}
               </div>
 
-              {gastosFiltradosHist.length === 0 ? <div style={{ ...s.card, textAlign: "center", color: c.muted, padding: "32px" }}>Sin movimientos</div> : (
+              {gastosFiltradosHist.length === 0 ? <div style={{ ...s.card, textAlign: "center", color: c.muted, padding: "32px", fontWeight: 400 }}>Sin movimientos</div> : (
                 <>
                   <div style={{ ...s.label, textAlign: "center", marginTop: 24, marginBottom: 16 }}>{gastosFiltradosHist.length} movimientos</div>
                   {gastosFiltradosHist.map(g => {
@@ -740,10 +757,10 @@ export default function App() {
                       <div key={g.id} style={{ ...s.card, padding: "12px 14px", marginBottom: 6 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ display: "flex", alignItems: "center", marginBottom: 2 }}>{cat && <span style={s.catDot(cat.color)} />}<span style={{ fontSize: 14 }}>{g.descripcion}</span></div>
-                            <div style={{ fontSize: 11, color: c.muted }}>{fecha} | {hora}</div>
+                            <div style={{ display: "flex", alignItems: "center", marginBottom: 2 }}>{cat && <span style={s.catDot(cat.color)} />}<span style={{ fontSize: 14, fontWeight: 400 }}>{g.descripcion}</span></div>
+                            <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{fecha} | {hora}</div>
                           </div>
-                          <span style={{ fontFamily: "monospace", color: g.tipo === "gasto" ? c.red : c.green }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
+                          <span style={{ fontSize: 16, fontWeight: 700, color: g.tipo === "gasto" ? c.red : c.green }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
                         </div>
                       </div>
                     );
@@ -756,21 +773,23 @@ export default function App() {
           {tab === "config" && (
             <div style={s.section}>
               <div style={s.card}>
-                <div style={{ ...s.label, marginBottom: 8, textAlign: "center" }}>DEFINIR META DE AHORRO (S/)</div>
-                <input style={{ ...s.input, marginBottom: 20, fontSize: 24, textAlign: "center", color: "#D4AF37", fontWeight: "700" }} type={isEditingMeta ? "number" : "text"} placeholder="Ej: 100000" value={isEditingMeta ? metaAhorro : (metaAhorro ? formatMoney(metaAhorro) : "")} onFocus={() => setIsEditingMeta(true)} onBlur={() => setIsEditingMeta(false)} onChange={e => setMetaAhorro(e.target.value)} />
-                <div style={{ ...s.label, marginBottom: 8, textAlign: "center" }}>PERÍODO DE AHORRO</div>
-                <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
-                  <div style={{ flex: 1 }}><div style={{ ...s.label, textAlign: "center" }}>DEL</div><input style={{ ...s.input, textAlign: "center" }} type="date" value={fechaInicioPlan} onChange={e => setFechaInicioPlan(e.target.value)} /></div>
-                  <div style={{ flex: 1 }}><div style={{ ...s.label, textAlign: "center" }}>AL</div><input style={{ ...s.input, textAlign: "center" }} type="date" value={fechaFinPlan} onChange={e => setFechaFinPlan(e.target.value)} /></div>
+                <div style={{ ...s.label, textAlign: "center" }}>DEFINIR META DE AHORRO (S/)</div>
+                <input style={{ ...s.input, marginTop: 12, marginBottom: 24, fontSize: 24, textAlign: "center", color: "#D4AF37", fontWeight: 700 }} type={isEditingMeta ? "number" : "text"} placeholder="Ej: 100000" value={isEditingMeta ? metaAhorro : (metaAhorro ? formatMoney(metaAhorro) : "")} onFocus={() => setIsEditingMeta(true)} onBlur={() => setIsEditingMeta(false)} onChange={e => setMetaAhorro(e.target.value)} />
+                
+                <div style={{ ...s.label, textAlign: "center" }}>PERÍODO DE AHORRO</div>
+                <div style={{ display: "flex", gap: 12, marginTop: 12, marginBottom: 24 }}>
+                  <div style={{ flex: 1 }}><div style={{ fontSize: 12, color: c.muted, marginBottom: 4, textAlign: "center", fontWeight: 400 }}>DEL</div><input style={{ ...s.input, textAlign: "center" }} type="date" value={fechaInicioPlan} onChange={e => setFechaInicioPlan(e.target.value)} /></div>
+                  <div style={{ flex: 1 }}><div style={{ fontSize: 12, color: c.muted, marginBottom: 4, textAlign: "center", fontWeight: 400 }}>AL</div><input style={{ ...s.input, textAlign: "center" }} type="date" value={fechaFinPlan} onChange={e => setFechaFinPlan(e.target.value)} /></div>
                 </div>
-                <div style={{ ...s.label, marginBottom: 8, textAlign: "center" }}>INGRESO MENSUAL (S/)</div>
-                <input style={{ ...s.input, marginBottom: 16, fontSize: 20, textAlign: "center", color: c.green, fontWeight: "700" }} type={isEditingIngreso ? "number" : "text"} placeholder="Ej: 5000" value={isEditingIngreso ? ingresoMensual : (ingresoMensual ? formatMoney(ingresoMensual) : "")} onFocus={() => setIsEditingIngreso(true)} onBlur={() => setIsEditingIngreso(false)} onChange={e => setIngresoMensual(e.target.value)} />
+                
+                <div style={{ ...s.label, textAlign: "center" }}>INGRESO MENSUAL (S/)</div>
+                <input style={{ ...s.input, marginTop: 12, marginBottom: 24, fontSize: 20, textAlign: "center", color: c.green, fontWeight: 700 }} type={isEditingIngreso ? "number" : "text"} placeholder="Ej: 5000" value={isEditingIngreso ? ingresoMensual : (ingresoMensual ? formatMoney(ingresoMensual) : "")} onFocus={() => setIsEditingIngreso(true)} onBlur={() => setIsEditingIngreso(false)} onChange={e => setIngresoMensual(e.target.value)} />
                 <button style={s.btnPrimary} onClick={guardarConfig} disabled={saving}>{saving ? "Guardando..." : "Guardar configuración"}</button>
               </div>
 
               <div style={s.card}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}><div style={s.label}>Categorías Base</div></div>
-                {safeBase.length === 0 ? <div style={{ color: c.muted, fontSize: 13, textAlign: "center" }}>No hay categorías base</div> : safeBase.map(cat => (
+                {safeBase.length === 0 ? <div style={{ color: c.muted, fontSize: 14, fontWeight: 400, textAlign: "center" }}>No hay categorías base</div> : safeBase.map(cat => (
                   editandoCatBase === cat.id ? (
                     <div key={cat.id} style={{ background: c.input, borderRadius: 8, padding: 12, margin: "8px 0" }}>
                       <input style={{ ...s.input, marginBottom: 8 }} value={editCatBaseLabel} onChange={e => setEditCatBaseLabel(e.target.value)} />
@@ -782,7 +801,7 @@ export default function App() {
                     </div>
                   ) : (
                     <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: `1px solid ${c.border}` }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={s.catDot(cat.color)} /><span style={{ fontSize: 14 }}>{cat.label}</span></div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={s.catDot(cat.color)} /><span style={{ fontSize: 14, fontWeight: 400 }}>{cat.label}</span></div>
                       <div><button style={s.editBtn} onClick={() => abrirEdicionCatBase(cat)}>✏️</button><button style={s.deleteBtn} onClick={() => eliminarCategoriaBase(cat.id)}>×</button></div>
                     </div>
                   )
@@ -790,7 +809,7 @@ export default function App() {
               </div>
 
               <div style={s.card}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}><div style={s.label}>Categorías personalizadas</div><button style={{ backgroundColor: "#D4AF37", WebkitAppearance: "none", color: "#000", border: "none", borderRadius: 6, padding: "4px 12px", cursor: "pointer" }} onClick={() => setShowNuevaCat(v => !v)}>+ Nueva</button></div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}><div style={s.label}>Categorías personalizadas</div><button style={{ backgroundColor: "#D4AF37", WebkitAppearance: "none", color: "#000", border: "none", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontWeight: 700, fontFamily: "inherit" }} onClick={() => setShowNuevaCat(v => !v)}>+ Nueva</button></div>
                 {showNuevaCat && (
                   <div style={{ background: c.input, borderRadius: 8, padding: 12, marginBottom: 12 }}>
                     <input style={{ ...s.input, marginBottom: 8 }} placeholder="Ej: 🛍️ Compras" value={nuevaCatLabel} onChange={e => setNuevaCatLabel(e.target.value)} />
@@ -799,7 +818,7 @@ export default function App() {
                     <div style={{ display: "flex", gap: 8 }}><button style={s.btnSecondary} onClick={() => setShowNuevaCat(false)}>Cancelar</button><button style={s.btnPrimary} onClick={agregarCategoria}>Agregar</button></div>
                   </div>
                 )}
-                {safeExtra.length === 0 ? <div style={{ color: c.muted, fontSize: 13, textAlign: "center", padding: "8px 0" }}>Aún no hay categorías</div> : safeExtra.map(cat => (
+                {safeExtra.length === 0 ? <div style={{ color: c.muted, fontSize: 14, fontWeight: 400, textAlign: "center", padding: "8px 0" }}>Aún no hay categorías</div> : safeExtra.map(cat => (
                   editandoCat === cat.id ? (
                     <div key={cat.id} style={{ background: c.input, borderRadius: 8, padding: 12, margin: "8px 0" }}>
                       <input style={{ ...s.input, marginBottom: 8 }} value={editCatLabel} onChange={e => setEditCatLabel(e.target.value)} />
@@ -809,7 +828,7 @@ export default function App() {
                     </div>
                   ) : (
                     <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: `1px solid ${c.border}` }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={s.catDot(cat.color)} /><span style={{ fontSize: 14 }}>{cat.label}</span></div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={s.catDot(cat.color)} /><span style={{ fontSize: 14, fontWeight: 400 }}>{cat.label}</span></div>
                       <div><button style={s.editBtn} onClick={() => abrirEdicionCat(cat)}>✏️</button><button style={s.deleteBtn} onClick={() => eliminarCategoria(cat.id)}>×</button></div>
                     </div>
                   )
@@ -832,7 +851,7 @@ export default function App() {
           <div style={s.navBar}>
             {[{ id: "hoy", icon: "📝", label: "Hoy" }, { id: "resumen", icon: "📊", label: "Resumen" }, { id: "historial", icon: "📋", label: "Historial" }, { id: "config", icon: "⚙️", label: "Config" }].map(n => (
               <button key={n.id} style={s.navBtn(tab === n.id)} onClick={() => setTab(n.id)}>
-                <span style={{ fontSize: 22 }}>{n.icon}</span><span>{n.label}</span>
+                <span style={{ fontSize: 22 }}>{n.icon}</span><span style={{ fontFamily: "'Montserrat', sans-serif" }}>{n.label}</span>
               </button>
             ))}
           </div>
@@ -844,10 +863,10 @@ export default function App() {
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
             <button onClick={() => { setShowApariencia(false); setShowMenu(true); }} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#D4AF37", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
-            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: "700" }}>Pantalla y brillo</h2>
+            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Pantalla y brillo</h2>
           </div>
 
-          <div style={{ fontSize: 13, color: c.muted, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 12, fontWeight: "700" }}>Aspecto</div>
+          <div style={{ fontSize: 14, color: c.muted, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 12, fontWeight: 700 }}>Aspecto</div>
           <div style={{ background: c.card, borderRadius: 16, padding: "20px 20px 0", marginBottom: 24, border: `1px solid ${c.border}`, boxShadow: c.shadow }}>
             
             <div style={{ display: "flex", justifyContent: "space-around", paddingBottom: 24 }}>
@@ -856,7 +875,7 @@ export default function App() {
                   <div style={{ position: "absolute", top: 12, left: 6, right: 6, height: 24, background: "#E5E5E5", borderRadius: 4 }} />
                   <div style={{ position: "absolute", top: 44, left: 6, right: 6, height: 18, background: "#E5E5E5", borderRadius: 4 }} />
                 </div>
-                <span style={{ fontSize: 15, fontWeight: "500" }}>Claro</span>
+                <span style={{ fontSize: 16, fontWeight: 600 }}>Claro</span>
                 <div style={{ width: 22, height: 22, borderRadius: "50%", border: theme === "light" ? "none" : `1px solid ${c.muted}`, background: theme === "light" ? "#34C759" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   {theme === "light" && <span style={{ color: "#FFF", fontSize: 14 }}>✓</span>}
                 </div>
@@ -867,7 +886,7 @@ export default function App() {
                   <div style={{ position: "absolute", top: 12, left: 6, right: 6, height: 24, background: "#333", borderRadius: 4 }} />
                   <div style={{ position: "absolute", top: 44, left: 6, right: 6, height: 18, background: "#333", borderRadius: 4 }} />
                 </div>
-                <span style={{ fontSize: 15, fontWeight: "500" }}>Oscuro</span>
+                <span style={{ fontSize: 16, fontWeight: 600 }}>Oscuro</span>
                 <div style={{ width: 22, height: 22, borderRadius: "50%", border: theme === "dark" ? "none" : `1px solid ${c.muted}`, background: theme === "dark" ? "#34C759" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   {theme === "dark" && <span style={{ color: "#FFF", fontSize: 14 }}>✓</span>}
                 </div>
@@ -875,7 +894,7 @@ export default function App() {
             </div>
 
             <div style={{ borderTop: `1px solid ${c.border}`, padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: 16 }}>Automático</span>
+              <span style={{ fontSize: 16, fontWeight: 600 }}>Automático</span>
               <div onClick={() => setIsAutoTheme(!isAutoTheme)} style={{ width: 50, height: 30, background: isAutoTheme ? "#34C759" : c.border, borderRadius: 15, position: "relative", cursor: "pointer", transition: "0.3s" }}>
                 <div style={{ width: 26, height: 26, background: "#FFF", borderRadius: "50%", position: "absolute", top: 2, left: isAutoTheme ? 22 : 2, transition: "0.3s", boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}/>
               </div>
@@ -883,9 +902,9 @@ export default function App() {
 
             {isAutoTheme && (
               <div style={{ borderTop: `1px solid ${c.border}`, padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
-                <span style={{ fontSize: 16 }}>Opciones</span>
+                <span style={{ fontSize: 16, fontWeight: 600 }}>Opciones</span>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ color: c.muted, fontSize: 15 }}>Claro hasta el atardecer</span>
+                  <span style={{ color: c.muted, fontSize: 14, fontWeight: 400 }}>Claro hasta el atardecer</span>
                   <span style={{ color: c.muted, fontSize: 18 }}>›</span>
                 </div>
               </div>
@@ -894,11 +913,11 @@ export default function App() {
 
           <div style={{ background: c.card, borderRadius: 16, padding: "0 20px", border: `1px solid ${c.border}`, boxShadow: c.shadow }}>
             <div style={{ padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, cursor: "pointer" }}>
-              <span style={{ fontSize: 16 }}>Tamaño del texto</span>
+              <span style={{ fontSize: 16, fontWeight: 600 }}>Tamaño del texto</span>
               <span style={{ color: c.muted, fontSize: 18 }}>›</span>
             </div>
             <div style={{ padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: 16 }}>Negritas</span>
+              <span style={{ fontSize: 16, fontWeight: 600 }}>Negritas</span>
               <div onClick={() => setUseBold(!useBold)} style={{ width: 50, height: 30, background: useBold ? "#34C759" : c.border, borderRadius: 15, position: "relative", cursor: "pointer", transition: "0.3s" }}>
                 <div style={{ width: 26, height: 26, background: "#FFF", borderRadius: "50%", position: "absolute", top: 2, left: useBold ? 22 : 2, transition: "0.3s", boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}/>
               </div>
@@ -914,18 +933,18 @@ export default function App() {
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 9999, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
             <button onClick={() => setShowMenu(false)} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#D4AF37", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
-            <h2 style={{ margin: 0, fontSize: 22, color: c.text, fontWeight: "700" }}>Mi Perfil</h2>
+            <h2 style={{ margin: 0, fontSize: 22, color: c.text, fontWeight: 700 }}>Mi Perfil</h2>
           </div>
 
           <div style={{ marginBottom: 32 }}>
-            <div style={{ fontSize: 12, color: "#D4AF37", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: "700" }}>Mi cuenta</div>
+            <div style={{ fontSize: 14, color: "#D4AF37", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Mi cuenta</div>
             <MenuItem icon="🪪" text="Mis datos" color={c.text} mutedColor={c.muted} border={c.border} />
             <MenuItem icon="🔒" text="Cambiar mi clave" color={c.text} mutedColor={c.muted} border={c.border} />
             <MenuItem icon="🏆" text="Mis logros / Insignias" color={c.text} mutedColor={c.muted} border={c.border} />
           </div>
 
           <div style={{ marginBottom: 32 }}>
-            <div style={{ fontSize: 12, color: "#D4AF37", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: "700" }}>Ajustes</div>
+            <div style={{ fontSize: 14, color: "#D4AF37", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Ajustes</div>
             <MenuItem icon="🎯" text="Mi Meta de Ahorro" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowMenu(false); setTab("config"); }} />
             <MenuItem icon="🎨" text="Apariencia (Tema Claro/Oscuro)" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowApariencia(true); setShowMenu(false); }} />
             <MenuItem icon="📊" text="Exportar Reportes" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowMenu(false); setShowEmailModal(true); }} />
@@ -943,17 +962,17 @@ export default function App() {
       {editando && (
         <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setEditando(null); }}>
           <div style={s.modal}>
-            <div style={{ ...s.label, marginBottom: 12, fontSize: 14, textAlign: "center" }}>✏️ Editar movimiento</div>
-            <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+            <div style={{ ...s.label, textAlign: "center" }}>✏️ Editar movimiento</div>
+            <div style={{ display: "flex", gap: 8, marginTop: 12, marginBottom: 10 }}>
               <button style={s.tipoBtn(editForm.tipo === "gasto", c.red)} onClick={() => setEditForm(f => ({ ...f, tipo: "gasto" }))}>− Gasto</button>
               <button style={s.tipoBtn(editForm.tipo === "ingreso", c.green)} onClick={() => setEditForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
             </div>
-            <input style={{ ...s.input, marginBottom: 8, fontSize: 20, textAlign: "center" }} type="number" placeholder="0.00" value={editForm.monto} onChange={e => setEditForm(f => ({ ...f, monto: e.target.value }))} />
+            <input style={{ ...s.input, marginBottom: 8, fontSize: 20, textAlign: "center", fontWeight: 700 }} type="number" placeholder="0.00" value={editForm.monto} onChange={e => setEditForm(f => ({ ...f, monto: e.target.value }))} />
             <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
               <select style={{ ...s.select, flex: 1, marginBottom: 0 }} value={editForm.categoria} onChange={e => setEditForm(f => ({ ...f, categoria: e.target.value }))}>
                 {categorias.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
               </select>
-              <input style={{ ...s.input, flex: 1, marginBottom: 0, fontSize: 13 }} type="text" placeholder="Descripción" value={editForm.descripcion} onChange={e => setEditForm(f => ({ ...f, descripcion: e.target.value }))} />
+              <input style={{ ...s.input, flex: 1, marginBottom: 0, fontSize: 14, fontWeight: 400 }} type="text" placeholder="Descripción" value={editForm.descripcion} onChange={e => setEditForm(f => ({ ...f, descripcion: e.target.value }))} />
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <button style={s.btnSecondary} onClick={() => setEditando(null)}>Cancelar</button>
@@ -966,12 +985,12 @@ export default function App() {
       {showEmailModal && (
         <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setShowEmailModal(false); }}>
           <div style={{ ...s.modal, textAlign: "center" }}>
-            <h3 style={{ margin: "0 0 8px", fontSize: 18, color: c.text }}>Enviar movimientos</h3>
-            <p style={{ margin: "0 0 16px", fontSize: 13, color: c.muted }}>Ingresa el e-mail del destinatario.</p>
-            <input style={{ ...s.input, marginBottom: 16, textAlign: "center" }} type="email" placeholder="correo@ejemplo.com" value={emailDestino} onChange={e => setEmailDestino(e.target.value)} />
+            <h3 style={{ margin: "0 0 8px", fontSize: 18, color: c.text, fontWeight: 600 }}>Enviar movimientos</h3>
+            <p style={{ margin: "0 0 16px", fontSize: 13, color: c.muted, fontWeight: 400 }}>Ingresa el e-mail del destinatario.</p>
+            <input style={{ ...s.input, marginBottom: 16, textAlign: "center", fontWeight: 400 }} type="email" placeholder="correo@ejemplo.com" value={emailDestino} onChange={e => setEmailDestino(e.target.value)} />
             <div style={{ display: "flex", gap: 8, borderTop: `1px solid ${c.border}`, paddingTop: 12 }}>
-              <button style={{ flex: 1, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#D4AF37", fontSize: 15, cursor: "pointer", padding: "8px 0" }} onClick={() => setShowEmailModal(false)}>Cancelar</button>
-              <button style={{ flex: 1, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#4D96FF", fontSize: 15, cursor: "pointer", padding: "8px 0", fontWeight: "600" }} onClick={() => { showToast("Enviado con éxito", c.green); setShowEmailModal(false); setEmailDestino(""); }}>Enviar</button>
+              <button style={{ flex: 1, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#D4AF37", fontSize: 15, cursor: "pointer", padding: "8px 0", fontFamily: "inherit" }} onClick={() => setShowEmailModal(false)}>Cancelar</button>
+              <button style={{ flex: 1, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#4D96FF", fontSize: 15, cursor: "pointer", padding: "8px 0", fontWeight: 700, fontFamily: "inherit" }} onClick={() => { showToast("Enviado con éxito", c.green); setShowEmailModal(false); setEmailDestino(""); }}>Enviar</button>
             </div>
           </div>
         </div>
