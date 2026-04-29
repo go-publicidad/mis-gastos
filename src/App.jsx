@@ -74,7 +74,6 @@ const exportarCSV = (gastos, categorias) => {
   URL.revokeObjectURL(url);
 };
 
-// EXPORTAR PDF ACTUALIZADO CON DISEÑO DE TARJETA EN FONDO GRIS
 const exportarPDF = (gastos, categorias) => {
   const filas = gastos.map(g => {
     const { fecha, hora } = formatDateTime(g.created_at);
@@ -100,7 +99,6 @@ const exportarPDF = (gastos, categorias) => {
       .header-meta {color:#6B7280;margin-bottom:24px;font-size:14px;font-weight:500;}
       .btn-print {display:inline-block;margin-bottom:20px;padding:12px 24px;background:#FCB606;color:#000;font-weight:700;border:none;border-radius:12px;cursor:pointer;font-family:inherit;font-size:14px;box-shadow:0 4px 12px rgba(252,182,6,0.2);}
       
-      /* ESTILO DE TARJETA ENCUADRANDO TODA LA INFO */
       .card-history {
         width:100%;
         max-width:800px;
@@ -206,13 +204,11 @@ export default function App() {
   const [isAutoTheme, setIsAutoTheme] = useState(false);
   const [useBold, setUseBold] = useState(false);
 
-  // UNION SEGURA DE CATEGORÍAS
   const safeBase = categoriasBase || [];
   const safeExtra = categoriasExtra || [];
   const categorias = [...safeBase, ...safeExtra];
   const isDark = theme === "dark";
 
-  // PALETA DINÁMICA
   const c = {
     bg: isDark ? "#0A0A0A" : "#F4F5F7",
     card: isDark ? "#111111" : "#FFFFFF",
@@ -451,7 +447,6 @@ export default function App() {
   const gastosFiltradosHist = gastos.filter(g => (filtroHistCat === "todas" || g.categoria === filtroHistCat) && (!filtroHistFechaDesde || g.fecha >= filtroHistFechaDesde) && (!filtroHistFechaHasta || g.fecha <= filtroHistFechaHasta));
   const gastosVerTodos = gastos.filter(g => (!vtFechaDesde || g.fecha >= vtFechaDesde) && (!vtFechaHasta || g.fecha <= vtFechaHasta));
 
-  // ESTILOS DINAMICOS Y SEGUROS CON MONTSERRAT
   const s = {
     app: { minHeight: "100vh", fontFamily: "'Montserrat', sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: "calc(160px + env(safe-area-inset-bottom, 0px))", width: "100%" },
     header:     { padding: "24px 20px 16px", borderBottom: `1px solid ${c.border}`, position: "sticky", top: 0, background: c.bg, zIndex: 90 },
@@ -460,7 +455,7 @@ export default function App() {
     subtitle:   { color: c.muted, fontSize: 13, margin: "4px 0 0", fontWeight: 400 },
     section:    { padding: "20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "stretch" },
     card:       { width: "100%", background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: "16px", marginBottom: 12, overflow: "hidden", boxSizing: "border-box", boxShadow: c.shadow },
-    metaCard:   { width: "100%", background: "linear-gradient(135deg,#1A1A1A,#050505)", borderRadius: 16, padding: "20px", marginBottom: 24, boxSizing: "border-box", color: "#FFF", boxShadow: isDark ? "none" : "0 8px 24px rgba(0,0,0,0.15)" },
+    metaCard:   { width: "100%", background: "linear-gradient(135deg,#1A1A1A,#050505)", borderRadius: 16, padding: "24px", marginBottom: 24, boxSizing: "border-box", color: "#FFF", boxShadow: isDark ? "none" : "0 8px 24px rgba(0,0,0,0.15)" },
     
     metaLabel:  { fontSize: 16, fontWeight: 600, color: "#FFF", marginBottom: 12 },
     label:      { fontSize: 16, fontWeight: 600, color: c.text, marginBottom: 12 },
@@ -470,7 +465,7 @@ export default function App() {
     redNum:     { fontSize: 22, fontWeight: 700, color: c.red },
     greenNum:   { fontSize: 22, fontWeight: 700, color: c.green },
     
-    progressBg: { background: "#333", borderRadius: 4, height: 8, margin: "12px 0 4px", overflow: "hidden" },
+    progressBg: { background: "#333", borderRadius: 4, height: 8, margin: "16px 0", overflow: "hidden" },
     progressFill: (p) => ({ height: "100%", width: `${p}%`, background: p >= 100 ? c.green : p >= 50 ? "#FCB606" : c.red, borderRadius: 4, transition: "width 0.6s ease" }),
     grid2:      { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 24, width: "100%" },
     
@@ -610,7 +605,6 @@ export default function App() {
         </>
       ) : (
         <>
-          {/* HEADER LIMPIO */}
           <div style={s.header}>
             <div style={{ display: "flex", justifyContent: "center", alignItems: "center", position: "relative", marginBottom: 4 }}>
               <button onClick={() => setShowMenu(true)} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: c.green, fontSize: 26, cursor: "pointer", position: "absolute", left: 0, padding: 0 }}>☰</button>
@@ -622,23 +616,33 @@ export default function App() {
 
           {error && <div style={s.errorCard}>⚠️ {error}</div>}
 
-          {/* TAB: INICIO */}
           {tab === "hoy" && (
             <div style={s.section}>
+              {/* NUEVO DISEÑO: TU PROGRESO */}
               <div style={s.metaCard}>
-                <div style={{ ...s.metaLabel, textAlign: "left" }}>Saldo actual</div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                  <span style={s.bigNum}>{formatMoney(Math.max(0, ahorroAcumulado))}</span>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 16 }}>
+                  <div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: "#FFF", marginBottom: 6 }}>Tu progreso</div>
+                    <div style={s.bigNum}>{formatMoney(Math.max(0, ahorroAcumulado))}</div>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontSize: 13, color: "#AAA", fontWeight: 500, marginBottom: 6 }}>Falta ahorrar</div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: "#FCB606" }}>{formatMoney(Math.max(0, metaTotalNum - ahorroAcumulado))}</div>
+                  </div>
                 </div>
-                <div style={{ fontSize: 13, color: c.green, fontWeight: 600, marginTop: 8 }}>
-                  ↑ Ahorro en camino
+
+                <div style={{ ...s.progressBg, marginBottom: 16 }}>
+                  <div style={s.progressFill(progreso)} />
                 </div>
-                
-                <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 12, marginTop: 16, display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 500 }}>
-                  <span style={{ color: "#AAA" }}>Meta total: <strong style={{color: "#FFF"}}>{formatMoney(metaTotalNum)}</strong></span>
-                  <span style={{ color: "#FCB606" }}>{progreso.toFixed(1)}%</span>
+
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#AAA", fontWeight: 500, marginBottom: 8 }}>
+                  <span>{progreso.toFixed(1)}%</span>
+                  <span>de {formatMoney(metaTotalNum)}</span>
                 </div>
-                <div style={s.progressBg}><div style={s.progressFill(progreso)} /></div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#AAA", fontWeight: 500 }}>
+                  <span>A este ritmo llegarás</span>
+                  <span style={{ color: c.green, fontWeight: 700 }}>{proyeccionTexto}</span>
+                </div>
               </div>
 
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
@@ -686,7 +690,6 @@ export default function App() {
                 </button>
               </div>
 
-              {/* REQUERIMIENTO: ÚLTIMOS MOVIMIENTOS DENTRO DE UNA CAJA (CARD) */}
               {(gastosHoy.length > 0 || ingresosHoy.length > 0) ? (
                 <div style={{ ...s.card, padding: "8px 16px" }}>
                   {[...gastosHoy, ...ingresosHoy].map((g, i, arr) => {
@@ -721,7 +724,6 @@ export default function App() {
                 <div style={{ ...s.card, textAlign: "center", color: c.muted, padding: "24px 0", fontWeight: 500 }}>Aún no hay movimientos hoy</div>
               )}
 
-              {/* Botón Flotante para Agregar */}
               <button style={s.fab} onClick={() => setShowAddModal(true)}>
                 <span style={{ fontSize: 20 }}>+</span> Nuevo movimiento
               </button>
@@ -1127,12 +1129,12 @@ export default function App() {
       {showEmailModal && (
         <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setShowEmailModal(false); }}>
           <div style={{ ...s.modal, textAlign: "center", animation: "slideUp 0.3s ease-out" }}>
-            <h3 style={{ margin: "0 0 8px", fontSize: 20, color: c.text, fontWeight: 700 }}>Enviar reporte</h3>
-            <p style={{ margin: "0 0 20px", fontSize: 14, color: c.muted, fontWeight: 500 }}>Ingresa el e-mail del destinatario.</p>
-            <input style={{ ...s.input, marginBottom: 20, textAlign: "center", fontWeight: 500 }} type="email" placeholder="correo@ejemplo.com" value={emailDestino} onChange={e => setEmailDestino(e.target.value)} />
-            <div style={{ display: "flex", gap: 12, borderTop: `1px solid ${c.border}`, paddingTop: 16 }}>
-              <button style={{ flex: 1, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: c.text, fontSize: 16, cursor: "pointer", padding: "10px 0", fontFamily: "inherit", fontWeight: 600 }} onClick={() => setShowEmailModal(false)}>Cancelar</button>
-              <button style={{ flex: 1, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#4D96FF", fontSize: 16, cursor: "pointer", padding: "10px 0", fontWeight: 700, fontFamily: "inherit" }} onClick={() => { showToast("Enviado con éxito", c.green); setShowEmailModal(false); setEmailDestino(""); }}>Enviar</button>
+            <h3 style={{ margin: "0 0 8px", fontSize: 18, color: c.text, fontWeight: 600 }}>Enviar movimientos</h3>
+            <p style={{ margin: "0 0 16px", fontSize: 13, color: c.muted, fontWeight: 400 }}>Ingresa el e-mail del destinatario.</p>
+            <input style={{ ...s.input, marginBottom: 16, textAlign: "center", fontWeight: 400 }} type="email" placeholder="correo@ejemplo.com" value={emailDestino} onChange={e => setEmailDestino(e.target.value)} />
+            <div style={{ display: "flex", gap: 8, borderTop: `1px solid ${c.border}`, paddingTop: 12 }}>
+              <button style={{ flex: 1, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FCB606", fontSize: 15, cursor: "pointer", padding: "8px 0", fontFamily: "inherit" }} onClick={() => setShowEmailModal(false)}>Cancelar</button>
+              <button style={{ flex: 1, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#4D96FF", fontSize: 15, cursor: "pointer", padding: "8px 0", fontWeight: 700, fontFamily: "inherit" }} onClick={() => { showToast("Enviado con éxito", c.green); setShowEmailModal(false); setEmailDestino(""); }}>Enviar</button>
             </div>
           </div>
         </div>
