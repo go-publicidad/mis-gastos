@@ -157,7 +157,6 @@ export default function App() {
   const [fechaFinPlan, setFechaFinPlan] = useState(calcularFechaFutura(150));
   const [ingresoMensual, setIngresoMensual] = useState("");
   
-  // NUEVO: Estado del nombre del usuario (Se guarda en Supabase)
   const [userName, setUserName] = useState("Emprendedor");
 
   const [isEditingMeta, setIsEditingMeta] = useState(false);
@@ -199,10 +198,9 @@ export default function App() {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailDestino, setEmailDestino] = useState("");
   
-  // NAVEGACIÓN DEL MENÚ
   const [showMenu, setShowMenu] = useState(false);
   const [showApariencia, setShowApariencia] = useState(false);
-  const [profileScreen, setProfileScreen] = useState(null); // 'datos', 'clave', 'logros', 'ayuda'
+  const [profileScreen, setProfileScreen] = useState(null);
   
   const [showAddModal, setShowAddModal] = useState(false);
 
@@ -523,7 +521,6 @@ export default function App() {
     </div>
   );
 
-  // Obtener iniciales para la foto de perfil
   const userInitials = userName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'PF';
 
   if (!loaded) return (
@@ -991,6 +988,76 @@ export default function App() {
         </>
       )}
 
+      {/* ── PANTALLA DE APARIENCIA ── */}
+      {showApariencia && (
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
+            <button onClick={() => { setShowApariencia(false); setShowMenu(true); }} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FCB606", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: "700" }}>Pantalla y brillo</h2>
+          </div>
+
+          <div style={{ fontSize: 14, color: c.muted, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 12, fontWeight: 700 }}>Aspecto</div>
+          <div style={{ background: c.card, borderRadius: 16, padding: "20px 20px 0", marginBottom: 24, border: `1px solid ${c.border}`, boxShadow: c.shadow }}>
+            
+            <div style={{ display: "flex", justifyContent: "space-around", paddingBottom: 24 }}>
+              <div onClick={() => { setTheme("light"); showToast("Tema Claro activado"); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer" }}>
+                <div style={{ width: 66, height: 130, borderRadius: 12, background: "#FFF", border: theme === "light" ? "3px solid #34C759" : "1px solid #CCC", position: "relative", overflow: "hidden" }}>
+                  <div style={{ position: "absolute", top: 12, left: 6, right: 6, height: 24, background: "#E5E5E5", borderRadius: 4 }} />
+                  <div style={{ position: "absolute", top: 44, left: 6, right: 6, height: 18, background: "#E5E5E5", borderRadius: 4 }} />
+                </div>
+                <span style={{ fontSize: 16, fontWeight: 600 }}>Claro</span>
+                <div style={{ width: 22, height: 22, borderRadius: "50%", border: theme === "light" ? "none" : `1px solid ${c.muted}`, background: theme === "light" ? "#34C759" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {theme === "light" && <span style={{ color: "#FFF", fontSize: 14 }}>✓</span>}
+                </div>
+              </div>
+
+              <div onClick={() => { setTheme("dark"); showToast("Tema Oscuro activado"); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer" }}>
+                <div style={{ width: 66, height: 130, borderRadius: 12, background: "#111", border: theme === "dark" ? "3px solid #34C759" : "1px solid #444", position: "relative", overflow: "hidden" }}>
+                  <div style={{ position: "absolute", top: 12, left: 6, right: 6, height: 24, background: "#333", borderRadius: 4 }} />
+                  <div style={{ position: "absolute", top: 44, left: 6, right: 6, height: 18, background: "#333", borderRadius: 4 }} />
+                </div>
+                <span style={{ fontSize: 16, fontWeight: 600 }}>Oscuro</span>
+                <div style={{ width: 22, height: 22, borderRadius: "50%", border: theme === "dark" ? "none" : `1px solid ${c.muted}`, background: theme === "dark" ? "#34C759" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {theme === "dark" && <span style={{ color: "#FFF", fontSize: 14 }}>✓</span>}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ borderTop: `1px solid ${c.border}`, padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 16, fontWeight: 600 }}>Automático</span>
+              <div onClick={() => setIsAutoTheme(!isAutoTheme)} style={{ width: 50, height: 30, background: isAutoTheme ? "#34C759" : c.border, borderRadius: 15, position: "relative", cursor: "pointer", transition: "0.3s" }}>
+                <div style={{ width: 26, height: 26, background: "#FFF", borderRadius: "50%", position: "absolute", top: 2, left: isAutoTheme ? 22 : 2, transition: "0.3s", boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}/>
+              </div>
+            </div>
+
+            {isAutoTheme && (
+              <div style={{ borderTop: `1px solid ${c.border}`, padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                <span style={{ fontSize: 16, fontWeight: 600 }}>Opciones</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ color: c.muted, fontSize: 14, fontWeight: 400 }}>Claro hasta el atardecer</span>
+                  <span style={{ color: c.muted, fontSize: 18 }}>›</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div style={{ background: c.card, borderRadius: 16, padding: "0 20px", border: `1px solid ${c.border}`, boxShadow: c.shadow }}>
+            <div style={{ padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, cursor: "pointer" }}>
+              <span style={{ fontSize: 16, fontWeight: 600 }}>Tamaño del texto</span>
+              <span style={{ color: c.muted, fontSize: 18 }}>›</span>
+            </div>
+            <div style={{ padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 16, fontWeight: 600 }}>Negritas</span>
+              <div onClick={() => setUseBold(!useBold)} style={{ width: 50, height: 30, background: useBold ? "#34C759" : c.border, borderRadius: 15, position: "relative", cursor: "pointer", transition: "0.3s" }}>
+                <div style={{ width: 26, height: 26, background: "#FFF", borderRadius: "50%", position: "absolute", top: 2, left: useBold ? 22 : 2, transition: "0.3s", boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}/>
+              </div>
+            </div>
+          </div>
+          
+          <button style={{ ...s.btnPrimary, marginTop: 30 }} onClick={() => { guardarConfig(); setShowApariencia(false); setShowMenu(true); }}>Guardar Preferencias</button>
+        </div>
+      )}
+
       {/* ── PANTALLA PRINCIPAL DE PERFIL Y SUBPANTALLAS ── */}
       {showMenu && !showApariencia && !profileScreen && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 9999, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column" }}>
@@ -1123,7 +1190,7 @@ export default function App() {
           
           <div style={{ ...s.card, padding: 16, marginBottom: 12 }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 8 }}>¿Cómo edito una categoría?</div>
-            <div style={{ fontSize: 13, color: c.muted, lineHeight: 1.5, fontWeight: 500 }}>Ve a Configuración > Categorías Personalizadas y presiona el ícono del lápiz junto a la categoría que deseas modificar.</div>
+            <div style={{ fontSize: 13, color: c.muted, lineHeight: 1.5, fontWeight: 500 }}>Ve a Configuración &gt; Categorías Personalizadas y presiona el ícono del lápiz junto a la categoría que deseas modificar.</div>
           </div>
 
           <div style={{ ...s.card, padding: 16, marginBottom: 12 }}>
@@ -1180,7 +1247,7 @@ export default function App() {
             </div>
             <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
               <button style={s.tipoBtn(editForm.tipo === "gasto", c.red)} onClick={() => setEditForm(f => ({ ...f, tipo: "gasto" }))}>− Gasto</button>
-              <button style={s.tipoBtn(editForm.tipo === "ingreso", c.green)} onClick={() => setEditForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
+              <button style={s.tipoBtn(editForm.tipo === "ingreso", c.green)} onClick={() => setForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
             </div>
             <input style={{ ...s.input, marginBottom: 16, fontSize: 32, textAlign: "center", fontWeight: 700, padding: "20px 10px", height: "auto" }} type="number" placeholder="0.00" value={editForm.monto} onChange={e => setEditForm(f => ({ ...f, monto: e.target.value }))} />
             <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
