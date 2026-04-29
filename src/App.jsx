@@ -18,7 +18,7 @@ const CATEGORIAS_DEFAULT = [
   { id: "otros",           label: "📦 Otros",              color: "#8A9BA8" },
 ];
 
-const COLORES_CUSTOM = ["#FF6B6B","#FFD93D","#6BCB77","#4D96FF","#C77DFF","#FF9F1C","#2EC4B6","#E71D36","#F72585","#B5E48C"];
+const COLORES_CUSTOM = ["#FF6B6B","#FCB606","#6BCB77","#4D96FF","#C77DFF","#FF9F1C","#2EC4B6","#E71D36","#F72585","#B5E48C"];
 
 const getLimaTime = () => new Date(Date.now() - 18000000);
 const hoy = () => getLimaTime().toISOString().split("T")[0];
@@ -93,7 +93,7 @@ const exportarPDF = (gastos, categorias) => {
     <title>Historial Ahorro Meta</title>
     <style>
       body{font-family:Arial,sans-serif;padding:20px;font-size:13px}
-      h2{color:#B8860B}
+      h2{color:#FCB606}
       table{width:100%;border-collapse:collapse;margin-top:12px}
       th{background:#1a1a1a;color:#fff;padding:8px 10px;text-align:left}
       td{padding:7px 10px;border-bottom:1px solid #eee}
@@ -102,7 +102,7 @@ const exportarPDF = (gastos, categorias) => {
     </style></head><body>
     <h2>Ahorro Meta — Historial de movimientos</h2>
     <p>Exportado el ${formatFecha(hoy())} · Total registros: ${gastos.length}</p>
-    <button onclick="window.print()" style="margin-bottom:12px;padding:8px 16px;background:#B8860B;color:#fff;border:none;border-radius:6px;cursor:pointer">🖨️ Imprimir / Guardar PDF</button>
+    <button onclick="window.print()" style="margin-bottom:12px;padding:8px 16px;background:#FCB606;color:#000;font-weight:bold;border:none;border-radius:6px;cursor:pointer">🖨️ Imprimir / Guardar PDF</button>
     <table><thead><tr><th>Fecha / Hora</th><th>Categoría</th><th>Descripción</th><th>Monto</th></tr></thead>
     <tbody>${filas}</tbody></table>
     </body></html>`);
@@ -195,7 +195,7 @@ export default function App() {
     shadow: isDark ? "none" : "0 4px 12px rgba(0,0,0,0.04)"
   };
 
-  const showToast = (msg, color = "#D4AF37") => {
+  const showToast = (msg, color = "#FCB606") => {
     setToast({ msg, color });
     setTimeout(() => setToast(null), 2500);
   };
@@ -227,7 +227,6 @@ export default function App() {
           if (getVal("themePref")) setTheme(getVal("themePref"));
           if (getVal("useBoldPref")) setUseBold(getVal("useBoldPref") === "true");
 
-          // Recuperación SEGURA para evitar crashes
           if (getVal("categoriasCustom")) {
             try { 
               const p = JSON.parse(getVal("categoriasCustom")); 
@@ -415,50 +414,50 @@ export default function App() {
   const gastosFiltradosHist = gastos.filter(g => (filtroHistCat === "todas" || g.categoria === filtroHistCat) && (!filtroHistFechaDesde || g.fecha >= filtroHistFechaDesde) && (!filtroHistFechaHasta || g.fecha <= filtroHistFechaHasta));
   const gastosVerTodos = gastos.filter(g => (!vtFechaDesde || g.fecha >= vtFechaDesde) && (!vtFechaHasta || g.fecha <= vtFechaHasta));
 
-  // ESTILOS DINAMICOS Y SEGUROS CON MONTSERRAT
+  // ESTILOS DINAMICOS Y SEGUROS CON MONTSERRAT Y NUEVO AMARILLO
   const s = {
     app: { minHeight: "100vh", fontFamily: "'Montserrat', sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: "calc(120px + env(safe-area-inset-bottom, 0px))", width: "100%" },
     header:     { padding: "24px 20px 0", borderBottom: `1px solid ${c.border}` },
-    title:      { fontSize: 24, fontWeight: 700, color: "#D4AF37", margin: 0, fontFamily: "'Montserrat', sans-serif" },
+    title:      { fontSize: 24, fontWeight: 700, color: "#FCB606", margin: 0, fontFamily: "'Montserrat', sans-serif" },
     refreshBtn: { backgroundColor: "transparent", WebkitAppearance: "none", border: "none", width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 18 },
     subtitle:   { color: c.muted, fontSize: 13, margin: "4px 0 0", fontWeight: 400 },
     tabs:       { display: "flex", padding: "16px 20px 0", borderBottom: `1px solid ${c.border}` },
-    tab:    (a) => ({ backgroundColor: "transparent", WebkitAppearance: "none", padding: "8px 14px", border: "none", borderBottom: a ? "2px solid #D4AF37" : "2px solid transparent", color: a ? "#D4AF37" : c.muted, cursor: "pointer", fontSize: 14, fontWeight: a ? 600 : 400, transition: "all 0.2s", fontFamily: "inherit" }),
+    tab:    (a) => ({ backgroundColor: "transparent", WebkitAppearance: "none", padding: "8px 14px", border: "none", borderBottom: a ? "2px solid #FCB606" : "2px solid transparent", color: a ? "#FCB606" : c.muted, cursor: "pointer", fontSize: 14, fontWeight: a ? 600 : 400, transition: "all 0.2s", fontFamily: "inherit" }),
     section:    { padding: "20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "stretch" },
     card:       { width: "100%", background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: "16px", marginBottom: 12, overflow: "hidden", boxSizing: "border-box", boxShadow: c.shadow },
     metaCard:   { width: "100%", background: "linear-gradient(135deg,#1A1A1A,#050505)", borderRadius: 16, padding: "20px", marginBottom: 16, boxSizing: "border-box", color: "#FFF", boxShadow: isDark ? "none" : "0 8px 24px rgba(0,0,0,0.15)" },
     
-    // Títulos de jerarquía (16px, weight 600)
     metaLabel:  { fontSize: 16, fontWeight: 600, color: "#FFF", marginBottom: 12 },
     label:      { fontSize: 16, fontWeight: 600, color: c.text, marginBottom: 12 },
     
-    // Saldos y números grandes (32px / 24px, weight 700)
-    bigNum:     { fontSize: 32, fontWeight: 700, color: "#D4AF37", lineHeight: 1 },
+    bigNum:     { fontSize: 32, fontWeight: 700, color: "#FCB606", lineHeight: 1 },
     smallNum:   { fontSize: 24, fontWeight: 700, color: c.text },
     redNum:     { fontSize: 24, fontWeight: 700, color: c.red },
     greenNum:   { fontSize: 24, fontWeight: 700, color: c.green },
     
     progressBg: { background: "#333", borderRadius: 4, height: 8, margin: "12px 0 4px", overflow: "hidden" },
-    progressFill: (p) => ({ height: "100%", width: `${p}%`, background: p >= 100 ? c.green : p >= 50 ? "#D4AF37" : c.red, borderRadius: 4, transition: "width 0.6s ease" }),
+    progressFill: (p) => ({ height: "100%", width: `${p}%`, background: p >= 100 ? c.green : p >= 50 ? "#FCB606" : c.red, borderRadius: 4, transition: "width 0.6s ease" }),
     grid2:      { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12, width: "100%" },
     
     input: { width: "100%", background: c.input, border: `1px solid ${c.border}`, borderRadius: 10, color: c.text, padding: "10px 12px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", fontWeight: 400, WebkitAppearance: "none", minHeight: 44 },
     select: { width: "100%", background: c.input, border: `1px solid ${c.border}`, borderRadius: 10, color: c.text, padding: "10px 12px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", fontWeight: 400, cursor: "pointer", WebkitAppearance: "none", minHeight: 44 },
     
-    btnPrimary: { background: "#D4AF37", color: "#000", border: "none", borderRadius: 10, padding: "12px", fontSize: 14, fontWeight: 700, cursor: "pointer", width: "100%", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(212, 175, 55, 0.2)" },
+    btnPrimary: { background: "#FCB606", color: "#000", border: "none", borderRadius: 10, padding: "12px", fontSize: 14, fontWeight: 700, cursor: "pointer", width: "100%", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(252, 182, 6, 0.2)" },
     btnSecondary:{ background: c.input, color: c.text, border: `1px solid ${c.border}`, borderRadius: 10, padding: "10px", fontSize: 14, fontWeight: 600, cursor: "pointer", width: "100%", fontFamily: "inherit" },
     tipoBtn: (a, col) => ({ flex: 1, padding: "8px", background: a ? col : c.input, border: `1px solid ${a ? col : c.border}`, color: a ? "#FFF" : c.muted, borderRadius: 10, cursor: "pointer", fontSize: 14, fontWeight: a ? 700 : 400, transition: "all 0.2s", fontFamily: "inherit" }),
     
     itemRow:    { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: `1px solid ${c.border}` },
     catDot: (col) => ({ width: 8, height: 8, borderRadius: "50%", background: col, display: "inline-block", marginRight: 8, flexShrink: 0 }),
     
-    // BOTONES SEGUROS PARA iOS
     deleteBtn:  { backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: c.red, cursor: "pointer", fontSize: 18, padding: "4px 6px" },
-    editBtn:    { backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#D4AF37", cursor: "pointer", fontSize: 15, padding: "4px 6px" },
+    editBtn:    { backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FCB606", cursor: "pointer", fontSize: 15, padding: "4px 6px" },
     
     errorCard:  { background: isDark ? "#1A0A0A" : "#FEF2F2", border: `1px solid ${c.red}`, borderRadius: 12, padding: "16px", margin: "20px", color: c.red, fontSize: 14, fontWeight: 400 },
-    filterRow:  { display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" },
-    filterBtn: (a) => ({ padding: "6px 14px", borderRadius: 20, border: `1px solid ${a ? "#D4AF37" : c.border}`, background: a ? "#D4AF37" : c.card, color: a ? "#000" : c.muted, fontSize: 13, fontWeight: a ? 600 : 400, cursor: "pointer", fontFamily: "inherit" }),
+    
+    // FILTROS EN UNA SOLA FILA CON SCROLL HORIZONTAL
+    filterRow:  { display: "flex", gap: 6, marginBottom: 14, flexWrap: "nowrap", overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" },
+    filterBtn: (a) => ({ whiteSpace: "nowrap", flexShrink: 0, padding: "6px 14px", borderRadius: 20, border: `1px solid ${a ? "#FCB606" : c.border}`, background: a ? "#FCB606" : c.card, color: a ? "#000" : c.muted, fontSize: 13, fontWeight: a ? 600 : 400, cursor: "pointer", fontFamily: "inherit" }),
+    
     navBar: {
       position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480,
       background: c.nav, borderTop: `1px solid ${c.border}`, display: "flex", zIndex: 100,
@@ -466,7 +465,7 @@ export default function App() {
     },
     navBtn: (a) => ({
       flex: 1, paddingTop: 12, paddingBottom: 10, backgroundColor: "transparent", WebkitAppearance: "none", border: "none",
-      color: a ? "#D4AF37" : c.muted, fontSize: 11, fontWeight: a ? 600 : 400, cursor: "pointer",
+      color: a ? "#FCB606" : c.muted, fontSize: 11, fontWeight: a ? 600 : 400, cursor: "pointer",
       display: "flex", flexDirection: "column", alignItems: "center", gap: 3, fontFamily: "inherit"
     }),
     overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: "20px", backdropFilter: "blur(4px)" },
@@ -475,7 +474,7 @@ export default function App() {
 
   if (!loaded) return (
     <div style={{ background: c.bg, height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
-      <div style={{ width: 32, height: 32, border: `2px solid ${c.border}`, borderTop: "2px solid #D4AF37", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+      <div style={{ width: 32, height: 32, border: `2px solid ${c.border}`, borderTop: "2px solid #FCB606", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
       <span style={{ color: c.muted, fontSize: 14, fontFamily: "'Montserrat', sans-serif" }}>Conectando...</span>
     </div>
   );
@@ -496,17 +495,19 @@ export default function App() {
         }
         body * { font-weight: ${useBold ? '700' : 'inherit'}; }
         #root { background: ${c.bg}; min-height: 100vh; width: 100%; max-width: 100%; overflow-x: hidden; overflow-y: auto; }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
         @keyframes spin { to { transform: rotate(360deg) } }
       `}</style>
 
       {viewAll ? (
         <>
           <div style={{ padding: "16px 20px", borderBottom: `1px solid ${c.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: c.bg, position: "sticky", top: 0, zIndex: 10 }}>
-            <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#D4AF37", fontSize: 24, cursor: "pointer", padding: 0 }} onClick={() => { setViewAll(false); window.scrollTo(0, 0); }}>←</button>
+            <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FCB606", fontSize: 24, cursor: "pointer", padding: 0 }} onClick={() => { setViewAll(false); window.scrollTo(0, 0); }}>←</button>
             <h2 style={{ margin: 0, fontSize: 18, color: c.text, fontWeight: 600 }}>Movimientos</h2>
             <div style={{ display: "flex", gap: 16 }}>
-              <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#D4AF37", fontSize: 20, cursor: "pointer", padding: 0 }} onClick={() => setShowEmailModal(true)}>✉️</button>
-              <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#D4AF37", fontSize: 20, cursor: "pointer", padding: 0 }} onClick={() => setShowVtFiltro(!showVtFiltro)}>📅</button>
+              <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FCB606", fontSize: 20, cursor: "pointer", padding: 0 }} onClick={() => setShowEmailModal(true)}>✉️</button>
+              <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FCB606", fontSize: 20, cursor: "pointer", padding: 0 }} onClick={() => setShowVtFiltro(!showVtFiltro)}>📅</button>
             </div>
           </div>
           {showVtFiltro && (
@@ -563,7 +564,8 @@ export default function App() {
               <h1 style={s.title}>Ahorro Meta</h1>
               <button onClick={() => window.location.reload()} style={{ ...s.refreshBtn, position: "absolute", right: 0 }}>🔄</button>
             </div>
-            <p style={s.subtitle}>Meta: {formatMoney(metaTotalNum)} · Día {diasTranscurridosPlan} de {diasTotalPlan}</p>
+            {/* SUBTÍTULO CENTRADO CON PRECISIÓN */}
+            <p style={{ ...s.subtitle, textAlign: "center", width: "100%", display: "block" }}>Meta: {formatMoney(metaTotalNum)} · Día {diasTranscurridosPlan} de {diasTotalPlan}</p>
             <div style={s.tabs}>
               {[{ id: "hoy", label: "Hoy" }, { id: "resumen", label: "Resumen" }, { id: "historial", label: "Historial" }, { id: "config", label: "Config" }].map(t => (
                 <button key={t.id} style={s.tab(tab === t.id)} onClick={() => setTab(t.id)}>{t.label}</button>
@@ -588,23 +590,23 @@ export default function App() {
                 </div>
                 <div style={{ borderTop: "1px solid #2A2000", paddingTop: 8, display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 400 }}>
                   <span style={{ color: "#AAA" }}>Falta ahorrar</span>
-                  <span style={{ color: "#E8845A", fontWeight: 700 }}>{formatMoney(Math.max(0, metaTotalNum - ahorroAcumulado))}</span>
+                  <span style={{ color: "#FCB606", fontWeight: 700 }}>{formatMoney(Math.max(0, metaTotalNum - ahorroAcumulado))}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginTop: 4, fontWeight: 400 }}>
                   <span style={{ color: "#AAA" }}>A este ritmo llegarás</span>
-                  <span style={{ color: "#D4AF37", fontWeight: 700 }}>{proyeccionTexto}</span>
+                  <span style={{ color: "#FCB606", fontWeight: 700 }}>{proyeccionTexto}</span>
                 </div>
               </div>
 
               <div style={s.grid2}>
                 <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Ingresos hoy</div><div style={s.greenNum}>{formatMoney(totalIngresosHoy)}</div></div>
                 <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Gastado hoy</div><div style={s.redNum}>{formatMoney(totalGastadoHoy)}</div></div>
-                <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Ahorro hoy</div><div style={{ fontSize: 24, fontWeight: 700, color: "#D4AF37" }}>{formatMoney(totalIngresosHoy - totalGastadoHoy)}</div></div>
+                <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Ahorro hoy</div><div style={{ fontSize: 24, fontWeight: 700, color: "#FCB606" }}>{formatMoney(totalIngresosHoy - totalGastadoHoy)}</div></div>
                 <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Límite ahorro / día</div><div style={{ fontSize: 24, fontWeight: 700, color: c.text }}>{formatMoney(ahorroMetaDiario)}</div></div>
               </div>
 
               <div style={s.card}>
-                <div style={{ ...s.label, textAlign: "center" }}>Registrar movimiento</div>
+                <div style={{ ...s.label, textAlign: "center", marginBottom: 16 }}>Registrar movimiento</div>
                 <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
                   <button style={s.tipoBtn(form.tipo === "gasto", c.red)} onClick={() => setForm(f => ({ ...f, tipo: "gasto" }))}>− Gasto</button>
                   <button style={s.tipoBtn(form.tipo === "ingreso", c.green)} onClick={() => setForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
@@ -647,7 +649,7 @@ export default function App() {
 
           {tab === "resumen" && (
             <div style={s.section}>
-              <div style={s.filterRow}>
+              <div className="hide-scroll" style={s.filterRow}>
                 {[{ id: "hoy", label: "Hoy" }, { id: "semana", label: "7 días" }, { id: "mes", label: "Este mes" }, { id: "todo", label: "Todo" }, { id: "rango", label: "📅 Rango" }].map(f => (
                   <button key={f.id} style={s.filterBtn(filtroResumen === f.id)} onClick={() => setFiltroResumen(f.id)}>{f.label}</button>
                 ))}
@@ -673,13 +675,13 @@ export default function App() {
               <div style={s.grid2}>
                 <div style={s.card}><div style={s.label}>Total gastado</div><div style={s.redNum}>{formatMoney(totalGastadoR)}</div></div>
                 <div style={s.card}><div style={s.label}>Total ingresos</div><div style={s.greenNum}>{formatMoney(totalIngresosR)}</div></div>
-                <div style={s.card}><div style={s.label}>Ahorro período</div><div style={{ ...s.smallNum, color: ahorroR >= 0 ? "#D4AF37" : c.red }}>{formatMoney(ahorroR)}</div></div>
+                <div style={s.card}><div style={s.label}>Ahorro período</div><div style={{ ...s.smallNum, color: ahorroR >= 0 ? "#FCB606" : c.red }}>{formatMoney(ahorroR)}</div></div>
                 <div style={s.card}><div style={s.label}>Gasto prom/día</div><div style={s.smallNum}>{formatMoney(gastoDiarioProm)}</div></div>
               </div>
 
               <div style={{ ...s.card, background: isDark ? "#0F1A0F" : "#F0FDF4", border: `1px solid ${isDark ? "#1A3A1A" : "#BBF7D0"}`, textAlign: "center" }}>
                 <div style={{ ...s.label, textAlign: "center", color: isDark ? c.muted : "#065F46" }}>Proyección inteligente</div>
-                <div style={{ fontSize: 16, color: isDark ? "#D4AF37" : "#047857", fontWeight: 700, marginTop: 6 }}>📈 A este ritmo llegarás a tu meta {proyeccionTexto}</div>
+                <div style={{ fontSize: 16, color: isDark ? "#FCB606" : "#047857", fontWeight: 700, marginTop: 6 }}>📈 A este ritmo llegarás a tu meta {proyeccionTexto}</div>
                 <div style={{ fontSize: 12, color: c.muted, marginTop: 4, fontWeight: 400 }}>Basado en un ahorro diario promedio de {formatMoney(ahorroDiarioProm > 0 ? ahorroDiarioProm : 0)}</div>
               </div>
 
@@ -687,10 +689,10 @@ export default function App() {
                 <div style={s.metaCard}>
                   <div style={{ ...s.metaLabel, textAlign: "center" }}>Para lograr tu meta</div>
                   <div style={{ fontSize: 14, color: "#CCC", lineHeight: 1.9, marginTop: 8, textAlign: "center", fontWeight: 400 }}>
-                    <div>💰 Ahorra <strong style={{ color: "#D4AF37", fontWeight: 700 }}>{formatMoney(ahorroMetaDiario)}/día</strong></div>
-                    <div>📅 o <strong style={{ color: "#D4AF37", fontWeight: 700 }}>{formatMoney(ahorroMetaDiario * 30)}/mes</strong></div>
+                    <div>💰 Ahorra <strong style={{ color: "#FCB606", fontWeight: 700 }}>{formatMoney(ahorroMetaDiario)}/día</strong></div>
+                    <div>📅 o <strong style={{ color: "#FCB606", fontWeight: 700 }}>{formatMoney(ahorroMetaDiario * 30)}/mes</strong></div>
                     <div>💸 Límite de gasto: <strong style={{ color: c.green, fontWeight: 700 }}>{formatMoney(presupuestoDiario)}/día</strong></div>
-                    <div>🎯 Faltan: <strong style={{ color: "#D4AF37", fontWeight: 700 }}>{formatMoney(Math.max(0, metaTotalNum - ahorroAcumulado))}</strong></div>
+                    <div>🎯 Faltan: <strong style={{ color: "#FCB606", fontWeight: 700 }}>{formatMoney(Math.max(0, metaTotalNum - ahorroAcumulado))}</strong></div>
                   </div>
                 </div>
               )}
@@ -700,8 +702,8 @@ export default function App() {
                 <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 80, marginTop: 14 }}>
                   {gastosUltimos7.map((d, i) => (
                     <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                      <div style={{ width: "100%", height: `${d.total ? Math.max(8, (d.total / maxBar) * 70) : 3}px`, background: d.fecha === fechaHoy ? "#D4AF37" : c.border, borderRadius: "3px 3px 0 0" }} />
-                      <span style={{ fontSize: 10, fontWeight: 400, color: d.fecha === fechaHoy ? "#D4AF37" : c.muted }}>{d.label}</span>
+                      <div style={{ width: "100%", height: `${d.total ? Math.max(8, (d.total / maxBar) * 70) : 3}px`, background: d.fecha === fechaHoy ? "#FCB606" : c.border, borderRadius: "3px 3px 0 0" }} />
+                      <span style={{ fontSize: 10, fontWeight: 400, color: d.fecha === fechaHoy ? "#FCB606" : c.muted }}>{d.label}</span>
                     </div>
                   ))}
                 </div>
@@ -735,7 +737,7 @@ export default function App() {
 
               <div style={s.card}>
                 <div style={{ ...s.label, textAlign: "center" }}>Filtrar por categoría</div>
-                <div style={{ ...s.filterRow, marginTop: 12 }}>
+                <div className="hide-scroll" style={{ ...s.filterRow, marginTop: 12 }}>
                   <button style={s.filterBtn(filtroHistCat === "todas")} onClick={() => setFiltroHistCat("todas")}>Todas</button>
                   {categorias.map(c => <button key={c.id} style={s.filterBtn(filtroHistCat === c.id)} onClick={() => setFiltroHistCat(c.id)}>{c.label}</button>)}
                 </div>
@@ -774,7 +776,7 @@ export default function App() {
             <div style={s.section}>
               <div style={s.card}>
                 <div style={{ ...s.label, textAlign: "center" }}>DEFINIR META DE AHORRO (S/)</div>
-                <input style={{ ...s.input, marginTop: 12, marginBottom: 24, fontSize: 24, textAlign: "center", color: "#D4AF37", fontWeight: 700 }} type={isEditingMeta ? "number" : "text"} placeholder="Ej: 100000" value={isEditingMeta ? metaAhorro : (metaAhorro ? formatMoney(metaAhorro) : "")} onFocus={() => setIsEditingMeta(true)} onBlur={() => setIsEditingMeta(false)} onChange={e => setMetaAhorro(e.target.value)} />
+                <input style={{ ...s.input, marginTop: 12, marginBottom: 24, fontSize: 24, textAlign: "center", color: "#FCB606", fontWeight: 700 }} type={isEditingMeta ? "number" : "text"} placeholder="Ej: 100000" value={isEditingMeta ? metaAhorro : (metaAhorro ? formatMoney(metaAhorro) : "")} onFocus={() => setIsEditingMeta(true)} onBlur={() => setIsEditingMeta(false)} onChange={e => setMetaAhorro(e.target.value)} />
                 
                 <div style={{ ...s.label, textAlign: "center" }}>PERÍODO DE AHORRO</div>
                 <div style={{ display: "flex", gap: 12, marginTop: 12, marginBottom: 24 }}>
@@ -786,6 +788,19 @@ export default function App() {
                 <input style={{ ...s.input, marginTop: 12, marginBottom: 24, fontSize: 20, textAlign: "center", color: c.green, fontWeight: 700 }} type={isEditingIngreso ? "number" : "text"} placeholder="Ej: 5000" value={isEditingIngreso ? ingresoMensual : (ingresoMensual ? formatMoney(ingresoMensual) : "")} onFocus={() => setIsEditingIngreso(true)} onBlur={() => setIsEditingIngreso(false)} onChange={e => setIngresoMensual(e.target.value)} />
                 <button style={s.btnPrimary} onClick={guardarConfig} disabled={saving}>{saving ? "Guardando..." : "Guardar configuración"}</button>
               </div>
+
+              {/* REQUERIMIENTO 2: SE RESTAURÓ LA CAJA DEL PLAN */}
+              {ingMensual > 0 && metaTotalNum > 0 && (
+                <div style={s.metaCard}>
+                  <div style={{ ...s.metaLabel, textAlign: "center" }}>Tu plan para {formatMoney(metaTotalNum)}</div>
+                  <div style={{ fontSize: 14, color: "#CCC", lineHeight: 1.9, marginTop: 8, textAlign: "center", fontWeight: 400 }}>
+                    <div>📥 Ingreso mensual: <strong style={{ color: "#E8E0D0", fontWeight: 700 }}>{formatMoney(ingMensual)}</strong></div>
+                    <div>🎯 Ahorro necesario/mes: <strong style={{ color: "#FCB606", fontWeight: 700 }}>{formatMoney(ahorroMetaDiario * 30)}</strong></div>
+                    <div>💸 Gasto máximo/mes: <strong style={{ color: c.green, fontWeight: 700 }}>{formatMoney(ingMensual - (ahorroMetaDiario * 30))}</strong></div>
+                    <div>📆 Gasto máximo/día: <strong style={{ color: c.green, fontWeight: 700 }}>{formatMoney(presupuestoDiario)}</strong></div>
+                  </div>
+                </div>
+              )}
 
               <div style={s.card}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}><div style={s.label}>Categorías Base</div></div>
@@ -809,7 +824,7 @@ export default function App() {
               </div>
 
               <div style={s.card}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}><div style={s.label}>Categorías personalizadas</div><button style={{ backgroundColor: "#D4AF37", WebkitAppearance: "none", color: "#000", border: "none", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontWeight: 700, fontFamily: "inherit" }} onClick={() => setShowNuevaCat(v => !v)}>+ Nueva</button></div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}><div style={s.label}>Categorías personalizadas</div><button style={{ backgroundColor: "#FCB606", WebkitAppearance: "none", color: "#000", border: "none", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontWeight: 700, fontFamily: "inherit" }} onClick={() => setShowNuevaCat(v => !v)}>+ Nueva</button></div>
                 {showNuevaCat && (
                   <div style={{ background: c.input, borderRadius: 8, padding: 12, marginBottom: 12 }}>
                     <input style={{ ...s.input, marginBottom: 8 }} placeholder="Ej: 🛍️ Compras" value={nuevaCatLabel} onChange={e => setNuevaCatLabel(e.target.value)} />
@@ -862,8 +877,8 @@ export default function App() {
       {showApariencia && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
-            <button onClick={() => { setShowApariencia(false); setShowMenu(true); }} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#D4AF37", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
-            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Pantalla y brillo</h2>
+            <button onClick={() => { setShowApariencia(false); setShowMenu(true); }} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FCB606", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: "700" }}>Pantalla y brillo</h2>
           </div>
 
           <div style={{ fontSize: 14, color: c.muted, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 12, fontWeight: 700 }}>Aspecto</div>
@@ -932,19 +947,19 @@ export default function App() {
       {showMenu && !showApariencia && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 9999, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
-            <button onClick={() => setShowMenu(false)} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#D4AF37", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <button onClick={() => setShowMenu(false)} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FCB606", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
             <h2 style={{ margin: 0, fontSize: 22, color: c.text, fontWeight: 700 }}>Mi Perfil</h2>
           </div>
 
           <div style={{ marginBottom: 32 }}>
-            <div style={{ fontSize: 14, color: "#D4AF37", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Mi cuenta</div>
+            <div style={{ fontSize: 14, color: "#FCB606", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Mi cuenta</div>
             <MenuItem icon="🪪" text="Mis datos" color={c.text} mutedColor={c.muted} border={c.border} />
             <MenuItem icon="🔒" text="Cambiar mi clave" color={c.text} mutedColor={c.muted} border={c.border} />
             <MenuItem icon="🏆" text="Mis logros / Insignias" color={c.text} mutedColor={c.muted} border={c.border} />
           </div>
 
           <div style={{ marginBottom: 32 }}>
-            <div style={{ fontSize: 14, color: "#D4AF37", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Ajustes</div>
+            <div style={{ fontSize: 14, color: "#FCB606", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Ajustes</div>
             <MenuItem icon="🎯" text="Mi Meta de Ahorro" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowMenu(false); setTab("config"); }} />
             <MenuItem icon="🎨" text="Apariencia (Tema Claro/Oscuro)" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowApariencia(true); setShowMenu(false); }} />
             <MenuItem icon="📊" text="Exportar Reportes" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowMenu(false); setShowEmailModal(true); }} />
@@ -989,7 +1004,7 @@ export default function App() {
             <p style={{ margin: "0 0 16px", fontSize: 13, color: c.muted, fontWeight: 400 }}>Ingresa el e-mail del destinatario.</p>
             <input style={{ ...s.input, marginBottom: 16, textAlign: "center", fontWeight: 400 }} type="email" placeholder="correo@ejemplo.com" value={emailDestino} onChange={e => setEmailDestino(e.target.value)} />
             <div style={{ display: "flex", gap: 8, borderTop: `1px solid ${c.border}`, paddingTop: 12 }}>
-              <button style={{ flex: 1, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#D4AF37", fontSize: 15, cursor: "pointer", padding: "8px 0", fontFamily: "inherit" }} onClick={() => setShowEmailModal(false)}>Cancelar</button>
+              <button style={{ flex: 1, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FCB606", fontSize: 15, cursor: "pointer", padding: "8px 0", fontFamily: "inherit" }} onClick={() => setShowEmailModal(false)}>Cancelar</button>
               <button style={{ flex: 1, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#4D96FF", fontSize: 15, cursor: "pointer", padding: "8px 0", fontWeight: 700, fontFamily: "inherit" }} onClick={() => { showToast("Enviado con éxito", c.green); setShowEmailModal(false); setEmailDestino(""); }}>Enviar</button>
             </div>
           </div>
