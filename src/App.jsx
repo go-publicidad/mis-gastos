@@ -457,10 +457,10 @@ export default function App() {
     card:       { width: "100%", background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: "16px", marginBottom: 12, overflow: "hidden", boxSizing: "border-box", boxShadow: c.shadow },
     metaCard:   { width: "100%", background: "linear-gradient(135deg,#1A1A1A,#050505)", borderRadius: 16, padding: "24px", marginBottom: 24, boxSizing: "border-box", color: "#FFF", boxShadow: isDark ? "none" : "0 8px 24px rgba(0,0,0,0.15)" },
     
-    metaLabel:  { fontSize: 16, fontWeight: 600, color: "#FFF", marginBottom: 12 },
+    metaLabel:  { fontSize: 16, color: "#FFF", marginBottom: 12 }, 
     label:      { fontSize: 16, fontWeight: 600, color: c.text, marginBottom: 12 },
     
-    bigNum:     { fontSize: 30, fontWeight: 700, color: "#FCB606", lineHeight: 1 },
+    bigNum:     { fontSize: 30, fontWeight: 700, color: "#FFF", lineHeight: 1 },
     smallNum:   { fontSize: 22, fontWeight: 700, color: c.text },
     redNum:     { fontSize: 22, fontWeight: 700, color: c.red },
     greenNum:   { fontSize: 22, fontWeight: 700, color: c.green },
@@ -611,19 +611,18 @@ export default function App() {
               <h1 style={s.title}>Ahorro Meta</h1>
               <button onClick={() => window.location.reload()} style={{ ...s.refreshBtn, position: "absolute", right: 0 }}>🔄</button>
             </div>
-            <p style={{ ...s.subtitle, textAlign: "center", width: "100%", display: "block" }}>Meta: {formatMoney(metaTotalNum)} · Día {diasTranscurridosPlan} de {diasTotalPlan}</p>
+            <p style={{ ...s.subtitle, textAlign: "center", width: "100%", display: "block" }}>Día {diasTranscurridosPlan} de {diasTotalPlan}</p>
           </div>
 
           {error && <div style={s.errorCard}>⚠️ {error}</div>}
 
           {tab === "hoy" && (
             <div style={s.section}>
-              {/* NUEVO DISEÑO: TU PROGRESO */}
               <div style={s.metaCard}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 16 }}>
                   <div>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: "#FFF", marginBottom: 6 }}>Tu progreso</div>
-                    <div style={s.bigNum}>{formatMoney(Math.max(0, ahorroAcumulado))}</div>
+                    <div style={{ fontSize: 18, fontWeight: 500, color: "#FFF", marginBottom: 6 }}>Tu progreso</div>
+                    <div style={{ ...s.bigNum, color: "#FFF" }}>{formatMoney(Math.max(0, ahorroAcumulado))}</div>
                   </div>
                   <div style={{ textAlign: "right" }}>
                     <div style={{ fontSize: 13, color: "#AAA", fontWeight: 500, marginBottom: 6 }}>Falta ahorrar</div>
@@ -961,7 +960,6 @@ export default function App() {
             </div>
           )}
 
-          {/* ── Nav bar con Safe Area (Nuevos Textos e Iconos) ── */}
           <div style={s.navBar}>
             {[{ id: "hoy", icon: "🏠", label: "Inicio" }, { id: "resumen", icon: "📊", label: "Resumen" }, { id: "historial", icon: "📋", label: "Historial" }, { id: "config", icon: "⚙️", label: "Config" }].map(n => (
               <button key={n.id} style={s.navBtn(tab === n.id)} onClick={() => setTab(n.id)}>
@@ -973,7 +971,6 @@ export default function App() {
         </>
       )}
 
-      {/* ── PANTALLA DE APARIENCIA ── */}
       {showApariencia && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
@@ -1043,7 +1040,6 @@ export default function App() {
         </div>
       )}
 
-      {/* ── MENÚ LATERAL (MI PERFIL) ── */}
       {showMenu && !showApariencia && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 9999, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
@@ -1073,7 +1069,6 @@ export default function App() {
         </div>
       )}
 
-      {/* ── MODAL FLOTANTE: NUEVO MOVIMIENTO ── */}
       {showAddModal && (
         <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setShowAddModal(false); }}>
           <div style={{...s.modal, animation: "slideUp 0.3s ease-out"}}>
@@ -1101,7 +1096,6 @@ export default function App() {
         </div>
       )}
 
-      {/* ── MODAL: EDITAR ── */}
       {editando && (
         <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setEditando(null); }}>
           <div style={{...s.modal, animation: "slideUp 0.3s ease-out"}}>
@@ -1125,7 +1119,6 @@ export default function App() {
         </div>
       )}
 
-      {/* ── MODAL DE CORREO ── */}
       {showEmailModal && (
         <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setShowEmailModal(false); }}>
           <div style={{ ...s.modal, textAlign: "center", animation: "slideUp 0.3s ease-out" }}>
