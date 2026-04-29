@@ -74,16 +74,18 @@ const exportarCSV = (gastos, categorias) => {
   URL.revokeObjectURL(url);
 };
 
+// EXPORTAR PDF ACTUALIZADO CON DISEÑO DE TARJETA EN FONDO GRIS
 const exportarPDF = (gastos, categorias) => {
   const filas = gastos.map(g => {
     const { fecha, hora } = formatDateTime(g.created_at);
-    const cat  = categorias.find(c => c.id === g.categoria)?.label || g.categoria || "";
+    const cat  = categorias.find(c => c.id === g.categoria);
+    const catLabel = cat?.label || g.categoria || "";
     const color = g.tipo === "gasto" ? "#c0392b" : "#27ae60";
     const signo = g.tipo === "gasto" ? "-" : "+";
     return `<tr>
-      <td>${fecha}<br/><small style="color:#888">${hora}</small></td>
-      <td>${cat}</td>
-      <td>${g.descripcion || ""}</td>
+      <td style="font-weight:500;">${fecha}<br/><small style="color:#888">${hora}</small></td>
+      <td style="font-weight:600;color:${cat?.color || "#1a1a1a"}">${catLabel}</td>
+      <td style="color:#1a1a1a;">${g.descripcion || ""}</td>
       <td style="color:${color};font-weight:bold;text-align:right">${signo} S/ ${Number(g.monto).toFixed(2)}</td>
     </tr>`;
   }).join("");
@@ -92,19 +94,46 @@ const exportarPDF = (gastos, categorias) => {
   win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"/>
     <title>Historial Ahorro Meta</title>
     <style>
-      body{font-family:Arial,sans-serif;padding:20px;font-size:13px}
-      h2{color:#FCB606}
-      table{width:100%;border-collapse:collapse;margin-top:12px}
-      th{background:#1a1a1a;color:#fff;padding:8px 10px;text-align:left}
-      td{padding:7px 10px;border-bottom:1px solid #eee}
-      tr:nth-child(even){background:#f9f9f9}
-      @media print{button{display:none}}
+      @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+      body{font-family:'Montserrat',sans-serif;padding:30px 20px;font-size:13px;background-color:#F4F5F7;color:#1a1a1a;margin:0;}
+      h2{color:#FCB606;margin-top:0;font-size:24px;font-weight:700;}
+      .header-meta {color:#6B7280;margin-bottom:24px;font-size:14px;font-weight:500;}
+      .btn-print {display:inline-block;margin-bottom:20px;padding:12px 24px;background:#FCB606;color:#000;font-weight:700;border:none;border-radius:12px;cursor:pointer;font-family:inherit;font-size:14px;box-shadow:0 4px 12px rgba(252,182,6,0.2);}
+      
+      /* ESTILO DE TARJETA ENCUADRANDO TODA LA INFO */
+      .card-history {
+        width:100%;
+        max-width:800px;
+        margin:0 auto;
+        background:#FFFFFF;
+        border:1px solid #E5E7EB;
+        border-radius:24px;
+        padding:32px;
+        box-shadow:0 8px 24px rgba(0,0,0,0.06);
+        box-sizing:border-box;
+      }
+      
+      table{width:100%;border-collapse:collapse;margin-top:12px;border-radius:12px;overflow:hidden;}
+      th{background:#F9FAFB;color:#6B7280;padding:14px 16px;text-align:left;font-weight:600;border-bottom:1px solid #E5E7EB;text-transform:uppercase;font-size:11px;letter-spacing:1px;}
+      td{padding:14px 16px;border-bottom:1px solid #E5E7EB;}
+      tr:last-child td{border-bottom:none;}
+      tr:nth-child(even){background:#F9FAFB;}
+      
+      @media print{
+        button{display:none;}
+        body{background:#FFFFFF;padding:0;}
+        .card-history{border:none;box-shadow:none;padding:0;}
+      }
     </style></head><body>
-    <h2>Ahorro Meta — Historial de movimientos</h2>
-    <p>Exportado el ${formatFecha(hoy())} · Total registros: ${gastos.length}</p>
-    <button onclick="window.print()" style="margin-bottom:12px;padding:8px 16px;background:#FCB606;color:#000;font-weight:bold;border:none;border-radius:6px;cursor:pointer">🖨️ Imprimir / Guardar PDF</button>
-    <table><thead><tr><th>Fecha / Hora</th><th>Categoría</th><th>Descripción</th><th>Monto</th></tr></thead>
-    <tbody>${filas}</tbody></table>
+    <div style="max-width:800px;margin:0 auto;">
+      <button onclick="window.print()" class="btn-print">🖨️ Imprimir / Guardar PDF</button>
+      <div class="card-history">
+        <h2>Ahorro Meta — Historial de movimientos</h2>
+        <p class="header-meta">Exportado el ${formatFecha(hoy())} · Total registros: ${gastos.length}</p>
+        <table><thead><tr><th>Fecha / Hora</th><th>Categoría</th><th>Descripción</th><th>Monto</th></tr></thead>
+        <tbody>${filas}</tbody></table>
+      </div>
+    </div>
     </body></html>`);
   win.document.close();
 };
@@ -171,7 +200,6 @@ export default function App() {
   const [showMenu, setShowMenu] = useState(false);
   const [showApariencia, setShowApariencia] = useState(false);
   
-  // NUEVO: ESTADO PARA EL MODAL DE REGISTRO
   const [showAddModal, setShowAddModal] = useState(false);
 
   const [theme, setTheme] = useState("dark");
@@ -196,7 +224,6 @@ export default function App() {
     green: isDark ? "#5AE88A" : "#10B981",
     red: isDark ? "#E85A5A" : "#EF4444",
     shadow: isDark ? "none" : "0 4px 12px rgba(0,0,0,0.04)",
-    // Colores para los iconitos de las cajas
     iconBgGreen: isDark ? "rgba(90, 232, 138, 0.15)" : "#E6F4EA",
     iconBgRed: isDark ? "rgba(232, 90, 90, 0.15)" : "#FEE2E2",
     iconBgYellow: isDark ? "rgba(252, 182, 6, 0.15)" : "#FEF3C7",
@@ -268,7 +295,7 @@ export default function App() {
     setForm(f => ({ ...f, monto: "", descripcion: "" }));
     showToast(`Registrado ✓`);
     setSaving(false);
-    setShowAddModal(false); // Cierra el modal al guardar
+    setShowAddModal(false);
   };
 
   const eliminar = async (id) => {
@@ -426,8 +453,8 @@ export default function App() {
 
   // ESTILOS DINAMICOS Y SEGUROS CON MONTSERRAT
   const s = {
-    app: { minHeight: "100vh", fontFamily: "'Montserrat', sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: "calc(160px + env(safe-area-inset-bottom, 0px))", width: "100%" }, // padding extra para el FAB
-    header:     { padding: "24px 20px 16px", borderBottom: `1px solid ${c.border}`, position: "sticky", top: 0, background: c.bg, zIndex: 90 }, // Tabs eliminadas, el header es más compacto
+    app: { minHeight: "100vh", fontFamily: "'Montserrat', sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: "calc(160px + env(safe-area-inset-bottom, 0px))", width: "100%" },
+    header:     { padding: "24px 20px 16px", borderBottom: `1px solid ${c.border}`, position: "sticky", top: 0, background: c.bg, zIndex: 90 },
     title:      { fontSize: 24, fontWeight: 700, color: "#FCB606", margin: 0, fontFamily: "'Montserrat', sans-serif" },
     refreshBtn: { backgroundColor: "transparent", WebkitAppearance: "none", border: "none", width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 18 },
     subtitle:   { color: c.muted, fontSize: 13, margin: "4px 0 0", fontWeight: 400 },
@@ -454,8 +481,6 @@ export default function App() {
     btnSecondary:{ background: c.input, color: c.text, border: `1px solid ${c.border}`, borderRadius: 10, padding: "12px", fontSize: 14, fontWeight: 600, cursor: "pointer", width: "100%", fontFamily: "inherit" },
     tipoBtn: (a, col) => ({ flex: 1, padding: "10px", background: a ? col : c.input, border: `1px solid ${a ? col : c.border}`, color: a ? "#FFF" : c.muted, borderRadius: 10, cursor: "pointer", fontSize: 15, fontWeight: a ? 700 : 500, transition: "all 0.2s", fontFamily: "inherit" }),
     
-    itemRow:    { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: `1px solid ${c.border}` },
-    
     deleteBtn:  { backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: c.red, cursor: "pointer", fontSize: 18, padding: "4px 6px" },
     editBtn:    { backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FCB606", cursor: "pointer", fontSize: 15, padding: "4px 6px" },
     
@@ -477,7 +502,6 @@ export default function App() {
     overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 200, padding: "0", backdropFilter: "blur(5px)" },
     modal: { background: c.card, borderTop: `1px solid ${c.border}`, borderLeft: `1px solid ${c.border}`, borderRight: `1px solid ${c.border}`, borderRadius: "24px 24px 0 0", padding: "24px 24px calc(24px + env(safe-area-inset-bottom, 0px))", width: "100%", maxWidth: 480, boxSizing: "border-box", boxShadow: "0 -10px 40px rgba(0,0,0,0.3)" },
     
-    // Botón flotante
     fab: { position: "fixed", bottom: "calc(90px + env(safe-area-inset-bottom, 0px))", left: "50%", transform: "translateX(-50%)", width: "90%", maxWidth: 430, background: "#FCB606", color: "#000", border: "none", borderRadius: 20, padding: "16px", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 8px 24px rgba(252, 182, 6, 0.3)", zIndex: 95, display: "flex", justifyContent: "center", alignItems: "center", gap: 8 }
   };
 
@@ -513,7 +537,6 @@ export default function App() {
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
         @keyframes spin { to { transform: rotate(360deg) } }
-        /* Animación suave para el modal desde abajo */
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
       `}</style>
 
@@ -587,7 +610,7 @@ export default function App() {
         </>
       ) : (
         <>
-          {/* HEADER LIMPIO (Sin menú de texto superior) */}
+          {/* HEADER LIMPIO */}
           <div style={s.header}>
             <div style={{ display: "flex", justifyContent: "center", alignItems: "center", position: "relative", marginBottom: 4 }}>
               <button onClick={() => setShowMenu(true)} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: c.green, fontSize: 26, cursor: "pointer", position: "absolute", left: 0, padding: 0 }}>☰</button>
@@ -599,7 +622,7 @@ export default function App() {
 
           {error && <div style={s.errorCard}>⚠️ {error}</div>}
 
-          {/* TAB: INICIO (Antes Hoy) */}
+          {/* TAB: INICIO */}
           {tab === "hoy" && (
             <div style={s.section}>
               <div style={s.metaCard}>
@@ -611,7 +634,6 @@ export default function App() {
                   ↑ Ahorro en camino
                 </div>
                 
-                {/* Detalles extra sutiles de la meta */}
                 <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 12, marginTop: 16, display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 500 }}>
                   <span style={{ color: "#AAA" }}>Meta total: <strong style={{color: "#FFF"}}>{formatMoney(metaTotalNum)}</strong></span>
                   <span style={{ color: "#FCB606" }}>{progreso.toFixed(1)}%</span>
@@ -664,13 +686,15 @@ export default function App() {
                 </button>
               </div>
 
+              {/* REQUERIMIENTO: ÚLTIMOS MOVIMIENTOS DENTRO DE UNA CAJA (CARD) */}
               {(gastosHoy.length > 0 || ingresosHoy.length > 0) ? (
-                <div>
-                  {[...gastosHoy, ...ingresosHoy].map(g => {
+                <div style={{ ...s.card, padding: "8px 16px" }}>
+                  {[...gastosHoy, ...ingresosHoy].map((g, i, arr) => {
                     const cat = categorias.find(c => c.id === g.categoria);
-                    const { fecha, hora } = formatDateTime(g.created_at);
+                    const { hora } = formatDateTime(g.created_at);
+                    const isLast = i === arr.length - 1;
                     return (
-                      <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: `1px solid ${c.border}` }}>
+                      <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: isLast ? "none" : `1px solid ${c.border}` }}>
                         <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 14 }}>
                           {cat && (
                             <div style={{ width: 44, height: 44, borderRadius: 14, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
@@ -694,7 +718,7 @@ export default function App() {
                   })}
                 </div>
               ) : (
-                <div style={{ textAlign: "center", color: c.muted, padding: "24px 0", fontWeight: 500 }}>Aún no hay movimientos hoy</div>
+                <div style={{ ...s.card, textAlign: "center", color: c.muted, padding: "24px 0", fontWeight: 500 }}>Aún no hay movimientos hoy</div>
               )}
 
               {/* Botón Flotante para Agregar */}
