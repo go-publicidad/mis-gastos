@@ -137,9 +137,9 @@ const exportarPDF = (gastos, categorias) => {
 };
 
 const MenuItem = ({ icon, text, color, mutedColor, border, onClick }) => (
-  <button onClick={onClick} style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", padding: "16px 0", cursor: "pointer", color: color, fontSize: 16, fontWeight: 400, borderBottom: `1px solid ${border}`, textAlign: "left", fontFamily: "inherit" }}>
-    <span style={{ fontSize: 22 }}>{icon}</span>
-    <span style={{ flex: 1, fontWeight: 400 }}>{text}</span>
+  <button onClick={onClick} style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", padding: "16px 0", cursor: "pointer", color: color, fontSize: 16, fontWeight: 500, borderBottom: `1px solid ${border}`, textAlign: "left", fontFamily: "inherit" }}>
+    <span style={{ fontSize: 24 }}>{icon}</span>
+    <span style={{ flex: 1 }}>{text}</span>
     <span style={{ color: mutedColor, fontSize: 20 }}>›</span>
   </button>
 );
@@ -156,6 +156,9 @@ export default function App() {
   const [fechaInicioPlan, setFechaInicioPlan] = useState(hoy());
   const [fechaFinPlan, setFechaFinPlan] = useState(calcularFechaFutura(150));
   const [ingresoMensual, setIngresoMensual] = useState("");
+  
+  // NUEVO: Estado del nombre del usuario (Se guarda en Supabase)
+  const [userName, setUserName] = useState("Emprendedor");
 
   const [isEditingMeta, setIsEditingMeta] = useState(false);
   const [isEditingIngreso, setIsEditingIngreso] = useState(false);
@@ -195,8 +198,11 @@ export default function App() {
   
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailDestino, setEmailDestino] = useState("");
+  
+  // NAVEGACIÓN DEL MENÚ
   const [showMenu, setShowMenu] = useState(false);
   const [showApariencia, setShowApariencia] = useState(false);
+  const [profileScreen, setProfileScreen] = useState(null); // 'datos', 'clave', 'logros', 'ayuda'
   
   const [showAddModal, setShowAddModal] = useState(false);
 
@@ -258,6 +264,7 @@ export default function App() {
           if (getVal("ingresoMensual")) setIngresoMensual(getVal("ingresoMensual"));
           if (getVal("themePref")) setTheme(getVal("themePref"));
           if (getVal("useBoldPref")) setUseBold(getVal("useBoldPref") === "true");
+          if (getVal("userName")) setUserName(getVal("userName"));
 
           if (getVal("categoriasCustom")) {
             try { 
@@ -334,6 +341,14 @@ export default function App() {
     showToast("Configuración guardada ✓");
   };
 
+  const guardarPerfil = async () => {
+    setSaving(true);
+    await supabase.from("config").upsert([{ key: "userName", value: userName }], { onConflict: "key" });
+    setSaving(false);
+    showToast("Datos actualizados ✓", c.green);
+    setProfileScreen(null);
+  };
+
   const agregarCategoria = async () => {
     const label = nuevaCatLabel.trim();
     if (!label) { showToast("Escribe un nombre", c.red); return; }
@@ -394,7 +409,6 @@ export default function App() {
   const diasRestantesPlan = Math.max(0, diasTotalPlan - diasTranscurridosPlan);
   const fechaHoy = hoy();
   
-  // AQUI OBTENEMOS TODOS LOS MOVIMIENTOS DE HOY EN ORDEN CRONOLÓGICO NATURAL
   const movimientosHoy = gastos.filter(g => g.fecha === fechaHoy);
 
   const totalGastadoHoy = movimientosHoy.filter(g => g.tipo === "gasto").reduce((a, g) => a + g.monto, 0);
@@ -508,6 +522,9 @@ export default function App() {
       {emoji}
     </div>
   );
+
+  // Obtener iniciales para la foto de perfil
+  const userInitials = userName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'PF';
 
   if (!loaded) return (
     <div style={{ background: c.bg, height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
@@ -974,76 +991,8 @@ export default function App() {
         </>
       )}
 
-      {showApariencia && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
-            <button onClick={() => { setShowApariencia(false); setShowMenu(true); }} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FCB606", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
-            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: "700" }}>Pantalla y brillo</h2>
-          </div>
-
-          <div style={{ fontSize: 14, color: c.muted, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 12, fontWeight: 700 }}>Aspecto</div>
-          <div style={{ background: c.card, borderRadius: 16, padding: "20px 20px 0", marginBottom: 24, border: `1px solid ${c.border}`, boxShadow: c.shadow }}>
-            
-            <div style={{ display: "flex", justifyContent: "space-around", paddingBottom: 24 }}>
-              <div onClick={() => { setTheme("light"); showToast("Tema Claro activado"); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer" }}>
-                <div style={{ width: 66, height: 130, borderRadius: 12, background: "#FFF", border: theme === "light" ? "3px solid #34C759" : "1px solid #CCC", position: "relative", overflow: "hidden" }}>
-                  <div style={{ position: "absolute", top: 12, left: 6, right: 6, height: 24, background: "#E5E5E5", borderRadius: 4 }} />
-                  <div style={{ position: "absolute", top: 44, left: 6, right: 6, height: 18, background: "#E5E5E5", borderRadius: 4 }} />
-                </div>
-                <span style={{ fontSize: 16, fontWeight: 600 }}>Claro</span>
-                <div style={{ width: 22, height: 22, borderRadius: "50%", border: theme === "light" ? "none" : `1px solid ${c.muted}`, background: theme === "light" ? "#34C759" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {theme === "light" && <span style={{ color: "#FFF", fontSize: 14 }}>✓</span>}
-                </div>
-              </div>
-
-              <div onClick={() => { setTheme("dark"); showToast("Tema Oscuro activado"); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer" }}>
-                <div style={{ width: 66, height: 130, borderRadius: 12, background: "#111", border: theme === "dark" ? "3px solid #34C759" : "1px solid #444", position: "relative", overflow: "hidden" }}>
-                  <div style={{ position: "absolute", top: 12, left: 6, right: 6, height: 24, background: "#333", borderRadius: 4 }} />
-                  <div style={{ position: "absolute", top: 44, left: 6, right: 6, height: 18, background: "#333", borderRadius: 4 }} />
-                </div>
-                <span style={{ fontSize: 16, fontWeight: 600 }}>Oscuro</span>
-                <div style={{ width: 22, height: 22, borderRadius: "50%", border: theme === "dark" ? "none" : `1px solid ${c.muted}`, background: theme === "dark" ? "#34C759" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {theme === "dark" && <span style={{ color: "#FFF", fontSize: 14 }}>✓</span>}
-                </div>
-              </div>
-            </div>
-
-            <div style={{ borderTop: `1px solid ${c.border}`, padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: 16, fontWeight: 600 }}>Automático</span>
-              <div onClick={() => setIsAutoTheme(!isAutoTheme)} style={{ width: 50, height: 30, background: isAutoTheme ? "#34C759" : c.border, borderRadius: 15, position: "relative", cursor: "pointer", transition: "0.3s" }}>
-                <div style={{ width: 26, height: 26, background: "#FFF", borderRadius: "50%", position: "absolute", top: 2, left: isAutoTheme ? 22 : 2, transition: "0.3s", boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}/>
-              </div>
-            </div>
-
-            {isAutoTheme && (
-              <div style={{ borderTop: `1px solid ${c.border}`, padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
-                <span style={{ fontSize: 16, fontWeight: 600 }}>Opciones</span>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ color: c.muted, fontSize: 14, fontWeight: 400 }}>Claro hasta el atardecer</span>
-                  <span style={{ color: c.muted, fontSize: 18 }}>›</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div style={{ background: c.card, borderRadius: 16, padding: "0 20px", border: `1px solid ${c.border}`, boxShadow: c.shadow }}>
-            <div style={{ padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, cursor: "pointer" }}>
-              <span style={{ fontSize: 16, fontWeight: 600 }}>Tamaño del texto</span>
-              <span style={{ color: c.muted, fontSize: 18 }}>›</span>
-            </div>
-            <div style={{ padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: 16, fontWeight: 600 }}>Negritas</span>
-              <div onClick={() => setUseBold(!useBold)} style={{ width: 50, height: 30, background: useBold ? "#34C759" : c.border, borderRadius: 15, position: "relative", cursor: "pointer", transition: "0.3s" }}>
-                <div style={{ width: 26, height: 26, background: "#FFF", borderRadius: "50%", position: "absolute", top: 2, left: useBold ? 22 : 2, transition: "0.3s", boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}/>
-              </div>
-            </div>
-          </div>
-          
-          <button style={{ ...s.btnPrimary, marginTop: 30 }} onClick={() => { guardarConfig(); setShowApariencia(false); setShowMenu(true); }}>Guardar Preferencias</button>
-        </div>
-      )}
-
-      {showMenu && !showApariencia && (
+      {/* ── PANTALLA PRINCIPAL DE PERFIL Y SUBPANTALLAS ── */}
+      {showMenu && !showApariencia && !profileScreen && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 9999, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
             <button onClick={() => setShowMenu(false)} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FCB606", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
@@ -1052,17 +1001,17 @@ export default function App() {
 
           <div style={{ marginBottom: 32 }}>
             <div style={{ fontSize: 14, color: "#FCB606", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Mi cuenta</div>
-            <MenuItem icon="🪪" text="Mis datos" color={c.text} mutedColor={c.muted} border={c.border} />
-            <MenuItem icon="🔒" text="Cambiar mi clave" color={c.text} mutedColor={c.muted} border={c.border} />
-            <MenuItem icon="🏆" text="Mis logros / Insignias" color={c.text} mutedColor={c.muted} border={c.border} />
+            <MenuItem icon="🪪" text="Mis datos" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("datos")} />
+            <MenuItem icon="🔒" text="Cambiar mi clave" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("clave")} />
+            <MenuItem icon="🏆" text="Mis logros / Insignias" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("logros")} />
           </div>
 
           <div style={{ marginBottom: 32 }}>
             <div style={{ fontSize: 14, color: "#FCB606", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Ajustes</div>
             <MenuItem icon="🎯" text="Mi Meta de Ahorro" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowMenu(false); setTab("config"); }} />
-            <MenuItem icon="🎨" text="Apariencia (Tema Claro/Oscuro)" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowApariencia(true); setShowMenu(false); }} />
+            <MenuItem icon="🎨" text="Apariencia (Tema Claro/Oscuro)" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowApariencia(true); setProfileScreen(null); }} />
             <MenuItem icon="📊" text="Exportar Reportes" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowMenu(false); setShowEmailModal(true); }} />
-            <MenuItem icon="🎧" text="Centro de ayuda" color={c.text} mutedColor={c.muted} border={c.border} />
+            <MenuItem icon="🎧" text="Centro de ayuda" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("ayuda")} />
           </div>
 
           <div style={{ marginTop: "auto", paddingTop: 32 }}>
@@ -1072,6 +1021,128 @@ export default function App() {
         </div>
       )}
 
+      {/* ── SUBPANTALLA: MIS DATOS ── */}
+      {showMenu && profileScreen === "datos" && (
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden" }}>
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
+            <button onClick={() => setProfileScreen(null)} style={{ background: "none", border: "none", color: "#FCB606", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Mis datos</h2>
+          </div>
+          
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 32 }}>
+            <div style={{ width: 80, height: 80, borderRadius: "50%", background: "#FCB606", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, fontWeight: 700, color: "#000" }}>
+              {userInitials}
+            </div>
+          </div>
+          
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Nombre completo</div>
+            <input style={s.input} value={userName} onChange={e => setUserName(e.target.value)} placeholder="Ej. Paul Flores" />
+          </div>
+          
+          <div style={{ marginBottom: 32 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Correo electrónico</div>
+            <input style={{ ...s.input, opacity: 0.6 }} value="paul@ejemplo.com" disabled />
+            <div style={{ fontSize: 12, color: c.muted, marginTop: 8, fontWeight: 400 }}>El correo no se puede cambiar por ahora.</div>
+          </div>
+          
+          <button style={s.btnPrimary} onClick={guardarPerfil} disabled={saving}>{saving ? "Guardando..." : "Guardar cambios"}</button>
+        </div>
+      )}
+
+      {/* ── SUBPANTALLA: CAMBIAR CLAVE ── */}
+      {showMenu && profileScreen === "clave" && (
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden" }}>
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
+            <button onClick={() => setProfileScreen(null)} style={{ background: "none", border: "none", color: "#FCB606", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Cambiar mi clave</h2>
+          </div>
+          
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Contraseña actual</div>
+            <input type="password" style={s.input} placeholder="••••••••" />
+          </div>
+          
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Nueva contraseña</div>
+            <input type="password" style={s.input} placeholder="••••••••" />
+          </div>
+
+          <div style={{ marginBottom: 32 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Repetir nueva contraseña</div>
+            <input type="password" style={s.input} placeholder="••••••••" />
+          </div>
+          
+          <button style={s.btnPrimary} onClick={() => { showToast("Clave actualizada ✓", c.green); setProfileScreen(null); }}>Actualizar clave</button>
+        </div>
+      )}
+
+      {/* ── SUBPANTALLA: MIS LOGROS / INSIGNIAS ── */}
+      {showMenu && profileScreen === "logros" && (
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden" }}>
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 24, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
+            <button onClick={() => setProfileScreen(null)} style={{ background: "none", border: "none", color: "#FCB606", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Mis logros</h2>
+          </div>
+          
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <div style={{ ...s.card, textAlign: "center", padding: "24px 12px", border: `2px solid #FCB606` }}>
+              <div style={{ fontSize: 44, marginBottom: 16 }}>🌟</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: c.text, marginBottom: 6 }}>Primer Paso</div>
+              <div style={{ fontSize: 12, color: c.muted, lineHeight: 1.4, fontWeight: 500 }}>Registraste tu primer movimiento.</div>
+            </div>
+            
+            <div style={{ ...s.card, textAlign: "center", padding: "24px 12px", border: `2px solid #FCB606` }}>
+              <div style={{ fontSize: 44, marginBottom: 16 }}>🔥</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: c.text, marginBottom: 6 }}>Constante</div>
+              <div style={{ fontSize: 12, color: c.muted, lineHeight: 1.4, fontWeight: 500 }}>Usaste la app por 3 días seguidos.</div>
+            </div>
+
+            <div style={{ ...s.card, textAlign: "center", padding: "24px 12px", opacity: 0.4, border: `1px solid ${c.border}` }}>
+              <div style={{ fontSize: 44, marginBottom: 16, filter: "grayscale(100%)" }}>🎯</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: c.text, marginBottom: 6 }}>Meta Alcanzada</div>
+              <div style={{ fontSize: 12, color: c.muted, lineHeight: 1.4, fontWeight: 500 }}>Llegaste al 100% de tu ahorro.</div>
+            </div>
+
+            <div style={{ ...s.card, textAlign: "center", padding: "24px 12px", opacity: 0.4, border: `1px solid ${c.border}` }}>
+              <div style={{ fontSize: 44, marginBottom: 16, filter: "grayscale(100%)" }}>🐷</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: c.text, marginBottom: 6 }}>Súper Ahorrador</div>
+              <div style={{ fontSize: 12, color: c.muted, lineHeight: 1.4, fontWeight: 500 }}>Ahorraste más del 50% en un mes.</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── SUBPANTALLA: CENTRO DE AYUDA ── */}
+      {showMenu && profileScreen === "ayuda" && (
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden" }}>
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 24, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
+            <button onClick={() => setProfileScreen(null)} style={{ background: "none", border: "none", color: "#FCB606", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Centro de ayuda</h2>
+          </div>
+          
+          <div style={{ ...s.card, padding: 16, marginBottom: 12 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 8 }}>¿Cómo edito una categoría?</div>
+            <div style={{ fontSize: 13, color: c.muted, lineHeight: 1.5, fontWeight: 500 }}>Ve a Configuración > Categorías Personalizadas y presiona el ícono del lápiz junto a la categoría que deseas modificar.</div>
+          </div>
+
+          <div style={{ ...s.card, padding: 16, marginBottom: 12 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 8 }}>¿Cómo funciona la proyección?</div>
+            <div style={{ fontSize: 13, color: c.muted, lineHeight: 1.5, fontWeight: 500 }}>Calculamos tu promedio de ahorro diario desde que iniciaste tu plan, y con eso estimamos en qué fecha exacta llegarás a tu meta si mantienes ese ritmo.</div>
+          </div>
+
+          <div style={{ ...s.card, padding: 16, marginBottom: 24 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 8 }}>Mi meta se reinició, ¿qué hago?</div>
+            <div style={{ fontSize: 13, color: c.muted, lineHeight: 1.5, fontWeight: 500 }}>Verifica que el periodo de ahorro (Fechas Del / Al) en tu configuración abarque el día de hoy.</div>
+          </div>
+
+          <a href="mailto:soporte@ahorrometa.com" style={{ ...s.btnSecondary, display: "block", textAlign: "center", textDecoration: "none", padding: "16px 0", fontSize: 15 }}>
+            ✉️ Contactar a soporte
+          </a>
+        </div>
+      )}
+
+      {/* ── MODAL FLOTANTE: NUEVO MOVIMIENTO ── */}
       {showAddModal && (
         <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setShowAddModal(false); }}>
           <div style={{...s.modal, animation: "slideUp 0.3s ease-out"}}>
@@ -1099,6 +1170,7 @@ export default function App() {
         </div>
       )}
 
+      {/* ── MODAL: EDITAR ── */}
       {editando && (
         <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setEditando(null); }}>
           <div style={{...s.modal, animation: "slideUp 0.3s ease-out"}}>
@@ -1122,6 +1194,7 @@ export default function App() {
         </div>
       )}
 
+      {/* ── MODAL DE CORREO ── */}
       {showEmailModal && (
         <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setShowEmailModal(false); }}>
           <div style={{ ...s.modal, textAlign: "center", animation: "slideUp 0.3s ease-out" }}>
