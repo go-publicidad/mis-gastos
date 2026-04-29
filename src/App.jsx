@@ -393,10 +393,13 @@ export default function App() {
   const diasTranscurridosPlan = Math.max(0, Math.min(diasTotalPlan, diffDias(fechaInicioPlan, hoy()) + 1));
   const diasRestantesPlan = Math.max(0, diasTotalPlan - diasTranscurridosPlan);
   const fechaHoy = hoy();
-  const gastosHoy = gastos.filter(g => g.fecha === fechaHoy && g.tipo === "gasto");
-  const ingresosHoy = gastos.filter(g => g.fecha === fechaHoy && g.tipo === "ingreso");
-  const totalGastadoHoy = gastosHoy.reduce((a, g) => a + g.monto, 0);
-  const totalIngresosHoy = ingresosHoy.reduce((a, g) => a + g.monto, 0);
+  
+  // AQUI OBTENEMOS TODOS LOS MOVIMIENTOS DE HOY EN ORDEN CRONOLÓGICO NATURAL
+  const movimientosHoy = gastos.filter(g => g.fecha === fechaHoy);
+
+  const totalGastadoHoy = movimientosHoy.filter(g => g.tipo === "gasto").reduce((a, g) => a + g.monto, 0);
+  const totalIngresosHoy = movimientosHoy.filter(g => g.tipo === "ingreso").reduce((a, g) => a + g.monto, 0);
+
   const totalGastado = gastos.filter(g => g.tipo === "gasto").reduce((a, g) => a + g.monto, 0);
   const totalIngresos = gastos.filter(g => g.tipo === "ingreso").reduce((a, g) => a + g.monto, 0);
   const ahorroAcumulado = totalIngresos - totalGastado;
@@ -689,9 +692,9 @@ export default function App() {
                 </button>
               </div>
 
-              {(gastosHoy.length > 0 || ingresosHoy.length > 0) ? (
+              {movimientosHoy.length > 0 ? (
                 <div style={{ ...s.card, padding: "8px 16px" }}>
-                  {[...gastosHoy, ...ingresosHoy].map((g, i, arr) => {
+                  {movimientosHoy.map((g, i, arr) => {
                     const cat = categorias.find(c => c.id === g.categoria);
                     const { hora } = formatDateTime(g.created_at);
                     const isLast = i === arr.length - 1;
@@ -1122,12 +1125,12 @@ export default function App() {
       {showEmailModal && (
         <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setShowEmailModal(false); }}>
           <div style={{ ...s.modal, textAlign: "center", animation: "slideUp 0.3s ease-out" }}>
-            <h3 style={{ margin: "0 0 8px", fontSize: 18, color: c.text, fontWeight: 600 }}>Enviar movimientos</h3>
-            <p style={{ margin: "0 0 16px", fontSize: 13, color: c.muted, fontWeight: 400 }}>Ingresa el e-mail del destinatario.</p>
-            <input style={{ ...s.input, marginBottom: 16, textAlign: "center", fontWeight: 400 }} type="email" placeholder="correo@ejemplo.com" value={emailDestino} onChange={e => setEmailDestino(e.target.value)} />
-            <div style={{ display: "flex", gap: 8, borderTop: `1px solid ${c.border}`, paddingTop: 12 }}>
-              <button style={{ flex: 1, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FCB606", fontSize: 15, cursor: "pointer", padding: "8px 0", fontFamily: "inherit" }} onClick={() => setShowEmailModal(false)}>Cancelar</button>
-              <button style={{ flex: 1, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#4D96FF", fontSize: 15, cursor: "pointer", padding: "8px 0", fontWeight: 700, fontFamily: "inherit" }} onClick={() => { showToast("Enviado con éxito", c.green); setShowEmailModal(false); setEmailDestino(""); }}>Enviar</button>
+            <h3 style={{ margin: "0 0 8px", fontSize: 20, color: c.text, fontWeight: 700 }}>Enviar reporte</h3>
+            <p style={{ margin: "0 0 20px", fontSize: 14, color: c.muted, fontWeight: 500 }}>Ingresa el e-mail del destinatario.</p>
+            <input style={{ ...s.input, marginBottom: 20, textAlign: "center", fontWeight: 500 }} type="email" placeholder="correo@ejemplo.com" value={emailDestino} onChange={e => setEmailDestino(e.target.value)} />
+            <div style={{ display: "flex", gap: 12, borderTop: `1px solid ${c.border}`, paddingTop: 16 }}>
+              <button style={{ flex: 1, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: c.text, fontSize: 16, cursor: "pointer", padding: "10px 0", fontFamily: "inherit", fontWeight: 600 }} onClick={() => setShowEmailModal(false)}>Cancelar</button>
+              <button style={{ flex: 1, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#4D96FF", fontSize: 16, cursor: "pointer", padding: "10px 0", fontWeight: 700, fontFamily: "inherit" }} onClick={() => { showToast("Enviado con éxito", c.green); setShowEmailModal(false); setEmailDestino(""); }}>Enviar</button>
             </div>
           </div>
         </div>
