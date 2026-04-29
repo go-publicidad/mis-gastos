@@ -175,7 +175,7 @@ export default function App() {
   const [isAutoTheme, setIsAutoTheme] = useState(false);
   const [useBold, setUseBold] = useState(false);
 
-  // UNION SEGURA DE CATEGORÍAS PARA EVITAR PANTALLA NEGRA
+  // UNION SEGURA DE CATEGORÍAS
   const safeBase = categoriasBase || [];
   const safeExtra = categoriasExtra || [];
   const categorias = [...safeBase, ...safeExtra];
@@ -454,7 +454,6 @@ export default function App() {
     
     errorCard:  { background: isDark ? "#1A0A0A" : "#FEF2F2", border: `1px solid ${c.red}`, borderRadius: 12, padding: "16px", margin: "20px", color: c.red, fontSize: 14, fontWeight: 400 },
     
-    // FILTROS EN UNA SOLA FILA CON SCROLL HORIZONTAL
     filterRow:  { display: "flex", gap: 6, marginBottom: 14, flexWrap: "nowrap", overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" },
     filterBtn: (a) => ({ whiteSpace: "nowrap", flexShrink: 0, padding: "6px 14px", borderRadius: 20, border: `1px solid ${a ? "#FCB606" : c.border}`, background: a ? "#FCB606" : c.card, color: a ? "#000" : c.muted, fontSize: 13, fontWeight: a ? 600 : 400, cursor: "pointer", fontFamily: "inherit" }),
     
@@ -673,10 +672,10 @@ export default function App() {
               )}
 
               <div style={s.grid2}>
-                <div style={s.card}><div style={s.label}>Total gastado</div><div style={s.redNum}>{formatMoney(totalGastadoR)}</div></div>
-                <div style={s.card}><div style={s.label}>Total ingresos</div><div style={s.greenNum}>{formatMoney(totalIngresosR)}</div></div>
-                <div style={s.card}><div style={s.label}>Ahorro período</div><div style={{ ...s.smallNum, color: ahorroR >= 0 ? "#FCB606" : c.red }}>{formatMoney(ahorroR)}</div></div>
-                <div style={s.card}><div style={s.label}>Gasto prom/día</div><div style={s.smallNum}>{formatMoney(gastoDiarioProm)}</div></div>
+                <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Total gastado</div><div style={s.redNum}>{formatMoney(totalGastadoR)}</div></div>
+                <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Total ingresos</div><div style={s.greenNum}>{formatMoney(totalIngresosR)}</div></div>
+                <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Ahorro período</div><div style={{ ...s.smallNum, color: ahorroR >= 0 ? "#FCB606" : c.red }}>{formatMoney(ahorroR)}</div></div>
+                <div style={{ ...s.card, textAlign: "center" }}><div style={s.label}>Gasto prom/día</div><div style={s.smallNum}>{formatMoney(gastoDiarioProm)}</div></div>
               </div>
 
               <div style={{ ...s.card, background: isDark ? "#0F1A0F" : "#F0FDF4", border: `1px solid ${isDark ? "#1A3A1A" : "#BBF7D0"}`, textAlign: "center" }}>
