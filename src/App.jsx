@@ -597,10 +597,10 @@ export default function App() {
     metaLabel:  { fontSize: 16, color: "#FFF", marginBottom: 12 }, 
     label:      { fontSize: 16, fontWeight: 600, color: c.text, marginBottom: 12 },
     
-    bigNum:     { fontSize: 30, fontWeight: 700, color: "#FFF", lineHeight: 1 },
-    smallNum:   { fontSize: 22, fontWeight: 700, color: c.text },
-    redNum:     { fontSize: 22, fontWeight: 700, color: c.red },
-    greenNum:   { fontSize: 22, fontWeight: 700, color: c.green },
+    bigNum:     { fontSize: 28, fontWeight: 500, color: "#FFF", lineHeight: 1 },
+    smallNum:   { fontSize: 20, fontWeight: 500, color: c.text },
+    redNum:     { fontSize: 20, fontWeight: 500, color: c.red },
+    greenNum:   { fontSize: 20, fontWeight: 500, color: c.green },
     
     progressBg: { background: "#333", borderRadius: 4, height: 8, margin: "8px 0 16px", overflow: "hidden" },
     progressFill: (p) => ({ height: "100%", width: `${p}%`, background: p >= 100 ? c.green : p >= 50 ? "#FCB606" : c.red, borderRadius: 4, transition: "width 0.6s ease" }),
@@ -630,7 +630,7 @@ export default function App() {
     },
     navBtn: (a) => ({
       flex: 1, paddingTop: 10, paddingBottom: `calc(20px + env(safe-area-inset-bottom, 0px))`, backgroundColor: "transparent", WebkitAppearance: "none", border: "none",
-      color: a ? "#FCB606" : c.muted, fontSize: 12, fontWeight: 600, cursor: "pointer",
+      color: a ? "#FCB606" : c.muted, fontSize: 12, fontWeight: 400, cursor: "pointer",
       display: "flex", flexDirection: "column", alignItems: "center", gap: 2, fontFamily: "inherit",
       position: "relative"
     }),
@@ -739,7 +739,7 @@ export default function App() {
                         </div>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <span style={{ fontSize: 16, fontWeight: 700, color: g.tipo === "gasto" ? c.text : c.green, marginRight: 4 }}>
+                        <span style={{ fontSize: 16, fontWeight: 500, color: g.tipo === "gasto" ? c.text : c.green, marginRight: 4 }}>
                           {g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}
                         </span>
                         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -798,7 +798,7 @@ export default function App() {
               <div style={s.metaCard}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 16 }}>
                   <div>
-                    <div style={{ fontSize: 18, fontWeight: 500, color: "#FFF", marginBottom: 6 }}>Tu progreso</div>
+                    <div style={{ fontSize: 18, fontWeight: 400, color: "#FFF", marginBottom: 6 }}>Tu progreso</div>
                     <div style={{ ...s.bigNum, color: "#FFF" }}>{formatMoney(Math.max(0, ahorroAcumulado))}</div>
                   </div>
                   <div style={{ textAlign: "right" }}>
@@ -829,7 +829,7 @@ export default function App() {
                 <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                     <IconBadge emoji={<ArrowDownToLine size={18} />} bg={c.iconBgGreen} color={c.green} />
-                    <span style={{ fontSize: 13, fontWeight: 600, color: c.muted }}>Ingresos hoy</span>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: c.muted }}>Ingresos hoy</span>
                   </div>
                   <div style={{ ...s.greenNum, textAlign: "center", marginTop: 2 }}>{formatMoney(totalIngresosHoy)}</div>
                 </div>
@@ -837,7 +837,7 @@ export default function App() {
                 <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                     <IconBadge emoji={<ArrowUpFromLine size={18} />} bg={c.iconBgRed} color={c.red} />
-                    <span style={{ fontSize: 13, fontWeight: 600, color: c.muted }}>Gastos hoy</span>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: c.muted }}>Gastos hoy</span>
                   </div>
                   <div style={{ ...s.redNum, textAlign: "center", marginTop: 2 }}>{formatMoney(totalGastadoHoy)}</div>
                 </div>
@@ -845,17 +845,17 @@ export default function App() {
                 <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                     <IconBadge emoji={<PiggyBank size={18} />} bg={c.iconBgYellow} color="#FCB606" />
-                    <span style={{ fontSize: 13, fontWeight: 600, color: c.muted }}>Ahorro hoy</span>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: c.muted }}>Ahorro hoy</span>
                   </div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: "#FCB606", textAlign: "center", marginTop: 2 }}>{formatMoney(totalIngresosHoy - totalGastadoHoy)}</div>
+                  <div style={{ fontSize: 20, fontWeight: 500, color: "#FCB606", textAlign: "center", marginTop: 2 }}>{formatMoney(totalIngresosHoy - totalGastadoHoy)}</div>
                 </div>
 
                 <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                     <IconBadge emoji={<Target size={18} />} bg={c.iconBgPurple} color={c.iconTextPurple} />
-                    <span style={{ fontSize: 13, fontWeight: 600, color: c.muted }}>Límite / día</span>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: c.muted }}>Límite / día</span>
                   </div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: c.text, textAlign: "center", marginTop: 2 }}>{formatMoney(ahorroMetaDiario)}</div>
+                  <div style={{ fontSize: 20, fontWeight: 500, color: c.text, textAlign: "center", marginTop: 2 }}>{formatMoney(ahorroMetaDiario)}</div>
                 </div>
               </div>
 
@@ -880,14 +880,14 @@ export default function App() {
                             </div>
                           )}
                           <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text }}>
+                            <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text }}>
                               {getDisplayDesc(g, categorias)}
                             </div>
                             <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ahorros"}</div>
                           </div>
                         </div>
                         <div style={{ textAlign: "right" }}>
-                           <span style={{ fontSize: 16, fontWeight: 700, color: g.tipo === "gasto" ? c.text : c.green }}>
+                           <span style={{ fontSize: 16, fontWeight: 500, color: g.tipo === "gasto" ? c.text : c.green }}>
                             {g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}
                           </span>
                         </div>
@@ -939,18 +939,18 @@ export default function App() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
                 <div style={{ background: isDark ? "rgba(16, 185, 129, 0.1)" : "#F0FDF4", borderRadius: 16, padding: 16, border: isDark ? "1px solid rgba(16, 185, 129, 0.2)" : "none" }}>
                   <div style={{ fontSize: 13, color: c.muted, marginBottom: 6, fontWeight: 500 }}>Total ingresos</div>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: c.text }}>{formatMoney(totalIngresosR)}</div>
+                  <div style={{ fontSize: 20, fontWeight: 500, color: c.text }}>{formatMoney(totalIngresosR)}</div>
                 </div>
                 <div style={{ background: isDark ? "rgba(239, 68, 68, 0.1)" : "#FEF2F2", borderRadius: 16, padding: 16, border: isDark ? "1px solid rgba(239, 68, 68, 0.2)" : "none" }}>
                   <div style={{ fontSize: 13, color: c.muted, marginBottom: 6, fontWeight: 500 }}>Total gastos</div>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: c.red }}>{formatMoney(totalGastadoR)}</div>
+                  <div style={{ fontSize: 20, fontWeight: 500, color: c.red }}>{formatMoney(totalGastadoR)}</div>
                 </div>
               </div>
 
               {/* GRÁFICO 1: INGRESOS */}
               <div style={{ ...s.card, padding: "20px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, paddingBottom: 12, marginBottom: 20 }}>
-                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: c.text }}>Ingresos por categoría</h3>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: c.text }}>Ingresos por categoría</h3>
                   <div style={{ display: "flex", gap: 12 }}>
                     <button onClick={() => setTipoGraficoIngresos("bar")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoIngresos === "bar" ? 1 : 0.3, padding: 0 }}>
                       <BarChart2 size={20} color={c.text} />
@@ -1019,7 +1019,7 @@ export default function App() {
               {/* GRÁFICO 2: GASTOS */}
               <div style={{ ...s.card, padding: "20px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, paddingBottom: 12, marginBottom: 20 }}>
-                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: c.text }}>Gastos por categoría</h3>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: c.text }}>Gastos por categoría</h3>
                   <div style={{ display: "flex", gap: 12 }}>
                     <button onClick={() => setTipoGraficoGastos("bar")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoGastos === "bar" ? 1 : 0.3, padding: 0 }}>
                       <BarChart2 size={20} color={c.text} />
@@ -1153,12 +1153,12 @@ export default function App() {
                                  </div>
                                )}
                                <div style={{ minWidth: 0 }}>
-                                 <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2 }}>{getDisplayDesc(g, categorias)}</div>
+                                 <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2 }}>{getDisplayDesc(g, categorias)}</div>
                                  <div style={{ fontSize: 12, fontWeight: 500, color: c.muted }}>{getUITime(g.created_at)}</div>
                                </div>
                              </div>
                              <div style={{ textAlign: "right", display: "flex", alignItems: "center", gap: 12 }}>
-                               <span style={{ fontSize: 16, fontWeight: 700, color: g.tipo === "gasto" ? c.text : c.green }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
+                               <span style={{ fontSize: 16, fontWeight: 500, color: g.tipo === "gasto" ? c.text : c.green }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
                              </div>
                            </div>
                          );
@@ -1174,10 +1174,10 @@ export default function App() {
             <div style={s.section}>
               
               <div style={{...s.card, marginBottom: 24}}>
-                <div style={{ ...s.label, textAlign: "center" }}>DEFINIR META DE AHORRO (S/)</div>
-                <input style={{ ...s.input, marginTop: 12, marginBottom: 24, fontSize: 24, textAlign: "center", color: "#FCB606", fontWeight: 700 }} type={isEditingMeta ? "number" : "text"} placeholder="Ej: 100000" value={isEditingMeta ? metaAhorro : (metaAhorro ? formatMoney(metaAhorro) : "")} onFocus={() => setIsEditingMeta(true)} onBlur={() => setIsEditingMeta(false)} onChange={e => setMetaAhorro(e.target.value)} />
+                <div style={{ ...s.label, textAlign: "center" }}>Definir meta de ahorro (S/)</div>
+                <input style={{ ...s.input, marginTop: 12, marginBottom: 24, fontSize: 24, textAlign: "center", color: "#FCB606", fontWeight: 500 }} type={isEditingMeta ? "number" : "text"} placeholder="Ej: 100000" value={isEditingMeta ? metaAhorro : (metaAhorro ? formatMoney(metaAhorro) : "")} onFocus={() => setIsEditingMeta(true)} onBlur={() => setIsEditingMeta(false)} onChange={e => setMetaAhorro(e.target.value)} />
                 
-                <div style={{ ...s.label, textAlign: "center" }}>PERÍODO DE AHORRO</div>
+                <div style={{ ...s.label, textAlign: "center" }}>Período de ahorro</div>
                 <div style={{ display: "flex", gap: 12, marginTop: 12, marginBottom: 24 }}>
                   <div style={{ flex: 1 }}>
                     <input type={fechaInicioPlan ? "date" : "text"} placeholder="Del" value={fechaInicioPlan} onFocus={e => e.target.type = "date"} onBlur={e => { if(!e.target.value) e.target.type = "text" }} onChange={e => setFechaInicioPlan(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
@@ -1187,8 +1187,8 @@ export default function App() {
                   </div>
                 </div>
                 
-                <div style={{ ...s.label, textAlign: "center" }}>INGRESO MENSUAL (S/)</div>
-                <input style={{ ...s.input, marginTop: 12, marginBottom: 24, fontSize: 20, textAlign: "center", color: c.green, fontWeight: 700 }} type={isEditingIngreso ? "number" : "text"} placeholder="Ej: 5000" value={isEditingIngreso ? ingresoMensual : (ingresoMensual ? formatMoney(ingresoMensual) : "")} onFocus={() => setIsEditingIngreso(true)} onBlur={() => setIsEditingIngreso(false)} onChange={e => setIngresoMensual(e.target.value)} />
+                <div style={{ ...s.label, textAlign: "center" }}>Ingreso mensual (S/)</div>
+                <input style={{ ...s.input, marginTop: 12, marginBottom: 24, fontSize: 20, textAlign: "center", color: c.green, fontWeight: 500 }} type={isEditingIngreso ? "number" : "text"} placeholder="Ej: 5000" value={isEditingIngreso ? ingresoMensual : (ingresoMensual ? formatMoney(ingresoMensual) : "")} onFocus={() => setIsEditingIngreso(true)} onBlur={() => setIsEditingIngreso(false)} onChange={e => setIngresoMensual(e.target.value)} />
                 <button style={s.btnPrimary} onClick={guardarConfig} disabled={saving}>{saving ? "Guardando..." : "Guardar configuración"}</button>
               </div>
 
