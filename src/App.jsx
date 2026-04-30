@@ -231,8 +231,8 @@ export default function App() {
   const [filtroFechaResumenDesde, setFiltroFechaResumenDesde] = useState(hoy());
   const [filtroFechaResumenHasta, setFiltroFechaResumenHasta] = useState(hoy());
 
-  const [filtroTipoResumen, setFiltroTipoResumen] = useState("gasto"); // 'todos', 'gasto', 'ingreso'
-  const [tipoGrafico, setTipoGrafico] = useState("donut"); // 'donut', 'bar'
+  const [filtroTipoResumen, setFiltroTipoResumen] = useState("gasto"); 
+  const [tipoGrafico, setTipoGrafico] = useState("donut"); 
 
   const [viewAll, setViewAll] = useState(false);
   const [showVtFiltro, setShowVtFiltro] = useState(false);
@@ -686,15 +686,15 @@ export default function App() {
             else if (tab === "config") headTitle = "Configuración";
 
             return (
-              <div style={{ padding: "24px 20px 16px", background: c.bg, position: "sticky", top: 0, zIndex: 90, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                  <button onClick={() => setShowMenu(true)} style={{ backgroundColor: "transparent", border: "none", color: c.text, fontSize: 26, cursor: "pointer", padding: 0 }}>☰</button>
-                  <div>
-                    <h1 style={{ fontSize: 24, fontWeight: 700, color: c.text, margin: 0, fontFamily: "'Montserrat', sans-serif", lineHeight: 1.2 }}>{headTitle}</h1>
-                    {headSub && <div style={{ fontSize: 13, color: c.muted, marginTop: 4, fontWeight: 500 }}>{headSub}</div>}
+              <div style={{ padding: "24px 20px 16px", background: c.bg, position: "sticky", top: 0, zIndex: 90 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                    <button onClick={() => setShowMenu(true)} style={{ backgroundColor: "transparent", border: "none", color: c.text, fontSize: 26, cursor: "pointer", padding: 0, display: "flex" }}>☰</button>
+                    <h1 style={{ fontSize: 28, fontWeight: 700, color: c.text, margin: 0, fontFamily: "'Montserrat', sans-serif", lineHeight: 1.1 }}>{headTitle}</h1>
                   </div>
+                  <button onClick={() => window.location.reload()} style={{ backgroundColor: "transparent", border: "none", fontSize: 20, cursor: "pointer", padding: 0, color: c.text }}>🔄</button>
                 </div>
-                <button onClick={() => window.location.reload()} style={{ backgroundColor: "transparent", border: "none", fontSize: 18, cursor: "pointer", padding: 0, color: c.text }}>🔄</button>
+                {headSub && <div style={{ fontSize: 13, color: c.muted, marginTop: 4, fontWeight: 500, paddingLeft: 42 }}>{headSub}</div>}
               </div>
             );
           })()}
