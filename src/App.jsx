@@ -50,7 +50,6 @@ const formatDateTime = (isoStr) => {
   return { fecha, hora };
 };
 
-// NUEVA FUNCIÓN: Formato amigable de fechas y horas (AM/PM)
 const getUIFechaHora = (isoStr) => {
   if (!isoStr) return "";
   const validIsoStr = isoStr.includes('Z') || isoStr.includes('+') ? isoStr : `${isoStr}Z`;
@@ -81,6 +80,16 @@ const getUIFechaHora = (isoStr) => {
     const year = limaDate.getUTCFullYear();
     return `${day} ${month} ${year} - ${strTime}`;
   }
+};
+
+// NUEVA FUNCIÓN: Limpia la descripción para evitar emojis dobles
+const getDisplayDesc = (g, categorias) => {
+  const cat = categorias.find(c => c.id === g.categoria);
+  if (!cat) return g.descripcion;
+  if (g.descripcion === cat.label) {
+    return cat.label.substring(cat.label.indexOf(" ") + 1).trim();
+  }
+  return g.descripcion;
 };
 
 const diffDias = (d1Str, d2Str) => {
@@ -322,7 +331,9 @@ export default function App() {
     const monto = parseFloat(form.monto);
     if (!monto || monto <= 0) { showToast("Ingresa un monto válido", c.red); return; }
     setSaving(true);
-    const nuevo = { fecha: hoy(), monto, descripcion: form.descripcion || categorias.find(cat => cat.id === form.categoria)?.label || "Movimiento", categoria: form.categoria, tipo: form.tipo };
+    const catObj = categorias.find(cat => cat.id === form.categoria);
+    const defaultDesc = catObj ? catObj.label.substring(catObj.label.indexOf(" ") + 1).trim() : "Movimiento";
+    const nuevo = { fecha: hoy(), monto, descripcion: form.descripcion || defaultDesc, categoria: form.categoria, tipo: form.tipo };
     const { data, error: err } = await supabase.from("gastos").insert([nuevo]).select();
     if (err) { showToast("Error al guardar", c.red); setSaving(false); return; }
     setGastos(prev => [{ ...data[0], fecha: getFechaLocal(data[0].created_at) }, ...prev]);
@@ -346,7 +357,9 @@ export default function App() {
     const monto = parseFloat(editForm.monto);
     if (!monto || monto <= 0) { showToast("Monto inválido", c.red); return; }
     setSaving(true);
-    const updates = { monto, descripcion: editForm.descripcion || categorias.find(cat => cat.id === editForm.categoria)?.label || "Movimiento", categoria: editForm.categoria, tipo: editForm.tipo };
+    const catObj = categorias.find(cat => cat.id === editForm.categoria);
+    const defaultDesc = catObj ? catObj.label.substring(catObj.label.indexOf(" ") + 1).trim() : "Movimiento";
+    const updates = { monto, descripcion: editForm.descripcion || defaultDesc, categoria: editForm.categoria, tipo: editForm.tipo };
     const { error: err } = await supabase.from("gastos").update(updates).eq("id", editando.id);
     if (err) { showToast("Error", c.red); setSaving(false); return; }
     setGastos(prev => prev.map(g => g.id === editando.id ? { ...g, ...updates } : g));
@@ -631,10 +644,10 @@ export default function App() {
                           </div>
                         )}
                         <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2 }}>
-                            {cat ? cat.label.substring(cat.label.indexOf(" ") + 1) : g.descripcion}
+                          <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2, color: c.text }}>
+                            {getDisplayDesc(g, categorias)}
                           </div>
-                          <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ahorros"}</div>
+                          <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ingresos"}</div>
                         </div>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -754,7 +767,7 @@ export default function App() {
                           )}
                           <div style={{ minWidth: 0 }}>
                             <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text }}>
-                              {cat ? cat.label.substring(cat.label.indexOf(" ") + 1) : g.descripcion}
+                              {getDisplayDesc(g, categorias)}
                             </div>
                             <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ahorros"}</div>
                           </div>
@@ -912,8 +925,10 @@ export default function App() {
                             </div>
                           )}
                           <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4 }}>{g.descripcion}</div>
-                            <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ahorros"}</div>
+                            <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text }}>
+                              {getDisplayDesc(g, categorias)}
+                            </div>
+                            <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} | {g.tipo === "gasto" ? "Gastos" : "Ahorros"}</div>
                           </div>
                         </div>
                         <span style={{ fontSize: 16, fontWeight: 700, color: g.tipo === "gasto" ? c.text : c.green }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
