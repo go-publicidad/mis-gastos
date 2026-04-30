@@ -33,7 +33,6 @@ const getFechaLocal = (isoStr) => {
 
 const formatMoney = (n) => `${CURRENCY} ${Number(n || 0).toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-// Regla para acortar nombres a 12 caracteres máximo
 const formatCatName = (label) => {
   if (!label) return "";
   const clean = label.includes(" ") ? label.substring(label.indexOf(" ") + 1).trim() : label;
@@ -238,8 +237,8 @@ export default function App() {
   const [filtroFechaResumenDesde, setFiltroFechaResumenDesde] = useState(hoy());
   const [filtroFechaResumenHasta, setFiltroFechaResumenHasta] = useState(hoy());
 
-  const [filtroTipoResumen, setFiltroTipoResumen] = useState("gasto"); 
-  const [tipoGrafico, setTipoGrafico] = useState("donut"); 
+  const [tipoGraficoIngresos, setTipoGraficoIngresos] = useState("bar"); 
+  const [tipoGraficoGastos, setTipoGraficoGastos] = useState("bar"); 
 
   const [viewAll, setViewAll] = useState(false);
   const [showVtFiltro, setShowVtFiltro] = useState(false);
@@ -474,10 +473,9 @@ export default function App() {
   const ingDiario = ingMensual / 30;
   const ahorroMetaDiario = metaTotalNum / diasTotalPlan;
   const presupuestoDiario = ingDiario - ahorroMetaDiario;
-  const gastoDiarioProm = diasTranscurridosPlan > 0 ? totalGastado / diasTranscurridosPlan : 0;
-  const ahorroDiarioProm = diasTranscurridosPlan > 0 ? ahorroAcumulado / diasTranscurridosPlan : 0;
   
   let proyeccionTexto = "—";
+  const ahorroDiarioProm = diasTranscurridosPlan > 0 ? ahorroAcumulado / diasTranscurridosPlan : 0;
   if (ahorroDiarioProm > 0 && metaTotalNum > 0) {
     const diasNecesarios = Math.ceil((metaTotalNum - ahorroAcumulado) / ahorroDiarioProm);
     const mesesProyeccion = Math.floor(diasNecesarios / 30);
@@ -488,6 +486,7 @@ export default function App() {
     else proyeccionTexto = `en ${mesesProyeccion} mes${mesesProyeccion !== 1 ? "es" : ""} y ${diasExtra} día${diasExtra !== 1 ? "s" : ""}`;
   } else if (ahorroDiarioProm <= 0 && diasTranscurridosPlan > 1) proyeccionTexto = "Sin ahorro neto aún";
 
+  // DATOS PARA PESTAÑA REPORTES
   const getFiltradosResumen = () => {
     if (filtroResumen === "hoy") return gastos.filter(g => g.fecha === hoy());
     if (filtroResumen === "mes") return gastos.filter(g => g.fecha.startsWith(hoy().slice(0, 7)));
@@ -496,32 +495,40 @@ export default function App() {
   };
   
   const gastosFiltradosResumen = getFiltradosResumen();
-  const totalGastadoR = gastosFiltradosResumen.filter(g => g.tipo === "gasto").reduce((a, g) => a + g.monto, 0);
-  const totalIngresosR = gastosFiltradosResumen.filter(g => g.tipo === "ingreso").reduce((a, g) => a + g.monto, 0);
+  const ingresosResumen = gastosFiltradosResumen.filter(g => g.tipo === "ingreso");
+  const gastosResumen = gastosFiltradosResumen.filter(g => g.tipo === "gasto");
+
+  const totalGastadoR = gastosResumen.reduce((a, g) => a + g.monto, 0);
+  const totalIngresosR = ingresosResumen.reduce((a, g) => a + g.monto, 0);
   const ahorroR = totalIngresosR - totalGastadoR;
 
-  const baseForChart = filtroTipoResumen === "todos" ? gastosFiltradosResumen : gastosFiltradosResumen.filter(g => g.tipo === filtroTipoResumen);
-
-  const porCategoriaR = categorias.map(cat => ({
-    ...cat, total: baseForChart.filter(g => g.categoria === cat.id).reduce((a, g) => a + g.monto, 0),
+  const calcCats = (arr) => categorias.map(cat => ({
+    ...cat, total: arr.filter(g => g.categoria === cat.id).reduce((a, g) => a + g.monto, 0),
   })).filter(c => c.total > 0).sort((a, b) => b.total - a.total);
-  
-  const maxCatR = porCategoriaR[0]?.total || 1;
-  const totalGastosDonut = porCategoriaR.reduce((sum, c) => sum + c.total, 0) || 1;
-  
-  let currentDeg = 0;
-  const conicString = porCategoriaR.length > 0 
-    ? porCategoriaR.map(c => {
-        const pct = (c.total / totalGastosDonut) * 360;
-        const str = `${c.color} ${currentDeg}deg ${currentDeg + pct}deg`;
-        currentDeg += pct;
-        return str;
-      }).join(", ")
-    : `${c.border} 0deg 360deg`;
 
-  // Cálculos para el eje Y del gráfico de barras
-  const chartMax = maxCatR > 0 ? maxCatR * 1.2 : 10; // 20% más alto para que quepa el texto
-  const ticks = [chartMax, chartMax * 0.75, chartMax * 0.5, chartMax * 0.25, 0];
+  const catsIngresos = calcCats(ingresosResumen);
+  const catsGastos = calcCats(gastosResumen);
+
+  const buildConic = (cats) => {
+    const tot = cats.reduce((sum, c) => sum + c.total, 0) || 1;
+    let deg = 0;
+    return cats.length > 0 ? cats.map(c => {
+        const pct = (c.total / tot) * 360;
+        const str = `${c.color} ${deg}deg ${deg + pct}deg`;
+        deg += pct;
+        return str;
+    }).join(", ") : `${c.border} 0deg 360deg`;
+  };
+
+  const conicIngresos = buildConic(catsIngresos);
+  const conicGastos = buildConic(catsGastos);
+  const totIngresosDonut = catsIngresos.reduce((s,c)=>s+c.total,0)||1;
+  const totGastosDonut = catsGastos.reduce((s,c)=>s+c.total,0)||1;
+  
+  const maxIngreso = catsIngresos[0]?.total || 1;
+  const maxGasto = catsGastos[0]?.total || 1;
+  const cMaxI = maxIngreso * 1.2;
+  const cMaxG = maxGasto * 1.2;
 
   const gastosFiltradosHist = gastos.filter(g => (filtroHistCat === "todas" || g.categoria === filtroHistCat) && (!filtroHistFechaDesde || g.fecha >= filtroHistFechaDesde) && (!filtroHistFechaHasta || g.fecha <= filtroHistFechaHasta));
   const gastosVerTodos = gastos.filter(g => (!vtFechaDesde || g.fecha >= vtFechaDesde) && (!vtFechaHasta || g.fecha <= vtFechaHasta));
@@ -530,7 +537,7 @@ export default function App() {
     app: { minHeight: "100vh", fontFamily: "'Montserrat', sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: "calc(100px + env(safe-area-inset-bottom, 0px))", width: "100%" },
     section:    { padding: "20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "stretch" },
     card:       { width: "100%", background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: "16px", marginBottom: 24, overflow: "hidden", boxSizing: "border-box", boxShadow: c.shadow },
-    metaCard:   { width: "100%", background: "linear-gradient(135deg,#1A1A1A,#050505)", borderRadius: 16, padding: "24px", marginBottom: 24, boxSizing: "border-box", color: "#FFF", boxShadow: isDark ? "none" : "0 8px 24px rgba(0,0,0,0.15)" },
+    metaCard:   { width: "100%", background: "linear-gradient(135deg,#1A1A1A,#050505)", borderRadius: 16, padding: "20px", marginBottom: 24, boxSizing: "border-box", color: "#FFF", boxShadow: isDark ? "none" : "0 8px 24px rgba(0,0,0,0.15)" },
     
     metaLabel:  { fontSize: 16, color: "#FFF", marginBottom: 12 }, 
     label:      { fontSize: 16, fontWeight: 600, color: c.text, marginBottom: 12 },
@@ -540,7 +547,7 @@ export default function App() {
     redNum:     { fontSize: 22, fontWeight: 700, color: c.red },
     greenNum:   { fontSize: 22, fontWeight: 700, color: c.green },
     
-    progressBg: { background: "#333", borderRadius: 4, height: 8, margin: "16px 0", overflow: "hidden" },
+    progressBg: { background: "#333", borderRadius: 4, height: 8, margin: "8px 0 16px", overflow: "hidden" },
     progressFill: (p) => ({ height: "100%", width: `${p}%`, background: p >= 100 ? c.green : p >= 50 ? "#FCB606" : c.red, borderRadius: 4, transition: "width 0.6s ease" }),
     
     grid2:      { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 24, width: "100%" },
@@ -567,7 +574,7 @@ export default function App() {
       boxShadow: isDark ? "0 -4px 24px rgba(0,0,0,0.4)" : "0 -4px 24px rgba(0,0,0,0.06)"
     },
     navBtn: (a) => ({
-      flex: 1, paddingTop: 14, paddingBottom: `calc(16px + env(safe-area-inset-bottom, 0px))`, backgroundColor: "transparent", WebkitAppearance: "none", border: "none",
+      flex: 1, paddingTop: 8, paddingBottom: `calc(12px + env(safe-area-inset-bottom, 0px))`, backgroundColor: "transparent", WebkitAppearance: "none", border: "none",
       color: a ? "#FCB606" : c.muted, fontSize: 11, fontWeight: a ? 700 : 500, cursor: "pointer",
       display: "flex", flexDirection: "column", alignItems: "center", gap: 4, fontFamily: "inherit",
       position: "relative"
@@ -735,7 +742,7 @@ export default function App() {
                   </div>
                 </div>
 
-                <div style={{ ...s.progressBg, marginBottom: 16 }}>
+                <div style={{ ...s.progressBg }}>
                   <div style={s.progressFill(progreso)} />
                 </div>
 
@@ -755,35 +762,35 @@ export default function App() {
 
               <div style={s.grid2}>
                 <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                     <IconBadge emoji="⬇️" bg={c.iconBgGreen} color={c.green} />
                     <span style={{ fontSize: 13, fontWeight: 600, color: c.muted }}>Ingresos hoy</span>
                   </div>
-                  <div style={{ ...s.greenNum, textAlign: "center", marginTop: 8 }}>{formatMoney(totalIngresosHoy)}</div>
+                  <div style={{ ...s.greenNum, textAlign: "center", marginTop: 2 }}>{formatMoney(totalIngresosHoy)}</div>
                 </div>
                 
                 <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                     <IconBadge emoji="⬆️" bg={c.iconBgRed} color={c.red} />
                     <span style={{ fontSize: 13, fontWeight: 600, color: c.muted }}>Gastos hoy</span>
                   </div>
-                  <div style={{ ...s.redNum, textAlign: "center", marginTop: 8 }}>{formatMoney(totalGastadoHoy)}</div>
+                  <div style={{ ...s.redNum, textAlign: "center", marginTop: 2 }}>{formatMoney(totalGastadoHoy)}</div>
                 </div>
 
                 <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                     <IconBadge emoji="🐷" bg={c.iconBgYellow} color="#FCB606" />
                     <span style={{ fontSize: 13, fontWeight: 600, color: c.muted }}>Ahorro hoy</span>
                   </div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: "#FCB606", textAlign: "center", marginTop: 8 }}>{formatMoney(totalIngresosHoy - totalGastadoHoy)}</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: "#FCB606", textAlign: "center", marginTop: 2 }}>{formatMoney(totalIngresosHoy - totalGastadoHoy)}</div>
                 </div>
 
                 <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                     <IconBadge emoji="🎯" bg={c.iconBgPurple} color={c.iconTextPurple} />
                     <span style={{ fontSize: 13, fontWeight: 600, color: c.muted }}>Límite / día</span>
                   </div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: c.text, textAlign: "center", marginTop: 8 }}>{formatMoney(ahorroMetaDiario)}</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: c.text, textAlign: "center", marginTop: 2 }}>{formatMoney(ahorroMetaDiario)}</div>
                 </div>
               </div>
 
@@ -873,43 +880,31 @@ export default function App() {
                 </div>
               </div>
 
-              {/* GRÁFICOS */}
+              {/* GRÁFICO 1: INGRESOS */}
               <div style={{ ...s.card, padding: "20px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, paddingBottom: 0, marginBottom: 20 }}>
-                  <div style={{ display: "flex", gap: 32 }}>
-                    {[{ id: "todos", label: "Total" }, { id: "ingreso", label: "Ingresos" }, { id: "gasto", label: "Gastos" }].map(opt => (
-                      <button key={opt.id} onClick={() => setFiltroTipoResumen(opt.id)} style={{
-                        background: "none", border: "none", padding: "0 0 12px 0", fontSize: 15, 
-                        fontWeight: filtroTipoResumen === opt.id ? 700 : 500,
-                        color: filtroTipoResumen === opt.id ? c.text : c.muted,
-                        borderBottom: filtroTipoResumen === opt.id ? `2px solid ${c.red}` : "2px solid transparent",
-                        cursor: "pointer", fontFamily: "inherit", marginBottom: -1
-                      }}>
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                  <div style={{ display: "flex", gap: 12, paddingBottom: 12 }}>
-                    <button onClick={() => setTipoGrafico("bar")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGrafico === "bar" ? 1 : 0.3, fontSize: 18, padding: 0 }}>📊</button>
-                    <button onClick={() => setTipoGrafico("donut")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGrafico === "donut" ? 1 : 0.3, fontSize: 18, padding: 0 }}>🍩</button>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, paddingBottom: 12, marginBottom: 20 }}>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: c.text }}>Ingresos por categoría</h3>
+                  <div style={{ display: "flex", gap: 12 }}>
+                    <button onClick={() => setTipoGraficoIngresos("bar")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoIngresos === "bar" ? 1 : 0.3, fontSize: 18, padding: 0 }}>📊</button>
+                    <button onClick={() => setTipoGraficoIngresos("donut")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoIngresos === "donut" ? 1 : 0.3, fontSize: 18, padding: 0 }}>🍩</button>
                   </div>
                 </div>
                 
-                {porCategoriaR.length === 0 ? (
+                {catsIngresos.length === 0 ? (
                   <div style={{ textAlign: "center", color: c.muted, padding: "20px 0", fontSize: 14 }}>Aún no hay registros en esta vista</div>
-                ) : tipoGrafico === "donut" ? (
+                ) : tipoGraficoIngresos === "donut" ? (
                   <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-                    <div style={{ width: 130, height: 130, borderRadius: "50%", background: `conic-gradient(${conicString})`, position: "relative", flexShrink: 0 }}>
+                    <div style={{ width: 130, height: 130, borderRadius: "50%", background: `conic-gradient(${conicIngresos})`, position: "relative", flexShrink: 0 }}>
                        <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 70, height: 70, background: c.card, borderRadius: "50%" }}></div>
                     </div>
                     <div style={{ flex: 1 }}>
-                       {porCategoriaR.slice(0, 5).map(cat => (
+                       {catsIngresos.slice(0, 5).map(cat => (
                          <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                              <div style={{ width: 10, height: 10, borderRadius: "50%", background: cat.color }}></div>
                              <span style={{ fontSize: 13, fontWeight: 600, color: c.text, whiteSpace: "nowrap" }}>{formatCatName(cat.label)}</span>
                            </div>
-                           <span style={{ fontSize: 13, fontWeight: 600, color: c.muted }}>{Math.round((cat.total / totalGastosDonut) * 100)}%</span>
+                           <span style={{ fontSize: 13, fontWeight: 600, color: c.muted }}>{Math.round((cat.total / totIngresosDonut) * 100)}%</span>
                          </div>
                        ))}
                     </div>
@@ -918,19 +913,19 @@ export default function App() {
                   <>
                     <div style={{ display: "flex", height: 160, marginTop: 24, gap: 8 }}>
                       <div style={{ width: 30, display: "flex", flexDirection: "column", justifyContent: "space-between", alignItems: "flex-end", paddingBottom: 0 }}>
-                        {ticks.map((t, i) => <span key={i} style={{ fontSize: 10, color: c.muted, fontWeight: 500, lineHeight: 1 }}>{t > 0 ? Math.round(t) : 0}</span>)}
+                        {[cMaxI, cMaxI * 0.75, cMaxI * 0.5, cMaxI * 0.25, 0].map((t, i) => <span key={i} style={{ fontSize: 10, color: c.muted, fontWeight: 500, lineHeight: 1 }}>{t > 0 ? Math.round(t) : 0}</span>)}
                       </div>
                       <div style={{ flex: 1, display: "flex", gap: 8, borderBottom: `1px solid ${c.border}`, position: "relative" }}>
-                        {porCategoriaR.slice(0, 6).map((cat) => (
+                        {catsIngresos.slice(0, 6).map((cat) => (
                           <div key={cat.id} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: "center", gap: 6 }}>
                             <span style={{ fontSize: 10, fontWeight: 700, color: c.text, whiteSpace: "nowrap" }}>S/ {cat.total % 1 === 0 ? cat.total : cat.total.toFixed(1)}</span>
-                            <div style={{ width: "100%", maxWidth: 36, height: `${(cat.total / chartMax) * 100}%`, background: cat.color, borderRadius: "4px 4px 0 0", minHeight: 2 }} />
+                            <div style={{ width: "100%", maxWidth: 36, height: `${(cat.total / cMaxI) * 100}%`, background: cat.color, borderRadius: "4px 4px 0 0", minHeight: 2 }} />
                           </div>
                         ))}
                       </div>
                     </div>
                     <div style={{ display: "flex", paddingLeft: 38, gap: 8, marginTop: 8 }}>
-                      {porCategoriaR.slice(0, 6).map((cat) => (
+                      {catsIngresos.slice(0, 6).map((cat) => (
                         <div key={cat.id} style={{ flex: 1, textAlign: "center", fontSize: 10, fontWeight: 500, color: c.muted }}>
                           {formatCatName(cat.label)}
                         </div>
@@ -946,6 +941,61 @@ export default function App() {
                   <div style={{ fontSize: 14, fontWeight: 700, color: c.text }}>Ahorraste {formatMoney(ahorroR)} en este periodo</div>
                   <div style={{ fontSize: 12, color: c.muted, marginTop: 4, fontWeight: 500 }}>¡Buen trabajo gestionando tu dinero!</div>
                 </div>
+              </div>
+
+              {/* GRÁFICO 2: GASTOS */}
+              <div style={{ ...s.card, padding: "20px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, paddingBottom: 12, marginBottom: 20 }}>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: c.text }}>Gastos por categoría</h3>
+                  <div style={{ display: "flex", gap: 12 }}>
+                    <button onClick={() => setTipoGraficoGastos("bar")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoGastos === "bar" ? 1 : 0.3, fontSize: 18, padding: 0 }}>📊</button>
+                    <button onClick={() => setTipoGraficoGastos("donut")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoGastos === "donut" ? 1 : 0.3, fontSize: 18, padding: 0 }}>🍩</button>
+                  </div>
+                </div>
+                
+                {catsGastos.length === 0 ? (
+                  <div style={{ textAlign: "center", color: c.muted, padding: "20px 0", fontSize: 14 }}>Aún no hay registros en esta vista</div>
+                ) : tipoGraficoGastos === "donut" ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+                    <div style={{ width: 130, height: 130, borderRadius: "50%", background: `conic-gradient(${conicGastos})`, position: "relative", flexShrink: 0 }}>
+                       <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 70, height: 70, background: c.card, borderRadius: "50%" }}></div>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                       {catsGastos.slice(0, 5).map(cat => (
+                         <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                             <div style={{ width: 10, height: 10, borderRadius: "50%", background: cat.color }}></div>
+                             <span style={{ fontSize: 13, fontWeight: 600, color: c.text, whiteSpace: "nowrap" }}>{formatCatName(cat.label)}</span>
+                           </div>
+                           <span style={{ fontSize: 13, fontWeight: 600, color: c.muted }}>{Math.round((cat.total / totGastosDonut) * 100)}%</span>
+                         </div>
+                       ))}
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ display: "flex", height: 160, marginTop: 24, gap: 8 }}>
+                      <div style={{ width: 30, display: "flex", flexDirection: "column", justifyContent: "space-between", alignItems: "flex-end", paddingBottom: 0 }}>
+                        {[cMaxG, cMaxG * 0.75, cMaxG * 0.5, cMaxG * 0.25, 0].map((t, i) => <span key={i} style={{ fontSize: 10, color: c.muted, fontWeight: 500, lineHeight: 1 }}>{t > 0 ? Math.round(t) : 0}</span>)}
+                      </div>
+                      <div style={{ flex: 1, display: "flex", gap: 8, borderBottom: `1px solid ${c.border}`, position: "relative" }}>
+                        {catsGastos.slice(0, 6).map((cat) => (
+                          <div key={cat.id} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: "center", gap: 6 }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, color: c.text, whiteSpace: "nowrap" }}>S/ {cat.total % 1 === 0 ? cat.total : cat.total.toFixed(1)}</span>
+                            <div style={{ width: "100%", maxWidth: 36, height: `${(cat.total / cMaxG) * 100}%`, background: cat.color, borderRadius: "4px 4px 0 0", minHeight: 2 }} />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", paddingLeft: 38, gap: 8, marginTop: 8 }}>
+                      {catsGastos.slice(0, 6).map((cat) => (
+                        <div key={cat.id} style={{ flex: 1, textAlign: "center", fontSize: 10, fontWeight: 500, color: c.muted }}>
+                          {formatCatName(cat.label)}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -1123,7 +1173,7 @@ export default function App() {
           <div style={s.navBar}>
             {[{ id: "hoy", icon: "🏠", label: "Inicio" }, { id: "resumen", icon: "📊", label: "Reportes" }].map(n => (
               <button key={n.id} style={s.navBtn(tab === n.id)} onClick={() => setTab(n.id)}>
-                {tab === n.id && <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 28, height: 3, background: "#FCB606", borderRadius: "0 0 4px 4px" }} />}
+                {tab === n.id && <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 44, height: 3, background: "#FCB606", borderRadius: "0 0 4px 4px" }} />}
                 <span style={{ fontSize: 24, marginBottom: 2 }}>{n.icon}</span>
                 <span style={{ fontFamily: "'Montserrat', sans-serif" }}>{n.label}</span>
               </button>
@@ -1135,7 +1185,7 @@ export default function App() {
 
             {[{ id: "historial", icon: "📋", label: "Historial" }, { id: "config", icon: "⚙️", label: "Config" }].map(n => (
               <button key={n.id} style={s.navBtn(tab === n.id)} onClick={() => setTab(n.id)}>
-                {tab === n.id && <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 28, height: 3, background: "#FCB606", borderRadius: "0 0 4px 4px" }} />}
+                {tab === n.id && <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 44, height: 3, background: "#FCB606", borderRadius: "0 0 4px 4px" }} />}
                 <span style={{ fontSize: 24, marginBottom: 2 }}>{n.icon}</span>
                 <span style={{ fontFamily: "'Montserrat', sans-serif" }}>{n.label}</span>
               </button>
