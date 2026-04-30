@@ -550,7 +550,6 @@ export default function App() {
     filterRow:  { display: "flex", gap: 6, marginBottom: 24, flexWrap: "nowrap", overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" },
     filterBtn: (a) => ({ whiteSpace: "nowrap", flexShrink: 0, padding: "8px 16px", borderRadius: 20, border: `1px solid ${a ? "#FCB606" : c.border}`, background: a ? "#FCB606" : c.card, color: a ? "#000" : c.muted, fontSize: 13, fontWeight: a ? 600 : 500, cursor: "pointer", fontFamily: "inherit" }),
     
-    // REDISEÑO DEL MENÚ INFERIOR (Sin borde, con sombra, espacio para el botón central)
     navBar: {
       position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480,
       background: c.nav, display: "flex", zIndex: 100,
@@ -565,7 +564,7 @@ export default function App() {
     }),
     fabCircle: {
       position: "absolute", top: -24, width: 60, height: 60, borderRadius: "50%",
-      background: "#FCB606", color: "#000", border: `6px solid ${c.bg}`, // Esto crea la ilusión de la "mordida" o perforación
+      background: "#FCB606", color: "#000", border: `6px solid ${c.bg}`, 
       display: "flex", alignItems: "center", justifyContent: "center",
       fontSize: 34, fontWeight: 400, cursor: "pointer", fontFamily: "inherit",
       boxShadow: "0 4px 12px rgba(252, 182, 6, 0.4)", zIndex: 105, padding: 0
@@ -867,10 +866,11 @@ export default function App() {
               {/* GRÁFICO DINÁMICO (Dona / Barras) */}
               <div style={{ ...s.card, padding: "20px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, paddingBottom: 0, marginBottom: 20 }}>
-                  <div style={{ display: "flex", gap: 16 }}>
-                    {[{ id: "todos", label: "Total" }, { id: "gasto", label: "Gastos" }, { id: "ingreso", label: "Ahorros" }].map(opt => (
+                  <div style={{ display: "flex", gap: 32 }}>
+                    {[{ id: "todos", label: "Total" }, { id: "ingreso", label: "Ingresos" }, { id: "gasto", label: "Gastos" }].map(opt => (
                       <button key={opt.id} onClick={() => setFiltroTipoResumen(opt.id)} style={{
-                        background: "none", border: "none", padding: "0 0 12px 0", fontSize: 14, fontWeight: 700,
+                        background: "none", border: "none", padding: "0 0 12px 0", fontSize: 15, 
+                        fontWeight: filtroTipoResumen === opt.id ? 700 : 500,
                         color: filtroTipoResumen === opt.id ? c.text : c.muted,
                         borderBottom: filtroTipoResumen === opt.id ? `2px solid ${c.red}` : "2px solid transparent",
                         cursor: "pointer", fontFamily: "inherit", marginBottom: -1
@@ -928,10 +928,11 @@ export default function App() {
               {/* LISTA DE MOVIMIENTOS DINÁMICA (SIN BOTONES DE EDICIÓN EN RESUMEN) */}
               <div style={s.card}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, paddingBottom: 0, marginBottom: 12 }}>
-                  <div style={{ display: "flex", gap: 16 }}>
-                    {[{ id: "todos", label: "Total" }, { id: "gasto", label: "Gastos" }, { id: "ingreso", label: "Ahorros" }].map(opt => (
+                  <div style={{ display: "flex", gap: 32 }}>
+                    {[{ id: "todos", label: "Total" }, { id: "ingreso", label: "Ingresos" }, { id: "gasto", label: "Gastos" }].map(opt => (
                       <button key={opt.id} onClick={() => setFiltroTipoResumen(opt.id)} style={{
-                        background: "none", border: "none", padding: "0 0 12px 0", fontSize: 14, fontWeight: 700,
+                        background: "none", border: "none", padding: "0 0 12px 0", fontSize: 15,
+                        fontWeight: filtroTipoResumen === opt.id ? 700 : 500,
                         color: filtroTipoResumen === opt.id ? c.text : c.muted,
                         borderBottom: filtroTipoResumen === opt.id ? `2px solid ${c.red}` : "2px solid transparent",
                         cursor: "pointer", fontFamily: "inherit", marginBottom: -1
@@ -1155,7 +1156,6 @@ export default function App() {
               </button>
             ))}
 
-            {/* BOTÓN CENTRAL FLOTANTE (FAB) */}
             <div style={{ width: 72, position: "relative", display: "flex", justifyContent: "center" }}>
               <button style={s.fabCircle} onClick={() => setShowAddModal(true)}>+</button>
             </div>
