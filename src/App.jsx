@@ -40,34 +40,27 @@ const getFechaLocal = (isoStr) => {
 
 const formatMoney = (n) => `${CURRENCY} ${Number(n || 0).toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-// --- NUEVAS FUNCIONES INTELIGENTES PARA ICONOS Y TEXTOS ---
 const getIcono = (label) => {
   if (!label) return "📌";
   const arr = label.trim().split(" ");
-  // Si hay espacio y la primera parte no tiene letras/números (es emoji puro)
   if (arr.length > 1 && !/[a-zA-Z0-9]/.test(arr[0])) {
     return arr[0];
   }
-  // Fallback: Tomar estrictamente el primer caracter (sea letra o emoji pegado)
   return Array.from(label.trim())[0].toUpperCase();
 };
 
 const getTexto = (label) => {
   if (!label) return "";
   const arr = label.trim().split(" ");
-  // Si venía con espacio correcto "🍽️ Comida"
   if (arr.length > 1 && !/[a-zA-Z0-9]/.test(arr[0])) {
     return arr.slice(1).join(" ");
   }
-  // Si venía pegado "🤣jeje"
   const firstChar = Array.from(label.trim())[0];
   if (!/[a-zA-Z0-9]/.test(firstChar)) {
       return Array.from(label.trim()).slice(1).join("").trim() || label.trim();
   }
-  // Si no había emoji, devolvemos todo "Holaaaaa"
   return label.trim();
 };
-// ----------------------------------------------------------
 
 const formatCatName = (label) => {
   const clean = getTexto(label);
@@ -1566,8 +1559,8 @@ export default function App() {
             </div>
             
             <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
-              <button style={s.tipoBtn(form.tipo === "gasto", c.red)} onClick={() => setForm(f => ({ ...f, tipo: "gasto" }))}>− Gasto</button>
               <button style={s.tipoBtn(form.tipo === "ingreso", c.green)} onClick={() => setForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
+              <button style={s.tipoBtn(form.tipo === "gasto", c.red)} onClick={() => setForm(f => ({ ...f, tipo: "gasto" }))}>− Gasto</button>
             </div>
             
             <input autoFocus style={{ ...s.input, marginBottom: 16, fontSize: 32, textAlign: "center", fontWeight: 700, padding: "20px 10px", height: "auto" }} type="number" placeholder="0.00" value={form.monto} onChange={e => setForm(f => ({ ...f, monto: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
@@ -1592,8 +1585,8 @@ export default function App() {
               <button onClick={() => setEditando(null)} style={{ background: "none", border: "none", color: c.muted, fontSize: 24, cursor: "pointer", padding: 0 }}>×</button>
             </div>
             <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+              <button style={s.tipoBtn(editForm.tipo === "ingreso", c.green)} onClick={() => setEditForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
               <button style={s.tipoBtn(editForm.tipo === "gasto", c.red)} onClick={() => setEditForm(f => ({ ...f, tipo: "gasto" }))}>− Gasto</button>
-              <button style={s.tipoBtn(editForm.tipo === "ingreso", c.green)} onClick={() => setForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
             </div>
             <input style={{ ...s.input, marginBottom: 16, fontSize: 32, textAlign: "center", fontWeight: 700, padding: "20px 10px", height: "auto" }} type="number" placeholder="0.00" value={editForm.monto} onChange={e => setEditForm(f => ({ ...f, monto: e.target.value }))} />
             <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
