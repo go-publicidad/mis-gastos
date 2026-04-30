@@ -518,10 +518,6 @@ export default function App() {
 
   const s = {
     app: { minHeight: "100vh", fontFamily: "'Montserrat', sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: "calc(160px + env(safe-area-inset-bottom, 0px))", width: "100%" },
-    header:     { padding: "24px 20px 16px", borderBottom: `1px solid ${c.border}`, position: "sticky", top: 0, background: c.bg, zIndex: 90 },
-    title:      { fontSize: 24, fontWeight: 700, color: "#FCB606", margin: 0, fontFamily: "'Montserrat', sans-serif" },
-    refreshBtn: { backgroundColor: "transparent", WebkitAppearance: "none", border: "none", width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 18 },
-    subtitle:   { color: c.muted, fontSize: 13, margin: "4px 0 0", fontWeight: 400 },
     section:    { padding: "20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "stretch" },
     card:       { width: "100%", background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: "16px", marginBottom: 24, overflow: "hidden", boxSizing: "border-box", boxShadow: c.shadow },
     metaCard:   { width: "100%", background: "linear-gradient(135deg,#1A1A1A,#050505)", borderRadius: 16, padding: "24px", marginBottom: 24, boxSizing: "border-box", color: "#FFF", boxShadow: isDark ? "none" : "0 8px 24px rgba(0,0,0,0.15)" },
@@ -609,7 +605,7 @@ export default function App() {
 
       {viewAll ? (
         <>
-          <div style={{ padding: "16px 20px", borderBottom: `1px solid ${c.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: c.bg, position: "sticky", top: 0, zIndex: 10 }}>
+          <div style={{ padding: "12px 20px", borderBottom: `1px solid ${c.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: c.bg, position: "sticky", top: 0, zIndex: 10 }}>
             <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FCB606", fontSize: 24, cursor: "pointer", padding: 0 }} onClick={() => { setViewAll(false); window.scrollTo(0, 0); }}>←</button>
             <h2 style={{ margin: 0, fontSize: 18, color: c.text, fontWeight: 600 }}>Movimientos</h2>
             <div style={{ display: "flex", gap: 16 }}>
@@ -678,19 +674,27 @@ export default function App() {
         <>
           {/* ENCABEZADO UNIFICADO PARA TODAS LAS PESTAÑAS */}
           {!viewAll && (() => {
-            let headTitle = "";
+            let headTitle;
             let headSub = "";
-            if (tab === "hoy") { headTitle = `¡Hola, ${userName}! 👋`; headSub = "Este es el resumen de tu negocio"; }
+            if (tab === "hoy") { 
+              headTitle = (
+                <>
+                  <span style={{ fontWeight: 500 }}>¡Hola</span>
+                  <span>, {userName}! 👋</span>
+                </>
+              ); 
+              headSub = "Este es el resumen de tu negocio"; 
+            }
             else if (tab === "resumen") headTitle = "Resumen";
             else if (tab === "historial") headTitle = "Historial";
             else if (tab === "config") headTitle = "Configuración";
 
             return (
-              <div style={{ padding: "24px 20px 16px", background: c.bg, position: "sticky", top: 0, zIndex: 90 }}>
+              <div style={{ padding: "12px 20px 8px", background: c.bg, position: "sticky", top: 0, zIndex: 90 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
                     <button onClick={() => setShowMenu(true)} style={{ backgroundColor: "transparent", border: "none", color: c.text, fontSize: 26, cursor: "pointer", padding: 0, display: "flex" }}>☰</button>
-                    <h1 style={{ fontSize: 28, fontWeight: 700, color: c.text, margin: 0, fontFamily: "'Montserrat', sans-serif", lineHeight: 1.1 }}>{headTitle}</h1>
+                    <h1 style={{ fontSize: 24, fontWeight: 700, color: c.text, margin: 0, fontFamily: "'Montserrat', sans-serif", lineHeight: 1.1 }}>{headTitle}</h1>
                   </div>
                   <button onClick={() => window.location.reload()} style={{ backgroundColor: "transparent", border: "none", fontSize: 20, cursor: "pointer", padding: 0, color: c.text }}>🔄</button>
                 </div>
