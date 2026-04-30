@@ -33,6 +33,13 @@ const getFechaLocal = (isoStr) => {
 
 const formatMoney = (n) => `${CURRENCY} ${Number(n || 0).toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+// Regla para acortar nombres a 12 caracteres máximo
+const formatCatName = (label) => {
+  if (!label) return "";
+  const clean = label.includes(" ") ? label.substring(label.indexOf(" ") + 1).trim() : label;
+  return clean.length > 12 ? clean.substring(0, 12) + "..." : clean;
+};
+
 const formatFecha = (fechaStr) => {
   if (!fechaStr) return "";
   const [y, m, d] = fechaStr.split("-");
@@ -494,7 +501,6 @@ export default function App() {
   const ahorroR = totalIngresosR - totalGastadoR;
 
   const baseForChart = filtroTipoResumen === "todos" ? gastosFiltradosResumen : gastosFiltradosResumen.filter(g => g.tipo === filtroTipoResumen);
-  const listaMovimientosResumen = filtroTipoResumen === "todos" ? gastosFiltradosResumen : gastosFiltradosResumen.filter(g => g.tipo === filtroTipoResumen);
 
   const porCategoriaR = categorias.map(cat => ({
     ...cat, total: baseForChart.filter(g => g.categoria === cat.id).reduce((a, g) => a + g.monto, 0),
@@ -512,6 +518,10 @@ export default function App() {
         return str;
       }).join(", ")
     : `${c.border} 0deg 360deg`;
+
+  // Cálculos para el eje Y del gráfico de barras
+  const chartMax = maxCatR > 0 ? maxCatR * 1.2 : 10; // 20% más alto para que quepa el texto
+  const ticks = [chartMax, chartMax * 0.75, chartMax * 0.5, chartMax * 0.25, 0];
 
   const gastosFiltradosHist = gastos.filter(g => (filtroHistCat === "todas" || g.categoria === filtroHistCat) && (!filtroHistFechaDesde || g.fecha >= filtroHistFechaDesde) && (!filtroHistFechaHasta || g.fecha <= filtroHistFechaHasta));
   const gastosVerTodos = gastos.filter(g => (!vtFechaDesde || g.fecha >= vtFechaDesde) && (!vtFechaHasta || g.fecha <= vtFechaHasta));
@@ -691,7 +701,7 @@ export default function App() {
               ); 
               headSub = "Este es el resumen de tu negocio"; 
             }
-            else if (tab === "resumen") headTitle = "Resumen";
+            else if (tab === "resumen") headTitle = "Reportes";
             else if (tab === "historial") headTitle = "Historial";
             else if (tab === "config") headTitle = "Configuración";
 
@@ -863,7 +873,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* GRÁFICO DINÁMICO (Dona / Barras) */}
+              {/* GRÁFICOS */}
               <div style={{ ...s.card, padding: "20px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, paddingBottom: 0, marginBottom: 20 }}>
                   <div style={{ display: "flex", gap: 32 }}>
@@ -897,7 +907,7 @@ export default function App() {
                          <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                              <div style={{ width: 10, height: 10, borderRadius: "50%", background: cat.color }}></div>
-                             <span style={{ fontSize: 13, fontWeight: 600, color: c.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 80 }}>{cat.label.substring(cat.label.indexOf(" ") + 1)}</span>
+                             <span style={{ fontSize: 13, fontWeight: 600, color: c.text, whiteSpace: "nowrap" }}>{formatCatName(cat.label)}</span>
                            </div>
                            <span style={{ fontSize: 13, fontWeight: 600, color: c.muted }}>{Math.round((cat.total / totalGastosDonut) * 100)}%</span>
                          </div>
@@ -905,15 +915,28 @@ export default function App() {
                     </div>
                   </div>
                 ) : (
-                  <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 140, marginTop: 16 }}>
-                    {porCategoriaR.slice(0, 6).map((cat) => (
-                      <div key={cat.id} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, height: "100%", justifyContent: "flex-end" }}>
-                        <span style={{ fontSize: 11, fontWeight: 600, color: c.text }}>{Math.round((cat.total / totalGastosDonut) * 100)}%</span>
-                        <div style={{ width: "100%", maxWidth: 36, height: `${Math.max(4, (cat.total / maxCatR) * 90)}px`, background: cat.color, borderRadius: "4px 4px 0 0" }} />
-                        <span style={{ fontSize: 10, fontWeight: 500, color: c.muted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%", textAlign: "center" }}>{cat.label.substring(cat.label.indexOf(" ") + 1)}</span>
+                  <>
+                    <div style={{ display: "flex", height: 160, marginTop: 24, gap: 8 }}>
+                      <div style={{ width: 30, display: "flex", flexDirection: "column", justifyContent: "space-between", alignItems: "flex-end", paddingBottom: 0 }}>
+                        {ticks.map((t, i) => <span key={i} style={{ fontSize: 10, color: c.muted, fontWeight: 500, lineHeight: 1 }}>{t > 0 ? Math.round(t) : 0}</span>)}
                       </div>
-                    ))}
-                  </div>
+                      <div style={{ flex: 1, display: "flex", gap: 8, borderBottom: `1px solid ${c.border}`, position: "relative" }}>
+                        {porCategoriaR.slice(0, 6).map((cat) => (
+                          <div key={cat.id} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: "center", gap: 6 }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, color: c.text, whiteSpace: "nowrap" }}>S/ {cat.total % 1 === 0 ? cat.total : cat.total.toFixed(1)}</span>
+                            <div style={{ width: "100%", maxWidth: 36, height: `${(cat.total / chartMax) * 100}%`, background: cat.color, borderRadius: "4px 4px 0 0", minHeight: 2 }} />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", paddingLeft: 38, gap: 8, marginTop: 8 }}>
+                      {porCategoriaR.slice(0, 6).map((cat) => (
+                        <div key={cat.id} style={{ flex: 1, textAlign: "center", fontSize: 10, fontWeight: 500, color: c.muted }}>
+                          {formatCatName(cat.label)}
+                        </div>
+                      ))}
+                    </div>
+                  </>
                 )}
               </div>
 
@@ -923,56 +946,6 @@ export default function App() {
                   <div style={{ fontSize: 14, fontWeight: 700, color: c.text }}>Ahorraste {formatMoney(ahorroR)} en este periodo</div>
                   <div style={{ fontSize: 12, color: c.muted, marginTop: 4, fontWeight: 500 }}>¡Buen trabajo gestionando tu dinero!</div>
                 </div>
-              </div>
-
-              {/* LISTA DE MOVIMIENTOS DINÁMICA (SIN BOTONES DE EDICIÓN EN RESUMEN) */}
-              <div style={s.card}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, paddingBottom: 0, marginBottom: 12 }}>
-                  <div style={{ display: "flex", gap: 32 }}>
-                    {[{ id: "todos", label: "Total" }, { id: "ingreso", label: "Ingresos" }, { id: "gasto", label: "Gastos" }].map(opt => (
-                      <button key={opt.id} onClick={() => setFiltroTipoResumen(opt.id)} style={{
-                        background: "none", border: "none", padding: "0 0 12px 0", fontSize: 15,
-                        fontWeight: filtroTipoResumen === opt.id ? 700 : 500,
-                        color: filtroTipoResumen === opt.id ? c.text : c.muted,
-                        borderBottom: filtroTipoResumen === opt.id ? `2px solid ${c.red}` : "2px solid transparent",
-                        cursor: "pointer", fontFamily: "inherit", marginBottom: -1
-                      }}>
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                
-                {listaMovimientosResumen.length === 0 ? (
-                  <div style={{ textAlign: "center", color: c.muted, padding: "20px 0", fontSize: 14 }}>No hay registros en este periodo</div>
-                ) : (
-                  listaMovimientosResumen.map((g, i, arr) => {
-                    const cat = categorias.find(c => c.id === g.categoria);
-                    const isLast = i === arr.length - 1;
-                    return (
-                      <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: isLast ? "none" : `1px solid ${c.border}` }}>
-                        <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 14 }}>
-                          {cat && (
-                            <div style={{ width: 44, height: 44, borderRadius: 14, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
-                              {cat.label.split(" ")[0]}
-                            </div>
-                          )}
-                          <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text }}>
-                              {getDisplayDesc(g, categorias)}
-                            </div>
-                            <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)}</div>
-                          </div>
-                        </div>
-                        <div style={{ textAlign: "right", display: "flex", alignItems: "center", gap: 12 }}>
-                           <span style={{ fontSize: 16, fontWeight: 700, color: g.tipo === "gasto" ? c.text : c.green }}>
-                            {g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
               </div>
             </div>
           )}
@@ -1148,7 +1121,7 @@ export default function App() {
           )}
 
           <div style={s.navBar}>
-            {[{ id: "hoy", icon: "🏠", label: "Inicio" }, { id: "resumen", icon: "📊", label: "Resumen" }].map(n => (
+            {[{ id: "hoy", icon: "🏠", label: "Inicio" }, { id: "resumen", icon: "📊", label: "Reportes" }].map(n => (
               <button key={n.id} style={s.navBtn(tab === n.id)} onClick={() => setTab(n.id)}>
                 {tab === n.id && <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 28, height: 3, background: "#FCB606", borderRadius: "0 0 4px 4px" }} />}
                 <span style={{ fontSize: 24, marginBottom: 2 }}>{n.icon}</span>
