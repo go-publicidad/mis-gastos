@@ -82,7 +82,6 @@ const getUIFechaHora = (isoStr) => {
   }
 };
 
-// NUEVA FUNCIÓN: Limpia la descripción para evitar emojis dobles
 const getDisplayDesc = (g, categorias) => {
   const cat = categorias.find(c => c.id === g.categoria);
   if (!cat) return g.descripcion;
@@ -228,7 +227,7 @@ export default function App() {
   const [filtroHistFechaDesde, setFiltroHistFechaDesde] = useState("");
   const [filtroHistFechaHasta, setFiltroHistFechaHasta] = useState("");
 
-  const [filtroResumen, setFiltroResumen] = useState("todo");
+  const [filtroResumen, setFiltroResumen] = useState("mes");
   const [filtroFechaResumenDesde, setFiltroFechaResumenDesde] = useState(hoy());
   const [filtroFechaResumenHasta, setFiltroFechaResumenHasta] = useState(hoy());
 
@@ -481,7 +480,6 @@ export default function App() {
 
   const getFiltradosResumen = () => {
     if (filtroResumen === "hoy") return gastos.filter(g => g.fecha === hoy());
-    if (filtroResumen === "semana") return gastos.filter(g => g.fecha >= new Date(Date.now() - 18000000 - 6 * 86400000).toISOString().split("T")[0]);
     if (filtroResumen === "mes") return gastos.filter(g => g.fecha.startsWith(hoy().slice(0, 7)));
     if (filtroResumen === "rango") return gastos.filter(g => (!filtroFechaResumenDesde || g.fecha >= filtroFechaResumenDesde) && (!filtroFechaResumenHasta || g.fecha <= filtroFechaResumenHasta));
     return gastos;
@@ -494,16 +492,18 @@ export default function App() {
   const porCategoriaR = categorias.map(cat => ({
     ...cat, total: gastosFiltradosResumen.filter(g => g.tipo === "gasto" && g.categoria === cat.id).reduce((a, g) => a + g.monto, 0),
   })).filter(c => c.total > 0).sort((a, b) => b.total - a.total);
-  const maxCatR = porCategoriaR[0]?.total || 1;
-
-  const gastosUltimos7 = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(Date.now() - 18000000 - (6 - i) * 86400000);
-    const fecha = d.toISOString().split("T")[0];
-    const label = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"][new Date(Date.UTC(...fecha.split("-").map((v, idx) => idx === 1 ? v - 1 : v), 12, 0, 0)).getUTCDay()];
-    const total = gastos.filter(g => g.fecha === fecha && g.tipo === "gasto").reduce((a, g) => a + g.monto, 0);
-    return { label, total, fecha };
-  });
-  const maxBar = Math.max(...gastosUltimos7.map(d => d.total), 1);
+  
+  // LÓGICA PARA EL DONUT CHART (CSS)
+  const totalGastosDonut = porCategoriaR.reduce((sum, c) => sum + c.total, 0) || 1;
+  let currentDeg = 0;
+  const conicString = porCategoriaR.length > 0 
+    ? porCategoriaR.map(c => {
+        const pct = (c.total / totalGastosDonut) * 360;
+        const str = `${c.color} ${currentDeg}deg ${currentDeg + pct}deg`;
+        currentDeg += pct;
+        return str;
+      }).join(", ")
+    : `${c.border} 0deg 360deg`;
 
   const gastosFiltradosHist = gastos.filter(g => (filtroHistCat === "todas" || g.categoria === filtroHistCat) && (!filtroHistFechaDesde || g.fecha >= filtroHistFechaDesde) && (!filtroHistFechaHasta || g.fecha <= filtroHistFechaHasta));
   const gastosVerTodos = gastos.filter(g => (!vtFechaDesde || g.fecha >= vtFechaDesde) && (!vtFechaHasta || g.fecha <= vtFechaHasta));
@@ -668,14 +668,21 @@ export default function App() {
         </>
       ) : (
         <>
-          <div style={s.header}>
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", position: "relative", marginBottom: 4 }}>
-              <button onClick={() => setShowMenu(true)} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: c.green, fontSize: 26, cursor: "pointer", position: "absolute", left: 0, padding: 0 }}>☰</button>
-              <h1 style={s.title}>Ahorro Meta</h1>
-              <button onClick={() => window.location.reload()} style={{ ...s.refreshBtn, position: "absolute", right: 0 }}>🔄</button>
+          {tab === "resumen" ? (
+             <div style={{ padding: "20px 20px 10px", background: c.bg, position: "sticky", top: 0, zIndex: 90, display: "flex", alignItems: "center", gap: 16 }}>
+               <button onClick={() => setShowMenu(true)} style={{ backgroundColor: "transparent", border: "none", color: c.text, fontSize: 26, cursor: "pointer", padding: 0 }}>☰</button>
+               <h1 style={{ fontSize: 28, fontWeight: 700, color: c.text, margin: 0, fontFamily: "'Montserrat', sans-serif" }}>Resumen</h1>
+             </div>
+          ) : (
+            <div style={s.header}>
+              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", position: "relative", marginBottom: 4 }}>
+                <button onClick={() => setShowMenu(true)} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: c.green, fontSize: 26, cursor: "pointer", position: "absolute", left: 0, padding: 0 }}>☰</button>
+                <h1 style={s.title}>Ahorro Meta</h1>
+                <button onClick={() => window.location.reload()} style={{ ...s.refreshBtn, position: "absolute", right: 0 }}>🔄</button>
+              </div>
+              <p style={{ ...s.subtitle, textAlign: "center", width: "100%", display: "block" }}>Día {diasTranscurridosPlan} de {diasTotalPlan}</p>
             </div>
-            <p style={{ ...s.subtitle, textAlign: "center", width: "100%", display: "block" }}>Día {diasTranscurridosPlan} de {diasTotalPlan}</p>
-          </div>
+          )}
 
           {error && <div style={s.errorCard}>⚠️ {error}</div>}
 
@@ -769,7 +776,7 @@ export default function App() {
                             <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text }}>
                               {getDisplayDesc(g, categorias)}
                             </div>
-                            <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ahorros"}</div>
+                            <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ingresos"}</div>
                           </div>
                         </div>
                         <div style={{ textAlign: "right" }}>
@@ -793,11 +800,22 @@ export default function App() {
 
           {tab === "resumen" && (
             <div style={s.section}>
-              <div className="hide-scroll" style={s.filterRow}>
-                {[{ id: "hoy", label: "Hoy" }, { id: "semana", label: "7 días" }, { id: "mes", label: "Este mes" }, { id: "todo", label: "Todo" }, { id: "rango", label: "📅 Rango" }].map(f => (
-                  <button key={f.id} style={s.filterBtn(filtroResumen === f.id)} onClick={() => setFiltroResumen(f.id)}>{f.label}</button>
+              
+              {/* PÍLDORAS DE FILTRO TIPO TREINTA */}
+              <div className="hide-scroll" style={{ display: "flex", gap: 8, marginBottom: 24, overflowX: "auto", paddingBottom: 4 }}>
+                {[{ id: "hoy", label: "Hoy" }, { id: "mes", label: "Mes" }, { id: "rango", label: "Personalizado 📅" }].map(f => (
+                  <button key={f.id} style={{
+                    padding: "10px 20px", borderRadius: 24, 
+                    border: `1px solid ${filtroResumen === f.id ? (isDark ? "#FFF" : "#000") : c.border}`,
+                    background: filtroResumen === f.id ? (isDark ? "#FFF" : "#000") : c.card, 
+                    color: filtroResumen === f.id ? (isDark ? "#000" : "#FFF") : c.muted,
+                    fontSize: 14, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit"
+                  }} onClick={() => setFiltroResumen(f.id)}>
+                    {f.label}
+                  </button>
                 ))}
               </div>
+
               {filtroResumen === "rango" && (
                 <div style={{ ...s.card, padding: 16 }}>
                   <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
@@ -816,69 +834,93 @@ export default function App() {
                 </div>
               )}
 
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>General</h3>
-              </div>
-
-              <div style={s.grid2}>
-                <div style={{ ...s.card, textAlign: "center", marginBottom: 0 }}><div style={s.label}>Total gastado</div><div style={s.redNum}>{formatMoney(totalGastadoR)}</div></div>
-                <div style={{ ...s.card, textAlign: "center", marginBottom: 0 }}><div style={s.label}>Total ingresos</div><div style={s.greenNum}>{formatMoney(totalIngresosR)}</div></div>
-                <div style={{ ...s.card, textAlign: "center", marginBottom: 0 }}><div style={s.label}>Ahorro período</div><div style={{ ...s.smallNum, color: ahorroR >= 0 ? "#FCB606" : c.red }}>{formatMoney(ahorroR)}</div></div>
-                <div style={{ ...s.card, textAlign: "center", marginBottom: 0 }}><div style={s.label}>Gasto prom/día</div><div style={s.smallNum}>{formatMoney(gastoDiarioProm)}</div></div>
-              </div>
-
-              <div style={{ ...s.card, background: isDark ? "#0F1A0F" : "#F0FDF4", border: `1px solid ${isDark ? "#1A3A1A" : "#BBF7D0"}`, textAlign: "center", padding: "24px 16px", marginBottom: 24 }}>
-                <div style={{ ...s.label, textAlign: "center", color: isDark ? c.muted : "#065F46", marginBottom: 0 }}>Proyección inteligente</div>
-                <div style={{ fontSize: 16, color: isDark ? "#FCB606" : "#047857", fontWeight: 700, marginTop: 8 }}>📈 A este ritmo llegarás a tu meta {proyeccionTexto}</div>
-                <div style={{ fontSize: 13, color: c.muted, marginTop: 6, fontWeight: 500 }}>Basado en un ahorro diario promedio de {formatMoney(ahorroDiarioProm > 0 ? ahorroDiarioProm : 0)}</div>
-              </div>
-
-              {ingMensual > 0 && (
-                <div style={s.metaCard}>
-                  <div style={{ ...s.metaLabel, textAlign: "center", marginBottom: 0 }}>Para lograr tu meta</div>
-                  <div style={{ fontSize: 14, color: "#CCC", lineHeight: 1.9, marginTop: 12, textAlign: "center", fontWeight: 500 }}>
-                    <div>📥 Ingreso mensual: <strong style={{ color: "#E8E0D0", fontWeight: 700 }}>{formatMoney(ingMensual)}</strong></div>
-                    <div>🎯 Ahorro necesario/mes: <strong style={{ color: "#FCB606", fontWeight: 700 }}>{formatMoney(ahorroMetaDiario * 30)}</strong></div>
-                    <div>💸 Gasto máximo/mes: <strong style={{ color: c.green, fontWeight: 700 }}>{formatMoney(ingMensual - (ahorroMetaDiario * 30))}</strong></div>
-                    <div>📆 Gasto máximo/día: <strong style={{ color: c.green, fontWeight: 700 }}>{formatMoney(presupuestoDiario)}</strong></div>
-                  </div>
+              {/* TARJETAS SUPERIORES (Ingresos / Gastos) */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
+                <div style={{ background: isDark ? "rgba(16, 185, 129, 0.1)" : "#F0FDF4", borderRadius: 16, padding: 16, border: isDark ? "1px solid rgba(16, 185, 129, 0.2)" : "none" }}>
+                  <div style={{ fontSize: 13, color: c.muted, marginBottom: 6, fontWeight: 500 }}>Total ingresos</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: c.text }}>{formatMoney(totalIngresosR)}</div>
                 </div>
-              )}
-
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>Gastos últimos 7 días</h3>
+                <div style={{ background: isDark ? "rgba(239, 68, 68, 0.1)" : "#FEF2F2", borderRadius: 16, padding: 16, border: isDark ? "1px solid rgba(239, 68, 68, 0.2)" : "none" }}>
+                  <div style={{ fontSize: 13, color: c.muted, marginBottom: 6, fontWeight: 500 }}>Total gastos</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: c.red }}>{formatMoney(totalGastadoR)}</div>
+                </div>
               </div>
-              <div style={{...s.card, marginBottom: 24}}>
-                <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 100, marginTop: 8 }}>
-                  {gastosUltimos7.map((d, i) => (
-                    <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-                      <div style={{ width: "100%", height: `${d.total ? Math.max(8, (d.total / maxBar) * 80) : 4}px`, background: d.fecha === fechaHoy ? "#FCB606" : c.border, borderRadius: "4px 4px 0 0" }} />
-                      <span style={{ fontSize: 11, fontWeight: 500, color: d.fecha === fechaHoy ? "#FCB606" : c.muted }}>{d.label}</span>
+
+              {/* GRÁFICO CIRCULAR DE DONA Y LEYENDA */}
+              <div style={{ ...s.card, padding: "20px" }}>
+                <div style={{ display: "flex", gap: 24, borderBottom: `1px solid ${c.border}`, paddingBottom: 12, marginBottom: 20 }}>
+                   <span style={{ fontSize: 14, fontWeight: 700, color: c.text, borderBottom: `2px solid ${c.red}`, paddingBottom: 12, marginBottom: -13 }}>Gastos</span>
+                   <span style={{ fontSize: 14, fontWeight: 600, color: c.muted }}>Ahorros</span>
+                </div>
+                
+                {porCategoriaR.length === 0 ? (
+                  <div style={{ textAlign: "center", color: c.muted, padding: "20px 0", fontSize: 14 }}>Aún no hay gastos registrados</div>
+                ) : (
+                  <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+                    <div style={{ width: 130, height: 130, borderRadius: "50%", background: `conic-gradient(${conicString})`, position: "relative", flexShrink: 0 }}>
+                       <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 70, height: 70, background: c.card, borderRadius: "50%" }}></div>
                     </div>
-                  ))}
+                    <div style={{ flex: 1 }}>
+                       {porCategoriaR.slice(0, 5).map(cat => (
+                         <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                             <div style={{ width: 10, height: 10, borderRadius: "50%", background: cat.color }}></div>
+                             <span style={{ fontSize: 13, fontWeight: 600, color: c.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 80 }}>{cat.label.substring(cat.label.indexOf(" ") + 1)}</span>
+                           </div>
+                           <span style={{ fontSize: 13, fontWeight: 600, color: c.muted }}>{Math.round((cat.total / totalGastosDonut) * 100)}%</span>
+                         </div>
+                       ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* TARJETA DE ÉXITO DE AHORRO */}
+              <div style={{ ...s.card, display: "flex", alignItems: "center", gap: 16, padding: "16px 20px" }}>
+                <div style={{ width: 32, height: 32, borderRadius: "50%", background: isDark ? "rgba(16, 185, 129, 0.15)" : "#DCFCE7", color: c.green, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>✓</div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: c.text }}>Ahorraste {formatMoney(ahorroR)} en este periodo</div>
+                  <div style={{ fontSize: 12, color: c.muted, marginTop: 4, fontWeight: 500 }}>¡Buen trabajo gestionando tu dinero!</div>
                 </div>
               </div>
 
-              {porCategoriaR.length > 0 && (
-                <>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                    <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>Por categoría</h3>
-                  </div>
-                  <div style={s.card}>
-                    {porCategoriaR.map((cat, i, arr) => (
-                      <div key={cat.id} style={{ marginBottom: i === arr.length - 1 ? 0 : 16 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                          <span style={{ fontSize: 14, fontWeight: 600, color: c.text }}>{cat.label}</span>
-                          <span style={{ fontSize: 15, fontWeight: 700, color: cat.color }}>{formatMoney(cat.total)}</span>
+              {/* LISTA DE MOVIMIENTOS FILTRADOS */}
+              <div style={s.card}>
+                <div style={{ display: "flex", gap: 24, borderBottom: `1px solid ${c.border}`, paddingBottom: 12, marginBottom: 12 }}>
+                   <span style={{ fontSize: 14, fontWeight: 700, color: c.text, borderBottom: `2px solid ${c.red}`, paddingBottom: 12, marginBottom: -13 }}>Movimientos</span>
+                </div>
+                
+                {gastosFiltradosResumen.length === 0 ? (
+                  <div style={{ textAlign: "center", color: c.muted, padding: "20px 0", fontSize: 14 }}>No hay registros en este periodo</div>
+                ) : (
+                  gastosFiltradosResumen.map((g, i, arr) => {
+                    const cat = categorias.find(c => c.id === g.categoria);
+                    const isLast = i === arr.length - 1;
+                    return (
+                      <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: isLast ? "none" : `1px solid ${c.border}` }}>
+                        <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 14 }}>
+                          {cat && (
+                            <div style={{ width: 44, height: 44, borderRadius: 14, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
+                              {cat.label.split(" ")[0]}
+                            </div>
+                          )}
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text }}>
+                              {getDisplayDesc(g, categorias)}
+                            </div>
+                            <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)}</div>
+                          </div>
                         </div>
-                        <div style={{ background: c.border, borderRadius: 4, height: 6, overflow: "hidden" }}>
-                          <div style={{ height: "100%", width: `${(cat.total / maxCatR) * 100}%`, background: cat.color, borderRadius: 4 }} />
+                        <div style={{ textAlign: "right" }}>
+                           <span style={{ fontSize: 16, fontWeight: 700, color: g.tipo === "gasto" ? c.text : c.green }}>
+                            {g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}
+                          </span>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </>
-              )}
+                    );
+                  })
+                )}
+              </div>
             </div>
           )}
 
@@ -925,9 +967,7 @@ export default function App() {
                             </div>
                           )}
                           <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text }}>
-                              {getDisplayDesc(g, categorias)}
-                            </div>
+                            <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4 }}>{getDisplayDesc(g, categorias)}</div>
                             <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} | {g.tipo === "gasto" ? "Gastos" : "Ahorros"}</div>
                           </div>
                         </div>
