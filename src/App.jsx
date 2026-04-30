@@ -517,7 +517,7 @@ export default function App() {
   const gastosVerTodos = gastos.filter(g => (!vtFechaDesde || g.fecha >= vtFechaDesde) && (!vtFechaHasta || g.fecha <= vtFechaHasta));
 
   const s = {
-    app: { minHeight: "100vh", fontFamily: "'Montserrat', sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: "calc(160px + env(safe-area-inset-bottom, 0px))", width: "100%" },
+    app: { minHeight: "100vh", fontFamily: "'Montserrat', sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: "calc(100px + env(safe-area-inset-bottom, 0px))", width: "100%" },
     section:    { padding: "20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "stretch" },
     card:       { width: "100%", background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: "16px", marginBottom: 24, overflow: "hidden", boxSizing: "border-box", boxShadow: c.shadow },
     metaCard:   { width: "100%", background: "linear-gradient(135deg,#1A1A1A,#050505)", borderRadius: 16, padding: "24px", marginBottom: 24, boxSizing: "border-box", color: "#FFF", boxShadow: isDark ? "none" : "0 8px 24px rgba(0,0,0,0.15)" },
@@ -550,20 +550,29 @@ export default function App() {
     filterRow:  { display: "flex", gap: 6, marginBottom: 24, flexWrap: "nowrap", overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" },
     filterBtn: (a) => ({ whiteSpace: "nowrap", flexShrink: 0, padding: "8px 16px", borderRadius: 20, border: `1px solid ${a ? "#FCB606" : c.border}`, background: a ? "#FCB606" : c.card, color: a ? "#000" : c.muted, fontSize: 13, fontWeight: a ? 600 : 500, cursor: "pointer", fontFamily: "inherit" }),
     
+    // REDISEÑO DEL MENÚ INFERIOR (Sin borde, con sombra, espacio para el botón central)
     navBar: {
       position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480,
-      background: c.nav, borderTop: `1px solid ${c.border}`, display: "flex", zIndex: 100,
-      paddingTop: "8px", paddingBottom: "calc(16px + env(safe-area-inset-bottom, 0px))", boxShadow: isDark ? "none" : "0 -4px 20px rgba(0,0,0,0.06)"
+      background: c.nav, display: "flex", zIndex: 100,
+      paddingTop: 0, paddingBottom: 0, 
+      boxShadow: isDark ? "0 -4px 24px rgba(0,0,0,0.4)" : "0 -4px 24px rgba(0,0,0,0.06)"
     },
     navBtn: (a) => ({
-      flex: 1, paddingTop: 10, paddingBottom: 10, backgroundColor: "transparent", WebkitAppearance: "none", border: "none",
+      flex: 1, paddingTop: 14, paddingBottom: `calc(16px + env(safe-area-inset-bottom, 0px))`, backgroundColor: "transparent", WebkitAppearance: "none", border: "none",
       color: a ? "#FCB606" : c.muted, fontSize: 11, fontWeight: a ? 700 : 500, cursor: "pointer",
-      display: "flex", flexDirection: "column", alignItems: "center", gap: 4, fontFamily: "inherit"
+      display: "flex", flexDirection: "column", alignItems: "center", gap: 4, fontFamily: "inherit",
+      position: "relative"
     }),
+    fabCircle: {
+      position: "absolute", top: -24, width: 60, height: 60, borderRadius: "50%",
+      background: "#FCB606", color: "#000", border: `6px solid ${c.bg}`, // Esto crea la ilusión de la "mordida" o perforación
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontSize: 34, fontWeight: 400, cursor: "pointer", fontFamily: "inherit",
+      boxShadow: "0 4px 12px rgba(252, 182, 6, 0.4)", zIndex: 105, padding: 0
+    },
+
     overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 200, padding: "0", backdropFilter: "blur(5px)" },
-    modal: { background: c.card, borderTop: `1px solid ${c.border}`, borderLeft: `1px solid ${c.border}`, borderRight: `1px solid ${c.border}`, borderRadius: "24px 24px 0 0", padding: "24px 24px calc(24px + env(safe-area-inset-bottom, 0px))", width: "100%", maxWidth: 480, boxSizing: "border-box", boxShadow: "0 -10px 40px rgba(0,0,0,0.3)" },
-    
-    fab: { position: "fixed", bottom: "calc(90px + env(safe-area-inset-bottom, 0px))", left: "50%", transform: "translateX(-50%)", width: "90%", maxWidth: 430, background: "#FCB606", color: "#000", border: "none", borderRadius: 20, padding: "16px", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 8px 24px rgba(252, 182, 6, 0.3)", zIndex: 95, display: "flex", justifyContent: "center", alignItems: "center", gap: 8 }
+    modal: { background: c.card, borderTop: `1px solid ${c.border}`, borderLeft: `1px solid ${c.border}`, borderRight: `1px solid ${c.border}`, borderRadius: "24px 24px 0 0", padding: "24px 24px calc(24px + env(safe-area-inset-bottom, 0px))", width: "100%", maxWidth: 480, boxSizing: "border-box", boxShadow: "0 -10px 40px rgba(0,0,0,0.3)" }
   };
 
   const IconBadge = ({ emoji, bg, color }) => (
@@ -808,10 +817,6 @@ export default function App() {
               ) : (
                 <div style={{ ...s.card, textAlign: "center", color: c.muted, padding: "24px 0", fontWeight: 500 }}>Aún no hay movimientos hoy</div>
               )}
-
-              <button style={s.fab} onClick={() => setShowAddModal(true)}>
-                <span style={{ fontSize: 20 }}>+</span> Nuevo movimiento
-              </button>
             </div>
           )}
 
@@ -1142,8 +1147,22 @@ export default function App() {
           )}
 
           <div style={s.navBar}>
-            {[{ id: "hoy", icon: "🏠", label: "Inicio" }, { id: "resumen", icon: "📊", label: "Resumen" }, { id: "historial", icon: "📋", label: "Historial" }, { id: "config", icon: "⚙️", label: "Config" }].map(n => (
+            {[{ id: "hoy", icon: "🏠", label: "Inicio" }, { id: "resumen", icon: "📊", label: "Resumen" }].map(n => (
               <button key={n.id} style={s.navBtn(tab === n.id)} onClick={() => setTab(n.id)}>
+                {tab === n.id && <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 28, height: 3, background: "#FCB606", borderRadius: "0 0 4px 4px" }} />}
+                <span style={{ fontSize: 24, marginBottom: 2 }}>{n.icon}</span>
+                <span style={{ fontFamily: "'Montserrat', sans-serif" }}>{n.label}</span>
+              </button>
+            ))}
+
+            {/* BOTÓN CENTRAL FLOTANTE (FAB) */}
+            <div style={{ width: 72, position: "relative", display: "flex", justifyContent: "center" }}>
+              <button style={s.fabCircle} onClick={() => setShowAddModal(true)}>+</button>
+            </div>
+
+            {[{ id: "historial", icon: "📋", label: "Historial" }, { id: "config", icon: "⚙️", label: "Config" }].map(n => (
+              <button key={n.id} style={s.navBtn(tab === n.id)} onClick={() => setTab(n.id)}>
+                {tab === n.id && <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 28, height: 3, background: "#FCB606", borderRadius: "0 0 4px 4px" }} />}
                 <span style={{ fontSize: 24, marginBottom: 2 }}>{n.icon}</span>
                 <span style={{ fontFamily: "'Montserrat', sans-serif" }}>{n.label}</span>
               </button>
