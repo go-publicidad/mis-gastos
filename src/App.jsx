@@ -91,47 +91,6 @@ const formatGroupDate = (dateStr) => {
   return `${day} de ${meses[d.getMonth()]}, ${d.getFullYear()}`;
 };
 
-const getUIFechaHora = (isoStr) => {
-  if (!isoStr) return "";
-  const validIsoStr = isoStr.includes('Z') || isoStr.includes('+') ? isoStr : `${isoStr}Z`;
-  const dt = new Date(validIsoStr);
-  const limaDate = new Date(dt.getTime() - 18000000);
-
-  let h = limaDate.getUTCHours();
-  let m = limaDate.getUTCMinutes();
-  const ampm = h >= 12 ? 'p.m.' : 'a.m.';
-  h = h % 12;
-  h = h ? h : 12; 
-  m = m < 10 ? '0' + m : m;
-  const strTime = `${h}:${m} ${ampm}`;
-
-  const isoDate = limaDate.toISOString().split("T")[0];
-  const todayIso = hoy();
-  const ayerDate = new Date(Date.now() - 18000000 - 86400000);
-  const ayerIso = ayerDate.toISOString().split("T")[0];
-
-  if (isoDate === todayIso) {
-    return `Hoy ${strTime}`;
-  } else if (isoDate === ayerIso) {
-    return `Ayer ${strTime}`;
-  } else {
-    const meses = ["Ene.", "Feb.", "Mar.", "Abr.", "May.", "Jun.", "Jul.", "Ago.", "Sep.", "Oct.", "Nov.", "Dic."];
-    const day = limaDate.getUTCDate();
-    const month = meses[limaDate.getUTCMonth()];
-    const year = limaDate.getUTCFullYear();
-    return `${day} ${month} ${year} - ${strTime}`;
-  }
-};
-
-const getDisplayDesc = (g, categorias) => {
-  const cat = categorias.find(c => c.id === g.categoria);
-  if (!cat) return g.descripcion;
-  if (g.descripcion === cat.label) {
-    return cat.label.substring(cat.label.indexOf(" ") + 1).trim();
-  }
-  return g.descripcion;
-};
-
 const diffDias = (d1Str, d2Str) => {
   if (!d1Str || !d2Str) return 0;
   const [y1, m1, day1] = d1Str.split("-");
@@ -180,30 +139,13 @@ const exportarPDF = (gastos, categorias) => {
       h2{color:#FCB606;margin-top:0;font-size:24px;font-weight:700;}
       .header-meta {color:#6B7280;margin-bottom:24px;font-size:14px;font-weight:500;}
       .btn-print {display:inline-block;margin-bottom:20px;padding:12px 24px;background:#FCB606;color:#000;font-weight:700;border:none;border-radius:12px;cursor:pointer;font-family:inherit;font-size:14px;box-shadow:0 4px 12px rgba(252,182,6,0.2);}
-      
-      .card-history {
-        width:100%;
-        max-width:800px;
-        margin:0 auto;
-        background:#FFFFFF;
-        border:1px solid #E5E7EB;
-        border-radius:24px;
-        padding:32px;
-        box-shadow:0 8px 24px rgba(0,0,0,0.06);
-        box-sizing:border-box;
-      }
-      
+      .card-history {width:100%;max-width:800px;margin:0 auto;background:#FFFFFF;border:1px solid #E5E7EB;border-radius:24px;padding:32px;box-shadow:0 8px 24px rgba(0,0,0,0.06);box-sizing:border-box;}
       table{width:100%;border-collapse:collapse;margin-top:12px;border-radius:12px;overflow:hidden;}
       th{background:#F9FAFB;color:#6B7280;padding:14px 16px;text-align:left;font-weight:600;border-bottom:1px solid #E5E7EB;text-transform:uppercase;font-size:11px;letter-spacing:1px;}
       td{padding:14px 16px;border-bottom:1px solid #E5E7EB;}
       tr:last-child td{border-bottom:none;}
       tr:nth-child(even){background:#F9FAFB;}
-      
-      @media print{
-        button{display:none;}
-        body{background:#FFFFFF;padding:0;}
-        .card-history{border:none;box-shadow:none;padding:0;}
-      }
+      @media print{ button{display:none;} body{background:#FFFFFF;padding:0;} .card-history{border:none;box-shadow:none;padding:0;} }
     </style></head><body>
     <div style="max-width:800px;margin:0 auto;">
       <button onclick="window.print()" class="btn-print">🖨️ Imprimir / Guardar PDF</button>
@@ -232,7 +174,7 @@ export default function App() {
   const [categoriasExtra, setCategoriasExtra] = useState([]);  
   
   const [tab, setTab] = useState("hoy");
-  const [form, setForm] = useState({ monto: "", descripcion: "", categoria: "comida", tipo: "gasto" });
+  const [form, setForm] = useState({ monto: "", descripcion: "", categoria: "comida", tipo: "gasto", fecha: hoy(), metodoPago: "Efectivo" });
   
   const [metaAhorro, setMetaAhorro] = useState("100000");
   const [fechaInicioPlan, setFechaInicioPlan] = useState(hoy());
@@ -382,11 +324,14 @@ export default function App() {
     setSaving(true);
     const catObj = categorias.find(cat => cat.id === form.categoria);
     const defaultDesc = catObj ? catObj.label.substring(catObj.label.indexOf(" ") + 1).trim() : "Movimiento";
-    const nuevo = { fecha: hoy(), monto, descripcion: form.descripcion || defaultDesc, categoria: form.categoria, tipo: form.tipo };
+    
+    const nuevo = { fecha: form.fecha || hoy(), monto, descripcion: form.descripcion || defaultDesc, categoria: form.categoria, tipo: form.tipo };
+    
     const { data, error: err } = await supabase.from("gastos").insert([nuevo]).select();
     if (err) { showToast("Error al guardar", c.red); setSaving(false); return; }
+    
     setGastos(prev => [{ ...data[0], fecha: getFechaLocal(data[0].created_at) }, ...prev]);
-    setForm(f => ({ ...f, monto: "", descripcion: "" }));
+    setForm(f => ({ ...f, monto: "", descripcion: "", fecha: hoy(), metodoPago: "Efectivo" }));
     showToast(`Registrado ✓`);
     setSaving(false);
     setShowAddModal(false);
@@ -400,7 +345,7 @@ export default function App() {
     showToast("Eliminado", c.muted);
   };
 
-  const abrirEdicion = (g) => { setEditando(g); setEditForm({ monto: g.monto, descripcion: g.descripcion, categoria: g.categoria, tipo: g.tipo }); };
+  const abrirEdicion = (g) => { setEditando(g); setEditForm({ monto: g.monto, descripcion: g.descripcion, categoria: g.categoria, tipo: g.tipo, fecha: g.fecha, metodoPago: "Efectivo" }); };
 
   const guardarEdicion = async () => {
     const monto = parseFloat(editForm.monto);
@@ -408,7 +353,9 @@ export default function App() {
     setSaving(true);
     const catObj = categorias.find(cat => cat.id === editForm.categoria);
     const defaultDesc = catObj ? catObj.label.substring(catObj.label.indexOf(" ") + 1).trim() : "Movimiento";
-    const updates = { monto, descripcion: editForm.descripcion || defaultDesc, categoria: editForm.categoria, tipo: editForm.tipo };
+    
+    const updates = { fecha: editForm.fecha || hoy(), monto, descripcion: editForm.descripcion || defaultDesc, categoria: editForm.categoria, tipo: editForm.tipo };
+    
     const { error: err } = await supabase.from("gastos").update(updates).eq("id", editando.id);
     if (err) { showToast("Error", c.red); setSaving(false); return; }
     setGastos(prev => prev.map(g => g.id === editando.id ? { ...g, ...updates } : g));
@@ -493,6 +440,13 @@ export default function App() {
     setCategoriasBase(updated);
     await supabase.from("config").upsert([{ key: "categoriasBase", value: JSON.stringify(updated) }], { onConflict: "key" });
     showToast("Categoría eliminada", c.muted);
+  };
+
+  const getDisplayDescUI = (g, categorias) => {
+    const cat = categorias.find(c => c.id === g.categoria);
+    if (!cat) return g.descripcion;
+    if (g.descripcion === cat.label) return cat.label.substring(cat.label.indexOf(" ") + 1).trim();
+    return g.descripcion;
   };
 
   const metaTotalNum = parseFloat(metaAhorro) || 0;
@@ -597,10 +551,10 @@ export default function App() {
     metaLabel:  { fontSize: 16, color: "#FFF", marginBottom: 12 }, 
     label:      { fontSize: 16, fontWeight: 600, color: c.text, marginBottom: 12 },
     
-    bigNum:     { fontSize: 28, fontWeight: 500, color: "#FFF", lineHeight: 1 },
-    smallNum:   { fontSize: 20, fontWeight: 500, color: c.text },
-    redNum:     { fontSize: 20, fontWeight: 500, color: c.red },
-    greenNum:   { fontSize: 20, fontWeight: 500, color: c.green },
+    bigNum:     { fontSize: 28, fontWeight: 600, color: "#FFF", lineHeight: 1 },
+    smallNum:   { fontSize: 20, fontWeight: 600, color: c.text },
+    redNum:     { fontSize: 20, fontWeight: 600, color: c.red },
+    greenNum:   { fontSize: 20, fontWeight: 600, color: c.green },
     
     progressBg: { background: "#333", borderRadius: 4, height: 8, margin: "8px 0 16px", overflow: "hidden" },
     progressFill: (p) => ({ height: "100%", width: `${p}%`, background: p >= 100 ? c.green : p >= 50 ? "#FCB606" : c.red, borderRadius: 4, transition: "width 0.6s ease" }),
@@ -626,7 +580,7 @@ export default function App() {
       position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480,
       background: c.nav, display: "flex", zIndex: 100,
       paddingTop: 0, paddingBottom: 0, 
-      boxShadow: isDark ? "0 -4px 24px rgba(0,0,0,0.6)" : "0 -8px 24px rgba(0,0,0,0.12)"
+      boxShadow: isDark ? "0 -2px 10px rgba(0,0,0,0.4)" : "0 -2px 10px rgba(0,0,0,0.08)"
     },
     navBtn: (a) => ({
       flex: 1, paddingTop: 10, paddingBottom: `calc(20px + env(safe-area-inset-bottom, 0px))`, backgroundColor: "transparent", WebkitAppearance: "none", border: "none",
@@ -643,7 +597,7 @@ export default function App() {
     },
 
     overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 200, padding: "0", backdropFilter: "blur(5px)" },
-    modal: { background: c.card, borderTop: `1px solid ${c.border}`, borderLeft: `1px solid ${c.border}`, borderRight: `1px solid ${c.border}`, borderRadius: "24px 24px 0 0", padding: "24px 24px calc(24px + env(safe-area-inset-bottom, 0px))", width: "100%", maxWidth: 480, boxSizing: "border-box", boxShadow: "0 -10px 40px rgba(0,0,0,0.3)" }
+    modal: { background: c.card, borderTop: `1px solid ${c.border}`, borderLeft: `1px solid ${c.border}`, borderRight: `1px solid ${c.border}`, borderRadius: "24px 24px 0 0", padding: "24px 20px calc(24px + env(safe-area-inset-bottom, 0px))", width: "100%", maxWidth: 480, boxSizing: "border-box", boxShadow: "0 -10px 40px rgba(0,0,0,0.3)" }
   };
 
   const IconBadge = ({ emoji, bg, color }) => (
@@ -733,7 +687,7 @@ export default function App() {
                         )}
                         <div style={{ minWidth: 0 }}>
                           <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2, color: c.text }}>
-                            {getDisplayDesc(g, categorias)}
+                            {getDisplayDescUI(g, categorias)}
                           </div>
                           <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ingresos"}</div>
                         </div>
@@ -847,7 +801,7 @@ export default function App() {
                     <IconBadge emoji={<PiggyBank size={18} />} bg={c.iconBgYellow} color="#FCB606" />
                     <span style={{ fontSize: 13, fontWeight: 500, color: c.muted }}>Ahorro hoy</span>
                   </div>
-                  <div style={{ fontSize: 20, fontWeight: 500, color: "#FCB606", textAlign: "center", marginTop: 2 }}>{formatMoney(totalIngresosHoy - totalGastadoHoy)}</div>
+                  <div style={{ fontSize: 20, fontWeight: 600, color: "#FCB606", textAlign: "center", marginTop: 2 }}>{formatMoney(totalIngresosHoy - totalGastadoHoy)}</div>
                 </div>
 
                 <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
@@ -855,7 +809,7 @@ export default function App() {
                     <IconBadge emoji={<Target size={18} />} bg={c.iconBgPurple} color={c.iconTextPurple} />
                     <span style={{ fontSize: 13, fontWeight: 500, color: c.muted }}>Límite / día</span>
                   </div>
-                  <div style={{ fontSize: 20, fontWeight: 500, color: c.text, textAlign: "center", marginTop: 2 }}>{formatMoney(ahorroMetaDiario)}</div>
+                  <div style={{ fontSize: 20, fontWeight: 600, color: c.text, textAlign: "center", marginTop: 2 }}>{formatMoney(ahorroMetaDiario)}</div>
                 </div>
               </div>
 
@@ -881,7 +835,7 @@ export default function App() {
                           )}
                           <div style={{ minWidth: 0 }}>
                             <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text }}>
-                              {getDisplayDesc(g, categorias)}
+                              {getDisplayDescUI(g, categorias)}
                             </div>
                             <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ahorros"}</div>
                           </div>
@@ -939,11 +893,11 @@ export default function App() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
                 <div style={{ background: isDark ? "rgba(16, 185, 129, 0.1)" : "#F0FDF4", borderRadius: 16, padding: 16, border: isDark ? "1px solid rgba(16, 185, 129, 0.2)" : "none" }}>
                   <div style={{ fontSize: 13, color: c.muted, marginBottom: 6, fontWeight: 500 }}>Total ingresos</div>
-                  <div style={{ fontSize: 20, fontWeight: 500, color: c.text }}>{formatMoney(totalIngresosR)}</div>
+                  <div style={{ fontSize: 20, fontWeight: 600, color: c.text }}>{formatMoney(totalIngresosR)}</div>
                 </div>
                 <div style={{ background: isDark ? "rgba(239, 68, 68, 0.1)" : "#FEF2F2", borderRadius: 16, padding: 16, border: isDark ? "1px solid rgba(239, 68, 68, 0.2)" : "none" }}>
                   <div style={{ fontSize: 13, color: c.muted, marginBottom: 6, fontWeight: 500 }}>Total gastos</div>
-                  <div style={{ fontSize: 20, fontWeight: 500, color: c.red }}>{formatMoney(totalGastadoR)}</div>
+                  <div style={{ fontSize: 20, fontWeight: 600, color: c.red }}>{formatMoney(totalGastadoR)}</div>
                 </div>
               </div>
 
@@ -1153,7 +1107,7 @@ export default function App() {
                                  </div>
                                )}
                                <div style={{ minWidth: 0 }}>
-                                 <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2 }}>{getDisplayDesc(g, categorias)}</div>
+                                 <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2 }}>{getDisplayDescUI(g, categorias)}</div>
                                  <div style={{ fontSize: 12, fontWeight: 500, color: c.muted }}>{getUITime(g.created_at)}</div>
                                </div>
                              </div>
@@ -1188,7 +1142,7 @@ export default function App() {
                 </div>
                 
                 <div style={{ ...s.label, textAlign: "center" }}>Ingreso mensual (S/)</div>
-                <input style={{ ...s.input, marginTop: 12, marginBottom: 24, fontSize: 20, textAlign: "center", color: c.green, fontWeight: 500 }} type={isEditingIngreso ? "number" : "text"} placeholder="Ej: 5000" value={isEditingIngreso ? ingresoMensual : (ingresoMensual ? formatMoney(ingresoMensual) : "")} onFocus={() => setIsEditingIngreso(true)} onBlur={() => setIsEditingIngreso(false)} onChange={e => setIngresoMensual(e.target.value)} />
+                <input style={{ ...s.input, marginTop: 12, marginBottom: 24, fontSize: 20, textAlign: "center", color: c.green, fontWeight: 700 }} type={isEditingIngreso ? "number" : "text"} placeholder="Ej: 5000" value={isEditingIngreso ? ingresoMensual : (ingresoMensual ? formatMoney(ingresoMensual) : "")} onFocus={() => setIsEditingIngreso(true)} onBlur={() => setIsEditingIngreso(false)} onChange={e => setIngresoMensual(e.target.value)} />
                 <button style={s.btnPrimary} onClick={guardarConfig} disabled={saving}>{saving ? "Guardando..." : "Guardar configuración"}</button>
               </div>
 
@@ -1531,50 +1485,130 @@ export default function App() {
 
       {showAddModal && (
         <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setShowAddModal(false); }}>
-          <div style={{...s.modal, animation: "slideUp 0.3s ease-out"}}>
+          <div style={{...s.modal, padding: "24px 20px calc(24px + env(safe-area-inset-bottom, 0px))", animation: "slideUp 0.3s ease-out"}}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <h3 style={{ margin: 0, fontSize: 18, color: c.text, fontWeight: 700 }}>Registrar Movimiento</h3>
-              <button onClick={() => setShowAddModal(false)} style={{ background: "none", border: "none", color: c.muted, fontSize: 24, cursor: "pointer", padding: 0 }}>×</button>
+              <button onClick={() => setShowAddModal(false)} style={{ background: "none", border: "none", color: c.muted, fontSize: 24, cursor: "pointer", padding: 0 }}><X size={20}/></button>
             </div>
-            
-            <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
-              <button style={s.tipoBtn(form.tipo === "gasto", c.red)} onClick={() => setForm(f => ({ ...f, tipo: "gasto" }))}>− Gasto</button>
-              <button style={s.tipoBtn(form.tipo === "ingreso", c.green)} onClick={() => setForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
-            </div>
-            
-            <input autoFocus style={{ ...s.input, marginBottom: 16, fontSize: 32, textAlign: "center", fontWeight: 700, padding: "20px 10px", height: "auto" }} type="number" placeholder="0.00" value={form.monto} onChange={e => setForm(f => ({ ...f, monto: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
             
             <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
-              <select style={{ ...s.select, flex: 1, marginBottom: 0 }} value={form.categoria} onChange={e => setForm(f => ({ ...f, categoria: e.target.value }))}>
-                {categorias.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-              </select>
-              <input style={{ ...s.input, flex: 1, marginBottom: 0, fontSize: 15, fontWeight: 500 }} type="text" placeholder="Descripción" value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
+              <button style={{ flex: 1, padding: "12px", borderRadius: 12, border: form.tipo === "ingreso" ? `2px solid ${c.green}` : `1px solid ${c.border}`, background: form.tipo === "ingreso" ? c.iconBgGreen : c.input, color: form.tipo === "ingreso" ? c.green : c.muted, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }} onClick={() => setForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
+              <button style={{ flex: 1, padding: "12px", borderRadius: 12, border: form.tipo === "gasto" ? `2px solid ${c.red}` : `1px solid ${c.border}`, background: form.tipo === "gasto" ? c.iconBgRed : c.input, color: form.tipo === "gasto" ? c.red : c.muted, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }} onClick={() => setForm(f => ({ ...f, tipo: "gasto" }))}>− Gasto</button>
             </div>
             
-            <button style={{...s.btnPrimary, padding: "16px"}} onClick={agregarMovimiento} disabled={saving}>{saving ? "Guardando..." : "Guardar Registro"}</button>
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ fontSize: 13, fontWeight: 600, color: c.muted, display: "block", marginBottom: 8 }}>Monto</label>
+              <div style={{ display: "flex", alignItems: "center", borderBottom: `2px solid ${c.border}`, paddingBottom: 8 }}>
+                <span style={{ fontSize: 32, fontWeight: 700, color: c.text, marginRight: 8 }}>S/</span>
+                <input autoFocus style={{ background: "transparent", border: "none", color: c.text, fontSize: 32, fontWeight: 700, width: "100%", outline: "none" }} type="number" placeholder="0.00" value={form.monto} onChange={e => setForm(f => ({ ...f, monto: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
+              </div>
+            </div>
+            
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ fontSize: 13, fontWeight: 600, color: c.muted, display: "block", marginBottom: 12 }}>Categoría</label>
+              <div className="hide-scroll" style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8 }}>
+                {categorias.map(cat => {
+                  const isSelected = form.categoria === cat.id;
+                  const catEmoji = cat.label.split(" ")[0];
+                  const catName = cat.label.substring(cat.label.indexOf(" ") + 1).trim();
+                  return (
+                    <div key={cat.id} onClick={() => setForm(f => ({ ...f, categoria: cat.id }))} style={{ minWidth: 70, padding: "12px 8px", borderRadius: 16, border: isSelected ? (form.tipo === 'ingreso' ? `2px solid ${c.green}` : `2px solid ${c.red}`) : `1px solid ${c.border}`, background: isSelected ? (form.tipo === 'ingreso' ? c.iconBgGreen : c.iconBgRed) : c.input, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer", transition: "all 0.2s" }}>
+                      <div style={{ fontSize: 24 }}>{catEmoji}</div>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: isSelected ? c.text : c.muted, textAlign: "center", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>{catName}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ fontSize: 13, fontWeight: 600, color: c.muted, display: "block", marginBottom: 8 }}>Descripción <span style={{fontWeight: 400}}>(opcional)</span></label>
+              <input style={s.input} type="text" placeholder="Ej. Almuerzo con cliente" value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
+            </div>
+
+            <div style={{ display: "flex", gap: 12, marginBottom: 28 }}>
+               <div style={{ flex: 1, minWidth: 0 }}>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: c.muted, display: "block", marginBottom: 8 }}>Fecha</label>
+                  <input type="date" style={s.input} value={form.fecha || hoy()} onChange={e => setForm(f => ({...f, fecha: e.target.value}))} />
+               </div>
+               <div style={{ flex: 1, minWidth: 0 }}>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: c.muted, display: "block", marginBottom: 8 }}>Método de pago</label>
+                  <select style={s.select} value={form.metodoPago || "Efectivo"} onChange={e => setForm(f => ({...f, metodoPago: e.target.value}))}>
+                     <option value="Efectivo">Efectivo</option>
+                     <option value="Tarjeta de crédito">Tarjeta de crédito</option>
+                     <option value="Transferencia">Transferencia</option>
+                  </select>
+               </div>
+            </div>
+
+            <button style={{...s.btnPrimary, padding: "16px", background: form.tipo === "ingreso" ? c.green : "#FCB606", color: form.tipo === "ingreso" ? "#FFF" : "#000" }} onClick={agregarMovimiento} disabled={saving}>
+              {saving ? "Guardando..." : (form.tipo === "ingreso" ? "Guardar Ingreso" : "Guardar Gasto")}
+            </button>
           </div>
         </div>
       )}
 
       {editando && (
         <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setEditando(null); }}>
-          <div style={{...s.modal, animation: "slideUp 0.3s ease-out"}}>
+          <div style={{...s.modal, padding: "24px 20px calc(24px + env(safe-area-inset-bottom, 0px))", animation: "slideUp 0.3s ease-out"}}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <h3 style={{ margin: 0, fontSize: 18, color: c.text, fontWeight: 700 }}>Editar Movimiento</h3>
-              <button onClick={() => setEditando(null)} style={{ background: "none", border: "none", color: c.muted, fontSize: 24, cursor: "pointer", padding: 0 }}>×</button>
+              <button onClick={() => setEditando(null)} style={{ background: "none", border: "none", color: c.muted, fontSize: 24, cursor: "pointer", padding: 0 }}><X size={20}/></button>
             </div>
-            <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
-              <button style={s.tipoBtn(editForm.tipo === "gasto", c.red)} onClick={() => setEditForm(f => ({ ...f, tipo: "gasto" }))}>− Gasto</button>
-              <button style={s.tipoBtn(editForm.tipo === "ingreso", c.green)} onClick={() => setForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
-            </div>
-            <input style={{ ...s.input, marginBottom: 16, fontSize: 32, textAlign: "center", fontWeight: 700, padding: "20px 10px", height: "auto" }} type="number" placeholder="0.00" value={editForm.monto} onChange={e => setEditForm(f => ({ ...f, monto: e.target.value }))} />
+            
             <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
-              <select style={{ ...s.select, flex: 1, marginBottom: 0 }} value={editForm.categoria} onChange={e => setEditForm(f => ({ ...f, categoria: e.target.value }))}>
-                {categorias.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-              </select>
-              <input style={{ ...s.input, flex: 1, marginBottom: 0, fontSize: 15, fontWeight: 500 }} type="text" placeholder="Descripción" value={editForm.descripcion} onChange={e => setEditForm(f => ({ ...f, descripcion: e.target.value }))} />
+              <button style={{ flex: 1, padding: "12px", borderRadius: 12, border: editForm.tipo === "ingreso" ? `2px solid ${c.green}` : `1px solid ${c.border}`, background: editForm.tipo === "ingreso" ? c.iconBgGreen : c.input, color: editForm.tipo === "ingreso" ? c.green : c.muted, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }} onClick={() => setEditForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
+              <button style={{ flex: 1, padding: "12px", borderRadius: 12, border: editForm.tipo === "gasto" ? `2px solid ${c.red}` : `1px solid ${c.border}`, background: editForm.tipo === "gasto" ? c.iconBgRed : c.input, color: editForm.tipo === "gasto" ? c.red : c.muted, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }} onClick={() => setEditForm(f => ({ ...f, tipo: "gasto" }))}>− Gasto</button>
             </div>
-            <button style={{...s.btnPrimary, padding: "16px"}} onClick={guardarEdicion} disabled={saving}>{saving ? "Guardando..." : "Guardar Cambios"}</button>
+            
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ fontSize: 13, fontWeight: 600, color: c.muted, display: "block", marginBottom: 8 }}>Monto</label>
+              <div style={{ display: "flex", alignItems: "center", borderBottom: `2px solid ${c.border}`, paddingBottom: 8 }}>
+                <span style={{ fontSize: 32, fontWeight: 700, color: c.text, marginRight: 8 }}>S/</span>
+                <input style={{ background: "transparent", border: "none", color: c.text, fontSize: 32, fontWeight: 700, width: "100%", outline: "none" }} type="number" placeholder="0.00" value={editForm.monto} onChange={e => setEditForm(f => ({ ...f, monto: e.target.value }))} />
+              </div>
+            </div>
+            
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ fontSize: 13, fontWeight: 600, color: c.muted, display: "block", marginBottom: 12 }}>Categoría</label>
+              <div className="hide-scroll" style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8 }}>
+                {categorias.map(cat => {
+                  const isSelected = editForm.categoria === cat.id;
+                  const catEmoji = cat.label.split(" ")[0];
+                  const catName = cat.label.substring(cat.label.indexOf(" ") + 1).trim();
+                  return (
+                    <div key={cat.id} onClick={() => setEditForm(f => ({ ...f, categoria: cat.id }))} style={{ minWidth: 70, padding: "12px 8px", borderRadius: 16, border: isSelected ? (editForm.tipo === 'ingreso' ? `2px solid ${c.green}` : `2px solid ${c.red}`) : `1px solid ${c.border}`, background: isSelected ? (editForm.tipo === 'ingreso' ? c.iconBgGreen : c.iconBgRed) : c.input, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer", transition: "all 0.2s" }}>
+                      <div style={{ fontSize: 24 }}>{catEmoji}</div>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: isSelected ? c.text : c.muted, textAlign: "center", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>{catName}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ fontSize: 13, fontWeight: 600, color: c.muted, display: "block", marginBottom: 8 }}>Descripción <span style={{fontWeight: 400}}>(opcional)</span></label>
+              <input style={s.input} type="text" placeholder="Ej. Almuerzo con cliente" value={editForm.descripcion} onChange={e => setEditForm(f => ({ ...f, descripcion: e.target.value }))} />
+            </div>
+
+            <div style={{ display: "flex", gap: 12, marginBottom: 28 }}>
+               <div style={{ flex: 1, minWidth: 0 }}>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: c.muted, display: "block", marginBottom: 8 }}>Fecha</label>
+                  <input type="date" style={s.input} value={editForm.fecha || hoy()} onChange={e => setEditForm(f => ({...f, fecha: e.target.value}))} />
+               </div>
+               <div style={{ flex: 1, minWidth: 0 }}>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: c.muted, display: "block", marginBottom: 8 }}>Método de pago</label>
+                  <select style={s.select} value={editForm.metodoPago || "Efectivo"} onChange={e => setEditForm(f => ({...f, metodoPago: e.target.value}))}>
+                     <option value="Efectivo">Efectivo</option>
+                     <option value="Tarjeta de crédito">Tarjeta de crédito</option>
+                     <option value="Transferencia">Transferencia</option>
+                  </select>
+               </div>
+            </div>
+
+            <button style={{...s.btnPrimary, padding: "16px", background: editForm.tipo === "ingreso" ? c.green : "#FCB606", color: editForm.tipo === "ingreso" ? "#FFF" : "#000" }} onClick={guardarEdicion} disabled={saving}>
+              {saving ? "Guardando..." : "Guardar Cambios"}
+            </button>
           </div>
         </div>
       )}
