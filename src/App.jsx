@@ -231,7 +231,6 @@ export default function App() {
   const [filtroFechaResumenDesde, setFiltroFechaResumenDesde] = useState(hoy());
   const [filtroFechaResumenHasta, setFiltroFechaResumenHasta] = useState(hoy());
 
-  // NUEVOS ESTADOS PARA LOS GRÁFICOS Y FILTROS DEL RESUMEN
   const [filtroTipoResumen, setFiltroTipoResumen] = useState("gasto"); // 'todos', 'gasto', 'ingreso'
   const [tipoGrafico, setTipoGrafico] = useState("donut"); // 'donut', 'bar'
 
@@ -494,7 +493,6 @@ export default function App() {
   const totalIngresosR = gastosFiltradosResumen.filter(g => g.tipo === "ingreso").reduce((a, g) => a + g.monto, 0);
   const ahorroR = totalIngresosR - totalGastadoR;
 
-  // NUEVO: Variables filtradas y dinámicas para el gráfico y la lista
   const baseForChart = filtroTipoResumen === "todos" ? gastosFiltradosResumen : gastosFiltradosResumen.filter(g => g.tipo === filtroTipoResumen);
   const listaMovimientosResumen = filtroTipoResumen === "todos" ? gastosFiltradosResumen : gastosFiltradosResumen.filter(g => g.tipo === filtroTipoResumen);
 
@@ -915,7 +913,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* LISTA DE MOVIMIENTOS DINÁMICA */}
+              {/* LISTA DE MOVIMIENTOS DINÁMICA (SIN BOTONES DE EDICIÓN EN RESUMEN) */}
               <div style={s.card}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, paddingBottom: 0, marginBottom: 12 }}>
                   <div style={{ display: "flex", gap: 16 }}>
@@ -957,10 +955,6 @@ export default function App() {
                            <span style={{ fontSize: 16, fontWeight: 700, color: g.tipo === "gasto" ? c.text : c.green }}>
                             {g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}
                           </span>
-                          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                            <button style={{...s.editBtn, padding: 2}} onClick={() => abrirEdicion(g)}>✏️</button>
-                            <button style={{...s.deleteBtn, padding: 2}} onClick={() => eliminar(g.id)}>×</button>
-                          </div>
                         </div>
                       </div>
                     );
@@ -1017,7 +1011,13 @@ export default function App() {
                             <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} | {g.tipo === "gasto" ? "Gastos" : "Ahorros"}</div>
                           </div>
                         </div>
-                        <span style={{ fontSize: 16, fontWeight: 700, color: g.tipo === "gasto" ? c.text : c.green }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                          <span style={{ fontSize: 16, fontWeight: 700, color: g.tipo === "gasto" ? c.text : c.green }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                            <button style={{...s.editBtn, padding: 2}} onClick={() => abrirEdicion(g)}>✏️</button>
+                            <button style={{...s.deleteBtn, padding: 2}} onClick={() => eliminar(g.id)}>×</button>
+                          </div>
+                        </div>
                       </div>
                     );
                   })}
