@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
+// Nombres actualizados a la versión más reciente de Lucide React
 import { 
   Home, PieChart, FileText, Settings, Menu, RefreshCw, 
-  ArrowDownToLine, ArrowUpFromLine, PiggyBank, Target, 
-  Edit2, Trash2, X, Calendar, Mail, CheckCircle2, ChevronRight,
-  UserCircle, Lock, Trophy, Palette, Download, Headphones, LogOut, AlertTriangle,
-  BarChart2
+  ArrowDown, ArrowUp, PiggyBank, Target, 
+  Pencil, Trash, X, Calendar, Mail, CheckCircle, ChevronRight,
+  UserCircle, Lock, Trophy, Palette, Download, Headphones, LogOut, Info,
+  BarChart
 } from "lucide-react";
 
 const SUPABASE_URL = "https://jboazxmcmvvcscqeerbz.supabase.co";
@@ -697,8 +698,8 @@ export default function App() {
                           {g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}
                         </span>
                         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                          <button style={{...s.editBtn, padding: 2}} onClick={() => abrirEdicion(g)}><Edit2 size={16} /></button>
-                          <button style={{...s.deleteBtn, padding: 2}} onClick={() => eliminar(g.id)}><Trash2 size={16} /></button>
+                          <button style={{...s.editBtn, padding: 2}} onClick={() => abrirEdicion(g)}><Pencil size={16} /></button>
+                          <button style={{...s.deleteBtn, padding: 2}} onClick={() => eliminar(g.id)}><Trash size={16} /></button>
                         </div>
                       </div>
                     </div>
@@ -745,7 +746,7 @@ export default function App() {
             );
           })()}
 
-          {error && <div style={s.errorCard}><AlertTriangle size={16} style={{ verticalAlign: "middle", marginRight: 8 }} /> {error}</div>}
+          {error && <div style={s.errorCard}><Info size={16} style={{ verticalAlign: "middle", marginRight: 8 }} /> {error}</div>}
 
           {tab === "hoy" && (
             <div style={s.section}>
@@ -782,7 +783,7 @@ export default function App() {
               <div style={s.grid2}>
                 <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                    <IconBadge emoji={<ArrowDownToLine size={18} />} bg={c.iconBgGreen} color={c.green} />
+                    <IconBadge emoji={<ArrowDown size={18} />} bg={c.iconBgGreen} color={c.green} />
                     <span style={{ fontSize: 13, fontWeight: 500, color: c.muted }}>Ingresos hoy</span>
                   </div>
                   <div style={{ ...s.greenNum, textAlign: "center", marginTop: 2 }}>{formatMoney(totalIngresosHoy)}</div>
@@ -790,7 +791,7 @@ export default function App() {
                 
                 <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                    <IconBadge emoji={<ArrowUpFromLine size={18} />} bg={c.iconBgRed} color={c.red} />
+                    <IconBadge emoji={<ArrowUp size={18} />} bg={c.iconBgRed} color={c.red} />
                     <span style={{ fontSize: 13, fontWeight: 500, color: c.muted }}>Gastos hoy</span>
                   </div>
                   <div style={{ ...s.redNum, textAlign: "center", marginTop: 2 }}>{formatMoney(totalGastadoHoy)}</div>
@@ -907,7 +908,7 @@ export default function App() {
                   <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: c.text }}>Ingresos por categoría</h3>
                   <div style={{ display: "flex", gap: 12 }}>
                     <button onClick={() => setTipoGraficoIngresos("bar")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoIngresos === "bar" ? 1 : 0.3, padding: 0 }}>
-                      <BarChart2 size={20} color={c.text} />
+                      <BarChart size={20} color={c.text} />
                     </button>
                     <button onClick={() => setTipoGraficoIngresos("donut")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoIngresos === "donut" ? 1 : 0.3, padding: 0 }}>
                       <PieChart size={20} color={c.text} />
@@ -962,7 +963,7 @@ export default function App() {
 
               <div style={{ ...s.card, display: "flex", alignItems: "center", gap: 16, padding: "16px 20px" }}>
                 <div style={{ width: 32, height: 32, borderRadius: "50%", background: isDark ? "rgba(16, 185, 129, 0.15)" : "#DCFCE7", color: c.green, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <CheckCircle2 size={20} />
+                  <CheckCircle size={20} />
                 </div>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: c.text }}>Ahorraste {formatMoney(ahorroR)} en este periodo</div>
@@ -976,7 +977,7 @@ export default function App() {
                   <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: c.text }}>Gastos por categoría</h3>
                   <div style={{ display: "flex", gap: 12 }}>
                     <button onClick={() => setTipoGraficoGastos("bar")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoGastos === "bar" ? 1 : 0.3, padding: 0 }}>
-                      <BarChart2 size={20} color={c.text} />
+                      <BarChart size={20} color={c.text} />
                     </button>
                     <button onClick={() => setTipoGraficoGastos("donut")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoGastos === "donut" ? 1 : 0.3, padding: 0 }}>
                       <PieChart size={20} color={c.text} />
@@ -1183,8 +1184,8 @@ export default function App() {
                         <span style={{ fontSize: 15, fontWeight: 600 }}>{cat.label.substring(cat.label.indexOf(" ") + 1)}</span>
                       </div>
                       <div>
-                        <button style={s.editBtn} onClick={() => abrirEdicionCatBase(cat)}><Edit2 size={16}/></button>
-                        <button style={s.deleteBtn} onClick={() => eliminarCategoriaBase(cat.id)}><Trash2 size={16}/></button>
+                        <button style={s.editBtn} onClick={() => abrirEdicionCatBase(cat)}><Pencil size={16}/></button>
+                        <button style={s.deleteBtn} onClick={() => eliminarCategoriaBase(cat.id)}><Trash size={16}/></button>
                       </div>
                     </div>
                   )
@@ -1218,8 +1219,8 @@ export default function App() {
                         <span style={{ fontSize: 15, fontWeight: 600 }}>{cat.label.substring(cat.label.indexOf(" ") + 1)}</span>
                       </div>
                       <div>
-                        <button style={s.editBtn} onClick={() => abrirEdicionCat(cat)}><Edit2 size={16}/></button>
-                        <button style={s.deleteBtn} onClick={() => eliminarCategoria(cat.id)}><Trash2 size={16}/></button>
+                        <button style={s.editBtn} onClick={() => abrirEdicionCat(cat)}><Pencil size={16}/></button>
+                        <button style={s.deleteBtn} onClick={() => eliminarCategoria(cat.id)}><Trash size={16}/></button>
                       </div>
                     </div>
                   )
@@ -1361,7 +1362,7 @@ export default function App() {
 
           <div style={{ marginTop: "auto", paddingTop: 32 }}>
             <MenuItem icon={<LogOut size={24}/>} text="Cerrar sesión" color={c.red} mutedColor={c.muted} border={c.border} />
-            <MenuItem icon={<Trash2 size={24}/>} text="Eliminar mi cuenta" color={c.red} mutedColor={c.muted} border={c.border} />
+            <MenuItem icon={<Trash size={24}/>} text="Eliminar mi cuenta" color={c.red} mutedColor={c.muted} border={c.border} />
           </div>
         </div>
       )}
