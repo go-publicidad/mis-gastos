@@ -597,10 +597,10 @@ export default function App() {
     metaLabel:  { fontSize: 16, color: "#FFF", marginBottom: 12 }, 
     label:      { fontSize: 16, fontWeight: 600, color: c.text, marginBottom: 12 },
     
-    bigNum:     { fontSize: 28, fontWeight: 500, color: "#FFF", lineHeight: 1 },
+    bigNum:     { fontSize: 28, fontWeight: 600, color: "#FFF", lineHeight: 1 },
     smallNum:   { fontSize: 20, fontWeight: 500, color: c.text },
-    redNum:     { fontSize: 20, fontWeight: 500, color: c.red },
-    greenNum:   { fontSize: 20, fontWeight: 500, color: c.green },
+    redNum:     { fontSize: 20, fontWeight: 600, color: c.red },
+    greenNum:   { fontSize: 20, fontWeight: 600, color: c.green },
     
     progressBg: { background: "#333", borderRadius: 4, height: 8, margin: "8px 0 16px", overflow: "hidden" },
     progressFill: (p) => ({ height: "100%", width: `${p}%`, background: p >= 100 ? c.green : p >= 50 ? "#FCB606" : c.red, borderRadius: 4, transition: "width 0.6s ease" }),
@@ -626,7 +626,7 @@ export default function App() {
       position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480,
       background: c.nav, display: "flex", zIndex: 100,
       paddingTop: 0, paddingBottom: 0, 
-      boxShadow: isDark ? "0 -4px 24px rgba(0,0,0,0.6)" : "0 -8px 24px rgba(0,0,0,0.12)"
+      boxShadow: isDark ? "0 -2px 10px rgba(0,0,0,0.4)" : "0 -2px 10px rgba(0,0,0,0.06)" 
     },
     navBtn: (a) => ({
       flex: 1, paddingTop: 10, paddingBottom: `calc(20px + env(safe-area-inset-bottom, 0px))`, backgroundColor: "transparent", WebkitAppearance: "none", border: "none",
@@ -847,7 +847,7 @@ export default function App() {
                     <IconBadge emoji={<PiggyBank size={18} />} bg={c.iconBgYellow} color="#FCB606" />
                     <span style={{ fontSize: 13, fontWeight: 500, color: c.muted }}>Ahorro hoy</span>
                   </div>
-                  <div style={{ fontSize: 20, fontWeight: 500, color: "#FCB606", textAlign: "center", marginTop: 2 }}>{formatMoney(totalIngresosHoy - totalGastadoHoy)}</div>
+                  <div style={{ fontSize: 20, fontWeight: 600, color: "#FCB606", textAlign: "center", marginTop: 2 }}>{formatMoney(totalIngresosHoy - totalGastadoHoy)}</div>
                 </div>
 
                 <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
@@ -855,7 +855,7 @@ export default function App() {
                     <IconBadge emoji={<Target size={18} />} bg={c.iconBgPurple} color={c.iconTextPurple} />
                     <span style={{ fontSize: 13, fontWeight: 500, color: c.muted }}>Límite / día</span>
                   </div>
-                  <div style={{ fontSize: 20, fontWeight: 500, color: c.text, textAlign: "center", marginTop: 2 }}>{formatMoney(ahorroMetaDiario)}</div>
+                  <div style={{ fontSize: 20, fontWeight: 600, color: c.text, textAlign: "center", marginTop: 2 }}>{formatMoney(ahorroMetaDiario)}</div>
                 </div>
               </div>
 
@@ -939,11 +939,11 @@ export default function App() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
                 <div style={{ background: isDark ? "rgba(16, 185, 129, 0.1)" : "#F0FDF4", borderRadius: 16, padding: 16, border: isDark ? "1px solid rgba(16, 185, 129, 0.2)" : "none" }}>
                   <div style={{ fontSize: 13, color: c.muted, marginBottom: 6, fontWeight: 500 }}>Total ingresos</div>
-                  <div style={{ fontSize: 20, fontWeight: 500, color: c.text }}>{formatMoney(totalIngresosR)}</div>
+                  <div style={{ fontSize: 20, fontWeight: 600, color: c.text }}>{formatMoney(totalIngresosR)}</div>
                 </div>
                 <div style={{ background: isDark ? "rgba(239, 68, 68, 0.1)" : "#FEF2F2", borderRadius: 16, padding: 16, border: isDark ? "1px solid rgba(239, 68, 68, 0.2)" : "none" }}>
                   <div style={{ fontSize: 13, color: c.muted, marginBottom: 6, fontWeight: 500 }}>Total gastos</div>
-                  <div style={{ fontSize: 20, fontWeight: 500, color: c.red }}>{formatMoney(totalGastadoR)}</div>
+                  <div style={{ fontSize: 20, fontWeight: 600, color: c.red }}>{formatMoney(totalGastadoR)}</div>
                 </div>
               </div>
 
