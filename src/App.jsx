@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
-// Usamos los íconos más seguros y estables de la librería
 import { 
   Home, PieChart, FileText, Settings, Menu, RefreshCw, 
   ArrowDownToLine, ArrowUpFromLine, PiggyBank, Target, 
@@ -92,6 +91,47 @@ const formatGroupDate = (dateStr) => {
   return `${day} de ${meses[d.getMonth()]}, ${d.getFullYear()}`;
 };
 
+const getUIFechaHora = (isoStr) => {
+  if (!isoStr) return "";
+  const validIsoStr = isoStr.includes('Z') || isoStr.includes('+') ? isoStr : `${isoStr}Z`;
+  const dt = new Date(validIsoStr);
+  const limaDate = new Date(dt.getTime() - 18000000);
+
+  let h = limaDate.getUTCHours();
+  let m = limaDate.getUTCMinutes();
+  const ampm = h >= 12 ? 'p.m.' : 'a.m.';
+  h = h % 12;
+  h = h ? h : 12; 
+  m = m < 10 ? '0' + m : m;
+  const strTime = `${h}:${m} ${ampm}`;
+
+  const isoDate = limaDate.toISOString().split("T")[0];
+  const todayIso = hoy();
+  const ayerDate = new Date(Date.now() - 18000000 - 86400000);
+  const ayerIso = ayerDate.toISOString().split("T")[0];
+
+  if (isoDate === todayIso) {
+    return `Hoy ${strTime}`;
+  } else if (isoDate === ayerIso) {
+    return `Ayer ${strTime}`;
+  } else {
+    const meses = ["Ene.", "Feb.", "Mar.", "Abr.", "May.", "Jun.", "Jul.", "Ago.", "Sep.", "Oct.", "Nov.", "Dic."];
+    const day = limaDate.getUTCDate();
+    const month = meses[limaDate.getUTCMonth()];
+    const year = limaDate.getUTCFullYear();
+    return `${day} ${month} ${year} - ${strTime}`;
+  }
+};
+
+const getDisplayDesc = (g, categorias) => {
+  const cat = categorias.find(c => c.id === g.categoria);
+  if (!cat) return g.descripcion;
+  if (g.descripcion === cat.label) {
+    return cat.label.substring(cat.label.indexOf(" ") + 1).trim();
+  }
+  return g.descripcion;
+};
+
 const diffDias = (d1Str, d2Str) => {
   if (!d1Str || !d2Str) return 0;
   const [y1, m1, day1] = d1Str.split("-");
@@ -140,13 +180,30 @@ const exportarPDF = (gastos, categorias) => {
       h2{color:#FCB606;margin-top:0;font-size:24px;font-weight:700;}
       .header-meta {color:#6B7280;margin-bottom:24px;font-size:14px;font-weight:500;}
       .btn-print {display:inline-block;margin-bottom:20px;padding:12px 24px;background:#FCB606;color:#000;font-weight:700;border:none;border-radius:12px;cursor:pointer;font-family:inherit;font-size:14px;box-shadow:0 4px 12px rgba(252,182,6,0.2);}
-      .card-history {width:100%;max-width:800px;margin:0 auto;background:#FFFFFF;border:1px solid #E5E7EB;border-radius:24px;padding:32px;box-shadow:0 8px 24px rgba(0,0,0,0.06);box-sizing:border-box;}
+      
+      .card-history {
+        width:100%;
+        max-width:800px;
+        margin:0 auto;
+        background:#FFFFFF;
+        border:1px solid #E5E7EB;
+        border-radius:24px;
+        padding:32px;
+        box-shadow:0 8px 24px rgba(0,0,0,0.06);
+        box-sizing:border-box;
+      }
+      
       table{width:100%;border-collapse:collapse;margin-top:12px;border-radius:12px;overflow:hidden;}
       th{background:#F9FAFB;color:#6B7280;padding:14px 16px;text-align:left;font-weight:600;border-bottom:1px solid #E5E7EB;text-transform:uppercase;font-size:11px;letter-spacing:1px;}
       td{padding:14px 16px;border-bottom:1px solid #E5E7EB;}
       tr:last-child td{border-bottom:none;}
       tr:nth-child(even){background:#F9FAFB;}
-      @media print{ button{display:none;} body{background:#FFFFFF;padding:0;} .card-history{border:none;box-shadow:none;padding:0;} }
+      
+      @media print{
+        button{display:none;}
+        body{background:#FFFFFF;padding:0;}
+        .card-history{border:none;box-shadow:none;padding:0;}
+      }
     </style></head><body>
     <div style="max-width:800px;margin:0 auto;">
       <button onclick="window.print()" class="btn-print">🖨️ Imprimir / Guardar PDF</button>
@@ -324,13 +381,7 @@ export default function App() {
     if (!monto || monto <= 0) { showToast("Ingresa un monto válido", c.red); return; }
     setSaving(true);
     const catObj = categorias.find(cat => cat.id === form.categoria);
-    
-    // Protección segura al obtener la descripción
-    let defaultDesc = "Movimiento";
-    if (catObj && catObj.label) {
-      defaultDesc = catObj.label.includes(" ") ? catObj.label.substring(catObj.label.indexOf(" ") + 1).trim() : catObj.label;
-    }
-
+    const defaultDesc = catObj ? catObj.label.substring(catObj.label.indexOf(" ") + 1).trim() : "Movimiento";
     const nuevo = { fecha: hoy(), monto, descripcion: form.descripcion || defaultDesc, categoria: form.categoria, tipo: form.tipo };
     const { data, error: err } = await supabase.from("gastos").insert([nuevo]).select();
     if (err) { showToast("Error al guardar", c.red); setSaving(false); return; }
@@ -356,13 +407,7 @@ export default function App() {
     if (!monto || monto <= 0) { showToast("Monto inválido", c.red); return; }
     setSaving(true);
     const catObj = categorias.find(cat => cat.id === editForm.categoria);
-    
-    // Protección segura
-    let defaultDesc = "Movimiento";
-    if (catObj && catObj.label) {
-      defaultDesc = catObj.label.includes(" ") ? catObj.label.substring(catObj.label.indexOf(" ") + 1).trim() : catObj.label;
-    }
-
+    const defaultDesc = catObj ? catObj.label.substring(catObj.label.indexOf(" ") + 1).trim() : "Movimiento";
     const updates = { monto, descripcion: editForm.descripcion || defaultDesc, categoria: editForm.categoria, tipo: editForm.tipo };
     const { error: err } = await supabase.from("gastos").update(updates).eq("id", editando.id);
     if (err) { showToast("Error", c.red); setSaving(false); return; }
@@ -448,16 +493,6 @@ export default function App() {
     setCategoriasBase(updated);
     await supabase.from("config").upsert([{ key: "categoriasBase", value: JSON.stringify(updated) }], { onConflict: "key" });
     showToast("Categoría eliminada", c.muted);
-  };
-
-  // Función segura para mostrar descripciones en las listas
-  const getDisplayDescUI = (g, categorias) => {
-    const cat = categorias.find(c => c.id === g.categoria);
-    if (!cat) return g.descripcion;
-    if (g.descripcion === cat.label) {
-      return cat.label.includes(" ") ? cat.label.substring(cat.label.indexOf(" ") + 1).trim() : cat.label;
-    }
-    return g.descripcion;
   };
 
   const metaTotalNum = parseFloat(metaAhorro) || 0;
@@ -562,11 +597,10 @@ export default function App() {
     metaLabel:  { fontSize: 16, color: "#FFF", marginBottom: 12 }, 
     label:      { fontSize: 16, fontWeight: 600, color: c.text, marginBottom: 12 },
     
-    // AQUÍ ESTÁN TUS CAMBIOS DE TIPOGRAFÍA DE INICIO
-    bigNum:     { fontSize: 28, fontWeight: 600, color: "#FFF", lineHeight: 1 },
-    smallNum:   { fontSize: 20, fontWeight: 600, color: c.text },
-    redNum:     { fontSize: 20, fontWeight: 600, color: c.red },
-    greenNum:   { fontSize: 20, fontWeight: 600, color: c.green },
+    bigNum:     { fontSize: 28, fontWeight: 500, color: "#FFF", lineHeight: 1 },
+    smallNum:   { fontSize: 20, fontWeight: 500, color: c.text },
+    redNum:     { fontSize: 20, fontWeight: 500, color: c.red },
+    greenNum:   { fontSize: 20, fontWeight: 500, color: c.green },
     
     progressBg: { background: "#333", borderRadius: 4, height: 8, margin: "8px 0 16px", overflow: "hidden" },
     progressFill: (p) => ({ height: "100%", width: `${p}%`, background: p >= 100 ? c.green : p >= 50 ? "#FCB606" : c.red, borderRadius: 4, transition: "width 0.6s ease" }),
@@ -592,11 +626,11 @@ export default function App() {
       position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480,
       background: c.nav, display: "flex", zIndex: 100,
       paddingTop: 0, paddingBottom: 0, 
-      boxShadow: isDark ? "0 -2px 10px rgba(0,0,0,0.4)" : "0 -2px 10px rgba(0,0,0,0.08)" // AQUÍ REDUJE LA SOMBRA
+      boxShadow: isDark ? "0 -4px 24px rgba(0,0,0,0.6)" : "0 -8px 24px rgba(0,0,0,0.12)"
     },
     navBtn: (a) => ({
       flex: 1, paddingTop: 10, paddingBottom: `calc(20px + env(safe-area-inset-bottom, 0px))`, backgroundColor: "transparent", WebkitAppearance: "none", border: "none",
-      color: a ? "#FCB606" : c.muted, fontSize: 12, fontWeight: 400, cursor: "pointer", // AQUÍ ESTÁ EL TAMAÑO 12px Y GROSOR 400
+      color: a ? "#FCB606" : c.muted, fontSize: 12, fontWeight: 400, cursor: "pointer",
       display: "flex", flexDirection: "column", alignItems: "center", gap: 2, fontFamily: "inherit",
       position: "relative"
     }),
@@ -694,12 +728,12 @@ export default function App() {
                       <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12 }}>
                         {cat && (
                           <div style={{ width: 40, height: 40, borderRadius: 12, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
-                            {cat.label ? cat.label.split(" ")[0] : "📌"}
+                            {cat.label.split(" ")[0]}
                           </div>
                         )}
                         <div style={{ minWidth: 0 }}>
                           <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2, color: c.text }}>
-                            {getDisplayDescUI(g, categorias)}
+                            {getDisplayDesc(g, categorias)}
                           </div>
                           <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ingresos"}</div>
                         </div>
@@ -813,7 +847,7 @@ export default function App() {
                     <IconBadge emoji={<PiggyBank size={18} />} bg={c.iconBgYellow} color="#FCB606" />
                     <span style={{ fontSize: 13, fontWeight: 500, color: c.muted }}>Ahorro hoy</span>
                   </div>
-                  <div style={{ fontSize: 20, fontWeight: 600, color: "#FCB606", textAlign: "center", marginTop: 2 }}>{formatMoney(totalIngresosHoy - totalGastadoHoy)}</div>
+                  <div style={{ fontSize: 20, fontWeight: 500, color: "#FCB606", textAlign: "center", marginTop: 2 }}>{formatMoney(totalIngresosHoy - totalGastadoHoy)}</div>
                 </div>
 
                 <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
@@ -821,7 +855,7 @@ export default function App() {
                     <IconBadge emoji={<Target size={18} />} bg={c.iconBgPurple} color={c.iconTextPurple} />
                     <span style={{ fontSize: 13, fontWeight: 500, color: c.muted }}>Límite / día</span>
                   </div>
-                  <div style={{ fontSize: 20, fontWeight: 600, color: c.text, textAlign: "center", marginTop: 2 }}>{formatMoney(ahorroMetaDiario)}</div>
+                  <div style={{ fontSize: 20, fontWeight: 500, color: c.text, textAlign: "center", marginTop: 2 }}>{formatMoney(ahorroMetaDiario)}</div>
                 </div>
               </div>
 
@@ -842,12 +876,12 @@ export default function App() {
                         <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 14 }}>
                           {cat && (
                             <div style={{ width: 44, height: 44, borderRadius: 14, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
-                              {cat.label ? cat.label.split(" ")[0] : "📌"}
+                              {cat.label.split(" ")[0]}
                             </div>
                           )}
                           <div style={{ minWidth: 0 }}>
                             <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text }}>
-                              {getDisplayDescUI(g, categorias)}
+                              {getDisplayDesc(g, categorias)}
                             </div>
                             <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ahorros"}</div>
                           </div>
@@ -905,11 +939,11 @@ export default function App() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
                 <div style={{ background: isDark ? "rgba(16, 185, 129, 0.1)" : "#F0FDF4", borderRadius: 16, padding: 16, border: isDark ? "1px solid rgba(16, 185, 129, 0.2)" : "none" }}>
                   <div style={{ fontSize: 13, color: c.muted, marginBottom: 6, fontWeight: 500 }}>Total ingresos</div>
-                  <div style={{ fontSize: 20, fontWeight: 600, color: c.text }}>{formatMoney(totalIngresosR)}</div>
+                  <div style={{ fontSize: 20, fontWeight: 500, color: c.text }}>{formatMoney(totalIngresosR)}</div>
                 </div>
                 <div style={{ background: isDark ? "rgba(239, 68, 68, 0.1)" : "#FEF2F2", borderRadius: 16, padding: 16, border: isDark ? "1px solid rgba(239, 68, 68, 0.2)" : "none" }}>
                   <div style={{ fontSize: 13, color: c.muted, marginBottom: 6, fontWeight: 500 }}>Total gastos</div>
-                  <div style={{ fontSize: 20, fontWeight: 600, color: c.red }}>{formatMoney(totalGastadoR)}</div>
+                  <div style={{ fontSize: 20, fontWeight: 500, color: c.red }}>{formatMoney(totalGastadoR)}</div>
                 </div>
               </div>
 
@@ -1115,11 +1149,11 @@ export default function App() {
                              <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12 }}>
                                {cat && (
                                  <div style={{ width: 40, height: 40, borderRadius: 12, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
-                                   {cat.label ? cat.label.split(" ")[0] : "📌"}
+                                   {cat.label.split(" ")[0]}
                                  </div>
                                )}
                                <div style={{ minWidth: 0 }}>
-                                 <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2 }}>{getDisplayDescUI(g, categorias)}</div>
+                                 <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2 }}>{getDisplayDesc(g, categorias)}</div>
                                  <div style={{ fontSize: 12, fontWeight: 500, color: c.muted }}>{getUITime(g.created_at)}</div>
                                </div>
                              </div>
@@ -1154,7 +1188,7 @@ export default function App() {
                 </div>
                 
                 <div style={{ ...s.label, textAlign: "center" }}>Ingreso mensual (S/)</div>
-                <input style={{ ...s.input, marginTop: 12, marginBottom: 24, fontSize: 20, textAlign: "center", color: c.green, fontWeight: 700 }} type={isEditingIngreso ? "number" : "text"} placeholder="Ej: 5000" value={isEditingIngreso ? ingresoMensual : (ingresoMensual ? formatMoney(ingresoMensual) : "")} onFocus={() => setIsEditingIngreso(true)} onBlur={() => setIsEditingIngreso(false)} onChange={e => setIngresoMensual(e.target.value)} />
+                <input style={{ ...s.input, marginTop: 12, marginBottom: 24, fontSize: 20, textAlign: "center", color: c.green, fontWeight: 500 }} type={isEditingIngreso ? "number" : "text"} placeholder="Ej: 5000" value={isEditingIngreso ? ingresoMensual : (ingresoMensual ? formatMoney(ingresoMensual) : "")} onFocus={() => setIsEditingIngreso(true)} onBlur={() => setIsEditingIngreso(false)} onChange={e => setIngresoMensual(e.target.value)} />
                 <button style={s.btnPrimary} onClick={guardarConfig} disabled={saving}>{saving ? "Guardando..." : "Guardar configuración"}</button>
               </div>
 
@@ -1500,7 +1534,7 @@ export default function App() {
           <div style={{...s.modal, animation: "slideUp 0.3s ease-out"}}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <h3 style={{ margin: 0, fontSize: 18, color: c.text, fontWeight: 700 }}>Registrar Movimiento</h3>
-              <button onClick={() => setShowAddModal(false)} style={{ background: "none", border: "none", color: c.muted, fontSize: 24, cursor: "pointer", padding: 0 }}><X size={20}/></button>
+              <button onClick={() => setShowAddModal(false)} style={{ background: "none", border: "none", color: c.muted, fontSize: 24, cursor: "pointer", padding: 0 }}>×</button>
             </div>
             
             <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
@@ -1527,7 +1561,7 @@ export default function App() {
           <div style={{...s.modal, animation: "slideUp 0.3s ease-out"}}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <h3 style={{ margin: 0, fontSize: 18, color: c.text, fontWeight: 700 }}>Editar Movimiento</h3>
-              <button onClick={() => setEditando(null)} style={{ background: "none", border: "none", color: c.muted, fontSize: 24, cursor: "pointer", padding: 0 }}><X size={20}/></button>
+              <button onClick={() => setEditando(null)} style={{ background: "none", border: "none", color: c.muted, fontSize: 24, cursor: "pointer", padding: 0 }}>×</button>
             </div>
             <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
               <button style={s.tipoBtn(editForm.tipo === "gasto", c.red)} onClick={() => setEditForm(f => ({ ...f, tipo: "gasto" }))}>− Gasto</button>
