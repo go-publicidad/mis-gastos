@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
-// Nombres actualizados a la versión más reciente de Lucide React
+// Nombres clásicos y estables garantizados para funcionar en tu versión
 import { 
-  Home, ChartPie, FileText, Settings, Menu, RefreshCw, 
-  ArrowDown, ArrowUp, PiggyBank, Target, 
-  Pencil, Trash, X, Calendar, Mail, CircleCheck, ChevronRight,
-  CircleUser, Lock, Trophy, Palette, Download, Headphones, LogOut, Info,
-  ChartColumn
+  Home, PieChart, FileText, Settings, Menu, RefreshCw, 
+  TrendingDown, TrendingUp, PiggyBank, Target, 
+  Edit2, Trash2, X, Calendar, Mail, CheckCircle, ChevronRight,
+  User, Lock, Trophy, Palette, Download, Headphones, LogOut, Info,
+  BarChart
 } from "lucide-react";
 
 const SUPABASE_URL = "https://jboazxmcmvvcscqeerbz.supabase.co";
@@ -79,6 +79,7 @@ const getUITime = (isoStr) => {
 };
 
 const formatGroupDate = (dateStr) => {
+  if (!dateStr) return "";
   const todayIso = hoy();
   const ayerDate = new Date(Date.now() - 18000000 - 86400000);
   const ayerIso = ayerDate.toISOString().split("T")[0];
@@ -324,7 +325,7 @@ export default function App() {
     if (!monto || monto <= 0) { showToast("Ingresa un monto válido", c.red); return; }
     setSaving(true);
     const catObj = categorias.find(cat => cat.id === form.categoria);
-    const defaultDesc = catObj ? catObj.label.substring(catObj.label.indexOf(" ") + 1).trim() : "Movimiento";
+    const defaultDesc = catObj ? (catObj.label.includes(" ") ? catObj.label.substring(catObj.label.indexOf(" ") + 1).trim() : catObj.label) : "Movimiento";
     
     const nuevo = { fecha: form.fecha || hoy(), monto, descripcion: form.descripcion || defaultDesc, categoria: form.categoria, tipo: form.tipo };
     
@@ -353,7 +354,7 @@ export default function App() {
     if (!monto || monto <= 0) { showToast("Monto inválido", c.red); return; }
     setSaving(true);
     const catObj = categorias.find(cat => cat.id === editForm.categoria);
-    const defaultDesc = catObj ? catObj.label.substring(catObj.label.indexOf(" ") + 1).trim() : "Movimiento";
+    const defaultDesc = catObj ? (catObj.label.includes(" ") ? catObj.label.substring(catObj.label.indexOf(" ") + 1).trim() : catObj.label) : "Movimiento";
     
     const updates = { fecha: editForm.fecha || hoy(), monto, descripcion: editForm.descripcion || defaultDesc, categoria: editForm.categoria, tipo: editForm.tipo };
     
@@ -446,7 +447,9 @@ export default function App() {
   const getDisplayDescUI = (g, categorias) => {
     const cat = categorias.find(c => c.id === g.categoria);
     if (!cat) return g.descripcion;
-    if (g.descripcion === cat.label) return cat.label.substring(cat.label.indexOf(" ") + 1).trim();
+    if (g.descripcion === cat.label) {
+        return cat.label.includes(" ") ? cat.label.substring(cat.label.indexOf(" ") + 1).trim() : cat.label;
+    }
     return g.descripcion;
   };
 
@@ -683,7 +686,7 @@ export default function App() {
                       <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12 }}>
                         {cat && (
                           <div style={{ width: 40, height: 40, borderRadius: 12, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
-                            {cat.label.split(" ")[0]}
+                            {cat.label ? cat.label.split(" ")[0] : "📌"}
                           </div>
                         )}
                         <div style={{ minWidth: 0 }}>
@@ -698,8 +701,8 @@ export default function App() {
                           {g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}
                         </span>
                         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                          <button style={{...s.editBtn, padding: 2}} onClick={() => abrirEdicion(g)}><Pencil size={16} /></button>
-                          <button style={{...s.deleteBtn, padding: 2}} onClick={() => eliminar(g.id)}><Trash size={16} /></button>
+                          <button style={{...s.editBtn, padding: 2}} onClick={() => abrirEdicion(g)}><Edit2 size={16} /></button>
+                          <button style={{...s.deleteBtn, padding: 2}} onClick={() => eliminar(g.id)}><Trash2 size={16} /></button>
                         </div>
                       </div>
                     </div>
@@ -783,7 +786,7 @@ export default function App() {
               <div style={s.grid2}>
                 <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                    <IconBadge emoji={<ArrowDown size={18} />} bg={c.iconBgGreen} color={c.green} />
+                    <IconBadge emoji={<TrendingDown size={18} />} bg={c.iconBgGreen} color={c.green} />
                     <span style={{ fontSize: 13, fontWeight: 500, color: c.muted }}>Ingresos hoy</span>
                   </div>
                   <div style={{ ...s.greenNum, textAlign: "center", marginTop: 2 }}>{formatMoney(totalIngresosHoy)}</div>
@@ -791,7 +794,7 @@ export default function App() {
                 
                 <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                    <IconBadge emoji={<ArrowUp size={18} />} bg={c.iconBgRed} color={c.red} />
+                    <IconBadge emoji={<TrendingUp size={18} />} bg={c.iconBgRed} color={c.red} />
                     <span style={{ fontSize: 13, fontWeight: 500, color: c.muted }}>Gastos hoy</span>
                   </div>
                   <div style={{ ...s.redNum, textAlign: "center", marginTop: 2 }}>{formatMoney(totalGastadoHoy)}</div>
@@ -831,7 +834,7 @@ export default function App() {
                         <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 14 }}>
                           {cat && (
                             <div style={{ width: 44, height: 44, borderRadius: 14, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
-                              {cat.label.split(" ")[0]}
+                              {cat.label ? cat.label.split(" ")[0] : "📌"}
                             </div>
                           )}
                           <div style={{ minWidth: 0 }}>
@@ -908,10 +911,10 @@ export default function App() {
                   <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: c.text }}>Ingresos por categoría</h3>
                   <div style={{ display: "flex", gap: 12 }}>
                     <button onClick={() => setTipoGraficoIngresos("bar")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoIngresos === "bar" ? 1 : 0.3, padding: 0 }}>
-                      <ChartColumn size={20} color={c.text} />
+                      <BarChart size={20} color={c.text} />
                     </button>
                     <button onClick={() => setTipoGraficoIngresos("donut")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoIngresos === "donut" ? 1 : 0.3, padding: 0 }}>
-                      <ChartPie size={20} color={c.text} />
+                      <PieChart size={20} color={c.text} />
                     </button>
                   </div>
                 </div>
@@ -963,7 +966,7 @@ export default function App() {
 
               <div style={{ ...s.card, display: "flex", alignItems: "center", gap: 16, padding: "16px 20px" }}>
                 <div style={{ width: 32, height: 32, borderRadius: "50%", background: isDark ? "rgba(16, 185, 129, 0.15)" : "#DCFCE7", color: c.green, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <CircleCheck size={20} />
+                  <CheckCircle size={20} />
                 </div>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: c.text }}>Ahorraste {formatMoney(ahorroR)} en este periodo</div>
@@ -977,10 +980,10 @@ export default function App() {
                   <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: c.text }}>Gastos por categoría</h3>
                   <div style={{ display: "flex", gap: 12 }}>
                     <button onClick={() => setTipoGraficoGastos("bar")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoGastos === "bar" ? 1 : 0.3, padding: 0 }}>
-                      <ChartColumn size={20} color={c.text} />
+                      <BarChart size={20} color={c.text} />
                     </button>
                     <button onClick={() => setTipoGraficoGastos("donut")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoGastos === "donut" ? 1 : 0.3, padding: 0 }}>
-                      <ChartPie size={20} color={c.text} />
+                      <PieChart size={20} color={c.text} />
                     </button>
                   </div>
                 </div>
@@ -1104,7 +1107,7 @@ export default function App() {
                              <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12 }}>
                                {cat && (
                                  <div style={{ width: 40, height: 40, borderRadius: 12, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
-                                   {cat.label.split(" ")[0]}
+                                   {cat.label ? cat.label.split(" ")[0] : "📌"}
                                  </div>
                                )}
                                <div style={{ minWidth: 0 }}>
@@ -1184,8 +1187,8 @@ export default function App() {
                         <span style={{ fontSize: 15, fontWeight: 600 }}>{cat.label.substring(cat.label.indexOf(" ") + 1)}</span>
                       </div>
                       <div>
-                        <button style={s.editBtn} onClick={() => abrirEdicionCatBase(cat)}><Pencil size={16}/></button>
-                        <button style={s.deleteBtn} onClick={() => eliminarCategoriaBase(cat.id)}><Trash size={16}/></button>
+                        <button style={s.editBtn} onClick={() => abrirEdicionCatBase(cat)}><Edit2 size={16}/></button>
+                        <button style={s.deleteBtn} onClick={() => eliminarCategoriaBase(cat.id)}><Trash2 size={16}/></button>
                       </div>
                     </div>
                   )
@@ -1219,8 +1222,8 @@ export default function App() {
                         <span style={{ fontSize: 15, fontWeight: 600 }}>{cat.label.substring(cat.label.indexOf(" ") + 1)}</span>
                       </div>
                       <div>
-                        <button style={s.editBtn} onClick={() => abrirEdicionCat(cat)}><Pencil size={16}/></button>
-                        <button style={s.deleteBtn} onClick={() => eliminarCategoria(cat.id)}><Trash size={16}/></button>
+                        <button style={s.editBtn} onClick={() => abrirEdicionCat(cat)}><Edit2 size={16}/></button>
+                        <button style={s.deleteBtn} onClick={() => eliminarCategoria(cat.id)}><Trash2 size={16}/></button>
                       </div>
                     </div>
                   )
@@ -1245,7 +1248,7 @@ export default function App() {
 
           <div style={s.navBar}>
             {[{ id: "hoy", icon: <Home size={24} strokeWidth={2.5} />, label: "Inicio" }, 
-              { id: "resumen", icon: <ChartPie size={24} strokeWidth={2.5} />, label: "Reportes" }].map(n => (
+              { id: "resumen", icon: <PieChart size={24} strokeWidth={2.5} />, label: "Reportes" }].map(n => (
               <button key={n.id} style={s.navBtn(tab === n.id)} onClick={() => setTab(n.id)}>
                 {tab === n.id && <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 44, height: 3, background: "#FCB606", borderRadius: "0 0 4px 4px" }} />}
                 <div style={{ marginBottom: 2 }}>{n.icon}</div>
@@ -1347,7 +1350,7 @@ export default function App() {
 
           <div style={{ marginBottom: 32 }}>
             <div style={{ fontSize: 14, color: "#FCB606", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Mi cuenta</div>
-            <MenuItem icon={<CircleUser size={24}/>} text="Mis datos" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("datos")} />
+            <MenuItem icon={<User size={24}/>} text="Mis datos" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("datos")} />
             <MenuItem icon={<Lock size={24}/>} text="Cambiar mi clave" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("clave")} />
             <MenuItem icon={<Trophy size={24}/>} text="Mis logros / Insignias" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("logros")} />
           </div>
@@ -1362,7 +1365,7 @@ export default function App() {
 
           <div style={{ marginTop: "auto", paddingTop: 32 }}>
             <MenuItem icon={<LogOut size={24}/>} text="Cerrar sesión" color={c.red} mutedColor={c.muted} border={c.border} />
-            <MenuItem icon={<Trash size={24}/>} text="Eliminar mi cuenta" color={c.red} mutedColor={c.muted} border={c.border} />
+            <MenuItem icon={<Trash2 size={24}/>} text="Eliminar mi cuenta" color={c.red} mutedColor={c.muted} border={c.border} />
           </div>
         </div>
       )}
@@ -1510,8 +1513,9 @@ export default function App() {
               <div className="hide-scroll" style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8 }}>
                 {categorias.map(cat => {
                   const isSelected = form.categoria === cat.id;
-                  const catEmoji = cat.label.split(" ")[0];
-                  const catName = cat.label.substring(cat.label.indexOf(" ") + 1).trim();
+                  const catLabelStr = cat.label || "";
+                  const catEmoji = catLabelStr.includes(" ") ? catLabelStr.split(" ")[0] : "📌";
+                  const catName = catLabelStr.includes(" ") ? catLabelStr.substring(catLabelStr.indexOf(" ") + 1).trim() : catLabelStr;
                   return (
                     <div key={cat.id} onClick={() => setForm(f => ({ ...f, categoria: cat.id }))} style={{ minWidth: 70, padding: "12px 8px", borderRadius: 16, border: isSelected ? (form.tipo === 'ingreso' ? `2px solid ${c.green}` : `2px solid ${c.red}`) : `1px solid ${c.border}`, background: isSelected ? (form.tipo === 'ingreso' ? c.iconBgGreen : c.iconBgRed) : c.input, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer", transition: "all 0.2s" }}>
                       <div style={{ fontSize: 24 }}>{catEmoji}</div>
@@ -1575,8 +1579,9 @@ export default function App() {
               <div className="hide-scroll" style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8 }}>
                 {categorias.map(cat => {
                   const isSelected = editForm.categoria === cat.id;
-                  const catEmoji = cat.label.split(" ")[0];
-                  const catName = cat.label.substring(cat.label.indexOf(" ") + 1).trim();
+                  const catLabelStr = cat.label || "";
+                  const catEmoji = catLabelStr.includes(" ") ? catLabelStr.split(" ")[0] : "📌";
+                  const catName = catLabelStr.includes(" ") ? catLabelStr.substring(catLabelStr.indexOf(" ") + 1).trim() : catLabelStr;
                   return (
                     <div key={cat.id} onClick={() => setEditForm(f => ({ ...f, categoria: cat.id }))} style={{ minWidth: 70, padding: "12px 8px", borderRadius: 16, border: isSelected ? (editForm.tipo === 'ingreso' ? `2px solid ${c.green}` : `2px solid ${c.red}`) : `1px solid ${c.border}`, background: isSelected ? (editForm.tipo === 'ingreso' ? c.iconBgGreen : c.iconBgRed) : c.input, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer", transition: "all 0.2s" }}>
                       <div style={{ fontSize: 24 }}>{catEmoji}</div>
