@@ -335,6 +335,11 @@ export default function App() {
     })();
   }, []);
 
+  // NUEVO EFECTO: Sube el scroll hacia arriba cuando cambias de pestaña
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [tab]);
+
   const agregarMovimiento = async () => {
     const monto = parseFloat(form.monto);
     if (!monto || monto <= 0) { showToast("Ingresa un monto válido", c.red); return; }
@@ -486,7 +491,6 @@ export default function App() {
     else proyeccionTexto = `en ${mesesProyeccion} mes${mesesProyeccion !== 1 ? "es" : ""} y ${diasExtra} día${diasExtra !== 1 ? "s" : ""}`;
   } else if (ahorroDiarioProm <= 0 && diasTranscurridosPlan > 1) proyeccionTexto = "Sin ahorro neto aún";
 
-  // DATOS PARA PESTAÑA REPORTES
   const getFiltradosResumen = () => {
     if (filtroResumen === "hoy") return gastos.filter(g => g.fecha === hoy());
     if (filtroResumen === "mes") return gastos.filter(g => g.fecha.startsWith(hoy().slice(0, 7)));
