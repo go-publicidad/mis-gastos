@@ -56,6 +56,34 @@ const formatDateTime = (isoStr) => {
   return { fecha, hora };
 };
 
+const getUITime = (isoStr) => {
+  if (!isoStr) return "";
+  const validIsoStr = isoStr.includes('Z') || isoStr.includes('+') ? isoStr : `${isoStr}Z`;
+  const dt = new Date(validIsoStr);
+  const limaDate = new Date(dt.getTime() - 18000000);
+  let h = limaDate.getUTCHours();
+  let m = limaDate.getUTCMinutes();
+  const ampm = h >= 12 ? 'p.m.' : 'a.m.';
+  h = h % 12;
+  h = h ? h : 12; 
+  m = m < 10 ? '0' + m : m;
+  return `${h}:${m} ${ampm}`;
+};
+
+const formatGroupDate = (dateStr) => {
+  const todayIso = hoy();
+  const ayerDate = new Date(Date.now() - 18000000 - 86400000);
+  const ayerIso = ayerDate.toISOString().split("T")[0];
+
+  const d = new Date(dateStr + "T12:00:00Z");
+  const day = d.getDate();
+  const meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+  
+  if (dateStr === todayIso) return `Hoy, ${day} de ${meses[d.getMonth()]}`;
+  if (dateStr === ayerIso) return `Ayer, ${day} de ${meses[d.getMonth()]}`;
+  return `${day} de ${meses[d.getMonth()]}, ${d.getFullYear()}`;
+};
+
 const getUIFechaHora = (isoStr) => {
   if (!isoStr) return "";
   const validIsoStr = isoStr.includes('Z') || isoStr.includes('+') ? isoStr : `${isoStr}Z`;
@@ -64,7 +92,7 @@ const getUIFechaHora = (isoStr) => {
 
   let h = limaDate.getUTCHours();
   let m = limaDate.getUTCMinutes();
-  const ampm = h >= 12 ? 'pm' : 'am';
+  const ampm = h >= 12 ? 'p.m.' : 'a.m.';
   h = h % 12;
   h = h ? h : 12; 
   m = m < 10 ? '0' + m : m;
@@ -229,9 +257,11 @@ export default function App() {
   const [editCatBaseLabel, setEditCatBaseLabel] = useState("");
   const [editCatBaseColor, setEditCatBaseColor] = useState("");
 
+  const [filtroHistTipo, setFiltroHistTipo] = useState("todos");
   const [filtroHistCat, setFiltroHistCat] = useState("todas");
   const [filtroHistFechaDesde, setFiltroHistFechaDesde] = useState("");
   const [filtroHistFechaHasta, setFiltroHistFechaHasta] = useState("");
+  const [showFiltrosMenu, setShowFiltrosMenu] = useState(false);
 
   const [filtroResumen, setFiltroResumen] = useState("mes");
   const [filtroFechaResumenDesde, setFiltroFechaResumenDesde] = useState(hoy());
@@ -335,7 +365,6 @@ export default function App() {
     })();
   }, []);
 
-  // NUEVO EFECTO: Sube el scroll hacia arriba cuando cambias de pestaña
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [tab]);
@@ -491,6 +520,7 @@ export default function App() {
     else proyeccionTexto = `en ${mesesProyeccion} mes${mesesProyeccion !== 1 ? "es" : ""} y ${diasExtra} día${diasExtra !== 1 ? "s" : ""}`;
   } else if (ahorroDiarioProm <= 0 && diasTranscurridosPlan > 1) proyeccionTexto = "Sin ahorro neto aún";
 
+  // DATOS PARA PESTAÑA REPORTES
   const getFiltradosResumen = () => {
     if (filtroResumen === "hoy") return gastos.filter(g => g.fecha === hoy());
     if (filtroResumen === "mes") return gastos.filter(g => g.fecha.startsWith(hoy().slice(0, 7)));
@@ -534,7 +564,21 @@ export default function App() {
   const cMaxI = maxIngreso * 1.2;
   const cMaxG = maxGasto * 1.2;
 
-  const gastosFiltradosHist = gastos.filter(g => (filtroHistCat === "todas" || g.categoria === filtroHistCat) && (!filtroHistFechaDesde || g.fecha >= filtroHistFechaDesde) && (!filtroHistFechaHasta || g.fecha <= filtroHistFechaHasta));
+  // DATOS PARA PESTAÑA HISTORIAL
+  const gastosFiltradosHist = gastos.filter(g => 
+    (filtroHistTipo === "todos" || g.tipo === filtroHistTipo) &&
+    (filtroHistCat === "todas" || g.categoria === filtroHistCat) && 
+    (!filtroHistFechaDesde || g.fecha >= filtroHistFechaDesde) && 
+    (!filtroHistFechaHasta || g.fecha <= filtroHistFechaHasta)
+  );
+
+  const groupedHistorial = gastosFiltradosHist.reduce((acc, g) => {
+    if (!acc[g.fecha]) acc[g.fecha] = [];
+    acc[g.fecha].push(g);
+    return acc;
+  }, {});
+  const sortedGroupKeys = Object.keys(groupedHistorial).sort((a,b) => b.localeCompare(a));
+
   const gastosVerTodos = gastos.filter(g => (!vtFechaDesde || g.fecha >= vtFechaDesde) && (!vtFechaHasta || g.fecha <= vtFechaHasta));
 
   const s = {
@@ -1006,58 +1050,91 @@ export default function App() {
 
           {tab === "historial" && (
             <div style={s.section}>
-              <div style={{ display: "flex", gap: 12, marginBottom: 24, width: "100%" }}>
-                <button style={s.btnSecondary} onClick={() => exportarCSV(gastosFiltradosHist, categorias)}>📊 Excel</button>
-                <button style={s.btnSecondary} onClick={() => exportarPDF(gastosFiltradosHist, categorias)}>📄 PDF</button>
+              
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {[{ id: "todos", label: "Total" }, { id: "ingreso", label: "Ingresos" }, { id: "gasto", label: "Gastos" }].map(opt => (
+                    <button key={opt.id} onClick={() => setFiltroHistTipo(opt.id)} style={{
+                      padding: "8px 16px", borderRadius: 20,
+                      border: `1px solid ${filtroHistTipo === opt.id ? "#FCB606" : c.border}`,
+                      background: filtroHistTipo === opt.id ? "#FCB606" : c.card,
+                      color: filtroHistTipo === opt.id ? "#000" : c.muted,
+                      fontSize: 14, fontWeight: filtroHistTipo === opt.id ? 700 : 600, cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s"
+                    }}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                
+                <button onClick={() => setShowFiltrosMenu(!showFiltrosMenu)} style={{
+                  width: 40, height: 40, borderRadius: 12, border: `1px solid ${c.border}`,
+                  background: c.card, display: "flex", alignItems: "center", justifyContent: "center",
+                  cursor: "pointer", flexShrink: 0
+                }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c.text} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+                </button>
               </div>
 
-              <div style={{...s.card, marginBottom: 24}}>
-                <div style={{ ...s.label, textAlign: "center" }}>Filtrar por categoría</div>
-                <div className="hide-scroll" style={{ ...s.filterRow, marginTop: 16 }}>
-                  <button style={s.filterBtn(filtroHistCat === "todas")} onClick={() => setFiltroHistCat("todas")}>Todas</button>
-                  {categorias.map(c => <button key={c.id} style={s.filterBtn(filtroHistCat === c.id)} onClick={() => setFiltroHistCat(c.id)}>{c.label}</button>)}
-                </div>
-                <div style={{ ...s.label, marginTop: 28, textAlign: "center" }}>Filtrar por rango de fecha</div>
-                <div style={{ display: "flex", gap: 12, alignItems: "center", marginTop: 16 }}>
-                  <div style={{ flex: 1 }}>
-                    <input type={filtroHistFechaDesde ? "date" : "text"} placeholder="Del" value={filtroHistFechaDesde} onFocus={e => e.target.type = "date"} onBlur={e => { if(!e.target.value) e.target.type = "text" }} onChange={e => setFiltroHistFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
+              {showFiltrosMenu && (
+                <div style={{...s.card, marginBottom: 24, animation: "slideUp 0.3s ease-out"}}>
+                  <div style={{ display: "flex", gap: 12, marginBottom: 24, width: "100%" }}>
+                    <button style={s.btnSecondary} onClick={() => exportarCSV(gastosFiltradosHist, categorias)}>📊 Excel</button>
+                    <button style={s.btnSecondary} onClick={() => exportarPDF(gastosFiltradosHist, categorias)}>📄 PDF</button>
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <input type={filtroHistFechaHasta ? "date" : "text"} placeholder="Al" value={filtroHistFechaHasta} onFocus={e => e.target.type = "date"} onBlur={e => { if(!e.target.value) e.target.type = "text" }} onChange={e => setFiltroHistFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
+
+                  <div style={{ ...s.label, textAlign: "center" }}>Filtrar por categoría</div>
+                  <div className="hide-scroll" style={{ ...s.filterRow, marginTop: 16 }}>
+                    <button style={s.filterBtn(filtroHistCat === "todas")} onClick={() => setFiltroHistCat("todas")}>Todas</button>
+                    {categorias.map(c => <button key={c.id} style={s.filterBtn(filtroHistCat === c.id)} onClick={() => setFiltroHistCat(c.id)}>{c.label}</button>)}
                   </div>
+                  
+                  <div style={{ ...s.label, marginTop: 28, textAlign: "center" }}>Filtrar por rango de fecha</div>
+                  <div style={{ display: "flex", gap: 12, alignItems: "center", marginTop: 16 }}>
+                    <div style={{ flex: 1 }}>
+                      <input type={filtroHistFechaDesde ? "date" : "text"} placeholder="Del" value={filtroHistFechaDesde} onFocus={e => e.target.type = "date"} onBlur={e => { if(!e.target.value) e.target.type = "text" }} onChange={e => setFiltroHistFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <input type={filtroHistFechaHasta ? "date" : "text"} placeholder="Al" value={filtroHistFechaHasta} onFocus={e => e.target.type = "date"} onBlur={e => { if(!e.target.value) e.target.type = "text" }} onChange={e => setFiltroHistFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
+                    </div>
+                  </div>
+                  {(filtroHistFechaDesde || filtroHistFechaHasta) && <button style={{ width: "100%", fontSize: 14, fontWeight: 700, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 16, fontFamily: "inherit" }} onClick={() => { setFiltroHistFechaDesde(""); setFiltroHistFechaHasta(""); }}>× Limpiar fechas</button>}
                 </div>
-                {(filtroHistFechaDesde || filtroHistFechaHasta) && <button style={{ width: "100%", fontSize: 14, fontWeight: 700, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 16, fontFamily: "inherit" }} onClick={() => { setFiltroHistFechaDesde(""); setFiltroHistFechaHasta(""); }}>× Limpiar fechas</button>}
-              </div>
+              )}
 
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>{gastosFiltradosHist.length} Movimientos</h3>
-              </div>
-
-              {gastosFiltradosHist.length === 0 ? <div style={{ ...s.card, textAlign: "center", color: c.muted, padding: "40px 20px", fontWeight: 500 }}>Sin movimientos con estos filtros</div> : (
-                <div style={{...s.card, padding: "8px 16px"}}>
-                  {gastosFiltradosHist.map((g, i, arr) => {
-                    const cat = categorias.find(c => c.id === g.categoria);
-                    const isLast = i === arr.length - 1;
-                    return (
-                      <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: isLast ? "none" : `1px solid ${c.border}` }}>
-                        <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12 }}>
-                          {cat && (
-                            <div style={{ width: 40, height: 40, borderRadius: 12, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
-                              {cat.label.split(" ")[0]}
-                            </div>
-                          )}
-                          <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4 }}>{getDisplayDesc(g, categorias)}</div>
-                            <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} | {g.tipo === "gasto" ? "Gastos" : "Ahorros"}</div>
-                          </div>
-                        </div>
-                        <div style={{ textAlign: "right", display: "flex", alignItems: "center", gap: 12 }}>
-                          <span style={{ fontSize: 16, fontWeight: 700, color: g.tipo === "gasto" ? c.text : c.green }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+              {gastosFiltradosHist.length === 0 ? (
+                 <div style={{ ...s.card, textAlign: "center", color: c.muted, padding: "40px 20px", fontWeight: 500 }}>Sin movimientos con estos filtros</div> 
+              ) : (
+                 sortedGroupKeys.map(dateKey => (
+                   <div key={dateKey} style={{ marginBottom: 24 }}>
+                     <div style={{ fontSize: 14, fontWeight: 600, color: c.text, marginBottom: 12, paddingLeft: 4 }}>
+                       {formatGroupDate(dateKey)}
+                     </div>
+                     <div style={{ ...s.card, padding: "8px 16px", marginBottom: 0 }}>
+                       {groupedHistorial[dateKey].map((g, i, arr) => {
+                         const cat = categorias.find(c => c.id === g.categoria);
+                         const isLast = i === arr.length - 1;
+                         return (
+                           <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: isLast ? "none" : `1px solid ${c.border}` }}>
+                             <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12 }}>
+                               {cat && (
+                                 <div style={{ width: 40, height: 40, borderRadius: 12, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
+                                   {cat.label.split(" ")[0]}
+                                 </div>
+                               )}
+                               <div style={{ minWidth: 0 }}>
+                                 <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2 }}>{getDisplayDesc(g, categorias)}</div>
+                                 <div style={{ fontSize: 12, fontWeight: 500, color: c.muted }}>{getUITime(g.created_at)}</div>
+                               </div>
+                             </div>
+                             <div style={{ textAlign: "right", display: "flex", alignItems: "center", gap: 12 }}>
+                               <span style={{ fontSize: 16, fontWeight: 700, color: g.tipo === "gasto" ? c.text : c.green }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
+                             </div>
+                           </div>
+                         );
+                       })}
+                     </div>
+                   </div>
+                 ))
               )}
             </div>
           )}
