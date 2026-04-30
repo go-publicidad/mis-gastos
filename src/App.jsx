@@ -676,35 +676,28 @@ export default function App() {
         </>
       ) : (
         <>
-          {tab === "resumen" && (
-             <div style={{ padding: "24px 20px 16px", background: c.bg, position: "sticky", top: 0, zIndex: 90, display: "flex", alignItems: "center", gap: 16 }}>
-               <button onClick={() => setShowMenu(true)} style={{ backgroundColor: "transparent", border: "none", color: c.text, fontSize: 26, cursor: "pointer", padding: 0 }}>☰</button>
-               <h1 style={{ fontSize: 28, fontWeight: 700, color: c.text, margin: 0, fontFamily: "'Montserrat', sans-serif" }}>Resumen</h1>
-             </div>
-          )}
-          
-          {tab === "hoy" && (
-            <div style={{ padding: "24px 20px 16px", background: c.bg, position: "sticky", top: 0, zIndex: 90, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                <button onClick={() => setShowMenu(true)} style={{ backgroundColor: "transparent", border: "none", color: c.green, fontSize: 26, cursor: "pointer", padding: 0 }}>☰</button>
-                <div>
-                  <h1 style={{ fontSize: 22, fontWeight: 700, color: c.text, margin: 0, fontFamily: "'Montserrat', sans-serif" }}>¡Hola, {userName}! 👋</h1>
-                  <div style={{ fontSize: 13, color: c.muted, marginTop: 4, fontWeight: 500 }}>Este es el resumen de tu negocio</div>
-                </div>
-              </div>
-              <button onClick={() => window.location.reload()} style={{ backgroundColor: "transparent", border: "none", fontSize: 18, cursor: "pointer", padding: 0, color: c.text }}>🔄</button>
-            </div>
-          )}
+          {/* ENCABEZADO UNIFICADO PARA TODAS LAS PESTAÑAS */}
+          {!viewAll && (() => {
+            let headTitle = "";
+            let headSub = "";
+            if (tab === "hoy") { headTitle = `¡Hola, ${userName}! 👋`; headSub = "Este es el resumen de tu negocio"; }
+            else if (tab === "resumen") headTitle = "Resumen";
+            else if (tab === "historial") headTitle = "Historial";
+            else if (tab === "config") headTitle = "Configuración";
 
-          {(tab === "historial" || tab === "config") && (
-            <div style={s.header}>
-              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", position: "relative", marginBottom: 4 }}>
-                <button onClick={() => setShowMenu(true)} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: c.green, fontSize: 26, cursor: "pointer", position: "absolute", left: 0, padding: 0 }}>☰</button>
-                <h1 style={s.title}>Ahorro Meta</h1>
-                <button onClick={() => window.location.reload()} style={{ ...s.refreshBtn, position: "absolute", right: 0 }}>🔄</button>
+            return (
+              <div style={{ padding: "24px 20px 16px", background: c.bg, position: "sticky", top: 0, zIndex: 90, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                  <button onClick={() => setShowMenu(true)} style={{ backgroundColor: "transparent", border: "none", color: c.text, fontSize: 26, cursor: "pointer", padding: 0 }}>☰</button>
+                  <div>
+                    <h1 style={{ fontSize: 24, fontWeight: 700, color: c.text, margin: 0, fontFamily: "'Montserrat', sans-serif", lineHeight: 1.2 }}>{headTitle}</h1>
+                    {headSub && <div style={{ fontSize: 13, color: c.muted, marginTop: 4, fontWeight: 500 }}>{headSub}</div>}
+                  </div>
+                </div>
+                <button onClick={() => window.location.reload()} style={{ backgroundColor: "transparent", border: "none", fontSize: 18, cursor: "pointer", padding: 0, color: c.text }}>🔄</button>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {error && <div style={s.errorCard}>⚠️ {error}</div>}
 
@@ -985,10 +978,6 @@ export default function App() {
                 <button style={s.btnSecondary} onClick={() => exportarPDF(gastosFiltradosHist, categorias)}>📄 PDF</button>
               </div>
 
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>Filtros</h3>
-              </div>
-
               <div style={{...s.card, marginBottom: 24}}>
                 <div style={{ ...s.label, textAlign: "center" }}>Filtrar por categoría</div>
                 <div className="hide-scroll" style={{ ...s.filterRow, marginTop: 16 }}>
@@ -1025,7 +1014,9 @@ export default function App() {
                             <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} | {g.tipo === "gasto" ? "Gastos" : "Ahorros"}</div>
                           </div>
                         </div>
-                        <span style={{ fontSize: 16, fontWeight: 700, color: g.tipo === "gasto" ? c.text : c.green }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
+                        <div style={{ textAlign: "right", display: "flex", alignItems: "center", gap: 12 }}>
+                          <span style={{ fontSize: 16, fontWeight: 700, color: g.tipo === "gasto" ? c.text : c.green }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
+                        </div>
                       </div>
                     );
                   })}
