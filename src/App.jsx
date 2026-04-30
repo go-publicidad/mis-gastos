@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
+// Nombres actualizados a la versión más reciente de Lucide React
 import { 
-  Home, PieChart, FileText, Settings, Menu, RefreshCw, 
+  Home, ChartPie, FileText, Settings, Menu, RefreshCw, 
   ArrowDown, ArrowUp, PiggyBank, Target, 
-  Pencil, Trash, X, Calendar, Mail, CheckCircle, ChevronRight,
-  UserCircle, Lock, Trophy, Palette, Download, Headphones, LogOut, Info,
-  BarChart
+  Pencil, Trash, X, Calendar, Mail, CircleCheck, ChevronRight,
+  CircleUser, Lock, Trophy, Palette, Download, Headphones, LogOut, Info,
+  ChartColumn
 } from "lucide-react";
 
 const SUPABASE_URL = "https://jboazxmcmvvcscqeerbz.supabase.co";
@@ -907,10 +908,10 @@ export default function App() {
                   <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: c.text }}>Ingresos por categoría</h3>
                   <div style={{ display: "flex", gap: 12 }}>
                     <button onClick={() => setTipoGraficoIngresos("bar")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoIngresos === "bar" ? 1 : 0.3, padding: 0 }}>
-                      <BarChart size={20} color={c.text} />
+                      <ChartColumn size={20} color={c.text} />
                     </button>
                     <button onClick={() => setTipoGraficoIngresos("donut")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoIngresos === "donut" ? 1 : 0.3, padding: 0 }}>
-                      <PieChart size={20} color={c.text} />
+                      <ChartPie size={20} color={c.text} />
                     </button>
                   </div>
                 </div>
@@ -962,7 +963,7 @@ export default function App() {
 
               <div style={{ ...s.card, display: "flex", alignItems: "center", gap: 16, padding: "16px 20px" }}>
                 <div style={{ width: 32, height: 32, borderRadius: "50%", background: isDark ? "rgba(16, 185, 129, 0.15)" : "#DCFCE7", color: c.green, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <CheckCircle size={20} />
+                  <CircleCheck size={20} />
                 </div>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: c.text }}>Ahorraste {formatMoney(ahorroR)} en este periodo</div>
@@ -976,10 +977,10 @@ export default function App() {
                   <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: c.text }}>Gastos por categoría</h3>
                   <div style={{ display: "flex", gap: 12 }}>
                     <button onClick={() => setTipoGraficoGastos("bar")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoGastos === "bar" ? 1 : 0.3, padding: 0 }}>
-                      <BarChart size={20} color={c.text} />
+                      <ChartColumn size={20} color={c.text} />
                     </button>
                     <button onClick={() => setTipoGraficoGastos("donut")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoGastos === "donut" ? 1 : 0.3, padding: 0 }}>
-                      <PieChart size={20} color={c.text} />
+                      <ChartPie size={20} color={c.text} />
                     </button>
                   </div>
                 </div>
@@ -1244,7 +1245,7 @@ export default function App() {
 
           <div style={s.navBar}>
             {[{ id: "hoy", icon: <Home size={24} strokeWidth={2.5} />, label: "Inicio" }, 
-              { id: "resumen", icon: <PieChart size={24} strokeWidth={2.5} />, label: "Reportes" }].map(n => (
+              { id: "resumen", icon: <ChartPie size={24} strokeWidth={2.5} />, label: "Reportes" }].map(n => (
               <button key={n.id} style={s.navBtn(tab === n.id)} onClick={() => setTab(n.id)}>
                 {tab === n.id && <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 44, height: 3, background: "#FCB606", borderRadius: "0 0 4px 4px" }} />}
                 <div style={{ marginBottom: 2 }}>{n.icon}</div>
@@ -1346,7 +1347,7 @@ export default function App() {
 
           <div style={{ marginBottom: 32 }}>
             <div style={{ fontSize: 14, color: "#FCB606", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Mi cuenta</div>
-            <MenuItem icon={<UserCircle size={24}/>} text="Mis datos" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("datos")} />
+            <MenuItem icon={<CircleUser size={24}/>} text="Mis datos" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("datos")} />
             <MenuItem icon={<Lock size={24}/>} text="Cambiar mi clave" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("clave")} />
             <MenuItem icon={<Trophy size={24}/>} text="Mis logros / Insignias" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("logros")} />
           </div>
