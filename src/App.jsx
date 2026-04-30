@@ -40,9 +40,37 @@ const getFechaLocal = (isoStr) => {
 
 const formatMoney = (n) => `${CURRENCY} ${Number(n || 0).toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-const formatCatName = (label) => {
+// --- NUEVAS FUNCIONES INTELIGENTES PARA ICONOS Y TEXTOS ---
+const getIcono = (label) => {
+  if (!label) return "📌";
+  const arr = label.trim().split(" ");
+  // Si hay espacio y la primera parte no tiene letras/números (es emoji puro)
+  if (arr.length > 1 && !/[a-zA-Z0-9]/.test(arr[0])) {
+    return arr[0];
+  }
+  // Fallback: Tomar estrictamente el primer caracter (sea letra o emoji pegado)
+  return Array.from(label.trim())[0].toUpperCase();
+};
+
+const getTexto = (label) => {
   if (!label) return "";
-  const clean = label.includes(" ") ? label.substring(label.indexOf(" ") + 1).trim() : label;
+  const arr = label.trim().split(" ");
+  // Si venía con espacio correcto "🍽️ Comida"
+  if (arr.length > 1 && !/[a-zA-Z0-9]/.test(arr[0])) {
+    return arr.slice(1).join(" ");
+  }
+  // Si venía pegado "🤣jeje"
+  const firstChar = Array.from(label.trim())[0];
+  if (!/[a-zA-Z0-9]/.test(firstChar)) {
+      return Array.from(label.trim()).slice(1).join("").trim() || label.trim();
+  }
+  // Si no había emoji, devolvemos todo "Holaaaaa"
+  return label.trim();
+};
+// ----------------------------------------------------------
+
+const formatCatName = (label) => {
+  const clean = getTexto(label);
   return clean.length > 12 ? clean.substring(0, 12) + "..." : clean;
 };
 
@@ -126,8 +154,8 @@ const getUIFechaHora = (isoStr) => {
 const getDisplayDesc = (g, categorias) => {
   const cat = categorias.find(c => c.id === g.categoria);
   if (!cat) return g.descripcion;
-  if (g.descripcion === cat.label) {
-    return cat.label.substring(cat.label.indexOf(" ") + 1).trim();
+  if (g.descripcion === cat.label || g.descripcion === getTexto(cat.label)) {
+    return getTexto(cat.label);
   }
   return g.descripcion;
 };
@@ -381,7 +409,7 @@ export default function App() {
     if (!monto || monto <= 0) { showToast("Ingresa un monto válido", c.red); return; }
     setSaving(true);
     const catObj = categorias.find(cat => cat.id === form.categoria);
-    const defaultDesc = catObj ? catObj.label.substring(catObj.label.indexOf(" ") + 1).trim() : "Movimiento";
+    const defaultDesc = catObj ? getTexto(catObj.label) : "Movimiento";
     const nuevo = { fecha: hoy(), monto, descripcion: form.descripcion || defaultDesc, categoria: form.categoria, tipo: form.tipo };
     const { data, error: err } = await supabase.from("gastos").insert([nuevo]).select();
     if (err) { showToast("Error al guardar", c.red); setSaving(false); return; }
@@ -407,7 +435,7 @@ export default function App() {
     if (!monto || monto <= 0) { showToast("Monto inválido", c.red); return; }
     setSaving(true);
     const catObj = categorias.find(cat => cat.id === editForm.categoria);
-    const defaultDesc = catObj ? catObj.label.substring(catObj.label.indexOf(" ") + 1).trim() : "Movimiento";
+    const defaultDesc = catObj ? getTexto(catObj.label) : "Movimiento";
     const updates = { monto, descripcion: editForm.descripcion || defaultDesc, categoria: editForm.categoria, tipo: editForm.tipo };
     const { error: err } = await supabase.from("gastos").update(updates).eq("id", editando.id);
     if (err) { showToast("Error", c.red); setSaving(false); return; }
@@ -631,7 +659,7 @@ export default function App() {
     navBtn: (a) => ({
       flex: 1, paddingTop: 10, paddingBottom: `calc(20px + env(safe-area-inset-bottom, 0px))`, backgroundColor: "transparent", WebkitAppearance: "none", border: "none",
       color: a ? "#FF803C" : c.muted, fontSize: 12, fontWeight: 400, cursor: "pointer",
-      display: "flex", flexDirection: "column", alignItems: "center", gap: 0, fontFamily: "inherit", // Cambio: gap 0
+      display: "flex", flexDirection: "column", alignItems: "center", gap: 0, fontFamily: "inherit",
       position: "relative"
     }),
     fabCircle: {
@@ -728,7 +756,7 @@ export default function App() {
                       <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12 }}>
                         {cat && (
                           <div style={{ width: 40, height: 40, borderRadius: 12, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
-                            {cat.label.split(" ")[0]}
+                            {getIcono(cat.label)}
                           </div>
                         )}
                         <div style={{ minWidth: 0 }}>
@@ -876,7 +904,7 @@ export default function App() {
                         <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 14 }}>
                           {cat && (
                             <div style={{ width: 44, height: 44, borderRadius: 14, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
-                              {cat.label.split(" ")[0]}
+                              {getIcono(cat.label)}
                             </div>
                           )}
                           <div style={{ minWidth: 0 }}>
@@ -1149,7 +1177,7 @@ export default function App() {
                              <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12 }}>
                                {cat && (
                                  <div style={{ width: 40, height: 40, borderRadius: 12, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
-                                   {cat.label.split(" ")[0]}
+                                   {getIcono(cat.label)}
                                  </div>
                                )}
                                <div style={{ minWidth: 0 }}>
@@ -1224,9 +1252,9 @@ export default function App() {
                     <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: i === arr.length - 1 ? "none" : `1px solid ${c.border}` }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                         <div style={{ width: 36, height: 36, borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
-                           {cat.label.split(" ")[0]}
+                           {getIcono(cat.label)}
                         </div>
-                        <span style={{ fontSize: 15, fontWeight: 600 }}>{cat.label.substring(cat.label.indexOf(" ") + 1)}</span>
+                        <span style={{ fontSize: 15, fontWeight: 600 }}>{getTexto(cat.label)}</span>
                       </div>
                       <div>
                         <button style={s.editBtn} onClick={() => abrirEdicionCatBase(cat)}><Edit2 size={16}/></button>
@@ -1259,9 +1287,9 @@ export default function App() {
                     <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: i === arr.length - 1 ? "none" : `1px solid ${c.border}` }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                         <div style={{ width: 36, height: 36, borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
-                           {cat.label.split(" ")[0]}
+                           {getIcono(cat.label)}
                         </div>
-                        <span style={{ fontSize: 15, fontWeight: 600 }}>{cat.label.substring(cat.label.indexOf(" ") + 1)}</span>
+                        <span style={{ fontSize: 15, fontWeight: 600 }}>{getTexto(cat.label)}</span>
                       </div>
                       <div>
                         <button style={s.editBtn} onClick={() => abrirEdicionCat(cat)}><Edit2 size={16}/></button>
