@@ -50,6 +50,39 @@ const formatDateTime = (isoStr) => {
   return { fecha, hora };
 };
 
+// NUEVA FUNCIÓN: Formato amigable de fechas y horas (AM/PM)
+const getUIFechaHora = (isoStr) => {
+  if (!isoStr) return "";
+  const validIsoStr = isoStr.includes('Z') || isoStr.includes('+') ? isoStr : `${isoStr}Z`;
+  const dt = new Date(validIsoStr);
+  const limaDate = new Date(dt.getTime() - 18000000);
+
+  let h = limaDate.getUTCHours();
+  let m = limaDate.getUTCMinutes();
+  const ampm = h >= 12 ? 'pm' : 'am';
+  h = h % 12;
+  h = h ? h : 12; 
+  m = m < 10 ? '0' + m : m;
+  const strTime = `${h}:${m} ${ampm}`;
+
+  const isoDate = limaDate.toISOString().split("T")[0];
+  const todayIso = hoy();
+  const ayerDate = new Date(Date.now() - 18000000 - 86400000);
+  const ayerIso = ayerDate.toISOString().split("T")[0];
+
+  if (isoDate === todayIso) {
+    return `Hoy ${strTime}`;
+  } else if (isoDate === ayerIso) {
+    return `Ayer ${strTime}`;
+  } else {
+    const meses = ["Ene.", "Feb.", "Mar.", "Abr.", "May.", "Jun.", "Jul.", "Ago.", "Sep.", "Oct.", "Nov.", "Dic."];
+    const day = limaDate.getUTCDate();
+    const month = meses[limaDate.getUTCMonth()];
+    const year = limaDate.getUTCFullYear();
+    return `${day} ${month} ${year} - ${strTime}`;
+  }
+};
+
 const diffDias = (d1Str, d2Str) => {
   if (!d1Str || !d2Str) return 0;
   const [y1, m1, day1] = d1Str.split("-");
@@ -462,7 +495,6 @@ export default function App() {
   const gastosFiltradosHist = gastos.filter(g => (filtroHistCat === "todas" || g.categoria === filtroHistCat) && (!filtroHistFechaDesde || g.fecha >= filtroHistFechaDesde) && (!filtroHistFechaHasta || g.fecha <= filtroHistFechaHasta));
   const gastosVerTodos = gastos.filter(g => (!vtFechaDesde || g.fecha >= vtFechaDesde) && (!vtFechaHasta || g.fecha <= vtFechaHasta));
 
-  // SISTEMA DE ESPACIADO UNIFICADO: 24px entre bloques, 12px títulos
   const s = {
     app: { minHeight: "100vh", fontFamily: "'Montserrat', sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: "calc(160px + env(safe-area-inset-bottom, 0px))", width: "100%" },
     header:     { padding: "24px 20px 16px", borderBottom: `1px solid ${c.border}`, position: "sticky", top: 0, background: c.bg, zIndex: 90 },
@@ -589,7 +621,6 @@ export default function App() {
             ) : (
               gastosVerTodos.map(g => {
                 const cat = categorias.find(c => c.id === g.categoria);
-                const { fecha, hora } = formatDateTime(g.created_at);
                 return (
                   <div key={g.id} style={{ ...s.card, padding: "12px 16px", marginBottom: 8 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -603,7 +634,7 @@ export default function App() {
                           <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2 }}>
                             {cat ? cat.label.substring(cat.label.indexOf(" ") + 1) : g.descripcion}
                           </div>
-                          <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{fecha} · {g.tipo === "gasto" ? "Gastos" : "Ingresos"}</div>
+                          <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ahorros"}</div>
                         </div>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -701,7 +732,7 @@ export default function App() {
                 </div>
               </div>
 
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 0, marginBottom: 12 }}>
                 <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>Últimos movimientos</h3>
                 <button onClick={() => { setViewAll(true); window.scrollTo(0, 0); }} style={{ background: "none", border: "none", color: c.muted, fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>
                   Ver todos
@@ -712,7 +743,6 @@ export default function App() {
                 <div style={{ ...s.card, padding: "8px 16px" }}>
                   {movimientosHoy.map((g, i, arr) => {
                     const cat = categorias.find(c => c.id === g.categoria);
-                    const { hora } = formatDateTime(g.created_at);
                     const isLast = i === arr.length - 1;
                     return (
                       <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: isLast ? "none" : `1px solid ${c.border}` }}>
@@ -726,7 +756,7 @@ export default function App() {
                             <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text }}>
                               {cat ? cat.label.substring(cat.label.indexOf(" ") + 1) : g.descripcion}
                             </div>
-                            <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{hora} · {g.tipo === "gasto" ? "Gastos" : "Ahorros"}</div>
+                            <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ahorros"}</div>
                           </div>
                         </div>
                         <div style={{ textAlign: "right" }}>
@@ -784,7 +814,7 @@ export default function App() {
                 <div style={{ ...s.card, textAlign: "center", marginBottom: 0 }}><div style={s.label}>Gasto prom/día</div><div style={s.smallNum}>{formatMoney(gastoDiarioProm)}</div></div>
               </div>
 
-              <div style={{ ...s.card, background: isDark ? "#0F1A0F" : "#F0FDF4", border: `1px solid ${isDark ? "#1A3A1A" : "#BBF7D0"}`, textAlign: "center", padding: "24px 16px" }}>
+              <div style={{ ...s.card, background: isDark ? "#0F1A0F" : "#F0FDF4", border: `1px solid ${isDark ? "#1A3A1A" : "#BBF7D0"}`, textAlign: "center", padding: "24px 16px", marginBottom: 24 }}>
                 <div style={{ ...s.label, textAlign: "center", color: isDark ? c.muted : "#065F46", marginBottom: 0 }}>Proyección inteligente</div>
                 <div style={{ fontSize: 16, color: isDark ? "#FCB606" : "#047857", fontWeight: 700, marginTop: 8 }}>📈 A este ritmo llegarás a tu meta {proyeccionTexto}</div>
                 <div style={{ fontSize: 13, color: c.muted, marginTop: 6, fontWeight: 500 }}>Basado en un ahorro diario promedio de {formatMoney(ahorroDiarioProm > 0 ? ahorroDiarioProm : 0)}</div>
@@ -805,7 +835,7 @@ export default function App() {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                 <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>Gastos últimos 7 días</h3>
               </div>
-              <div style={s.card}>
+              <div style={{...s.card, marginBottom: 24}}>
                 <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 100, marginTop: 8 }}>
                   {gastosUltimos7.map((d, i) => (
                     <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
@@ -850,7 +880,7 @@ export default function App() {
                 <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>Filtros</h3>
               </div>
 
-              <div style={s.card}>
+              <div style={{...s.card, marginBottom: 24}}>
                 <div style={{ ...s.label, textAlign: "center" }}>Filtrar por categoría</div>
                 <div className="hide-scroll" style={{ ...s.filterRow, marginTop: 16 }}>
                   <button style={s.filterBtn(filtroHistCat === "todas")} onClick={() => setFiltroHistCat("todas")}>Todas</button>
@@ -872,7 +902,6 @@ export default function App() {
                 <div style={{...s.card, padding: "8px 16px"}}>
                   {gastosFiltradosHist.map((g, i, arr) => {
                     const cat = categorias.find(c => c.id === g.categoria);
-                    const { fecha, hora } = formatDateTime(g.created_at);
                     const isLast = i === arr.length - 1;
                     return (
                       <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: isLast ? "none" : `1px solid ${c.border}` }}>
@@ -884,7 +913,7 @@ export default function App() {
                           )}
                           <div style={{ minWidth: 0 }}>
                             <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4 }}>{g.descripcion}</div>
-                            <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{fecha} | {hora}</div>
+                            <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ahorros"}</div>
                           </div>
                         </div>
                         <span style={{ fontSize: 16, fontWeight: 700, color: g.tipo === "gasto" ? c.text : c.green }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
@@ -903,7 +932,7 @@ export default function App() {
                 <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>Plan actual</h3>
               </div>
 
-              <div style={s.card}>
+              <div style={{...s.card, marginBottom: 24}}>
                 <div style={{ ...s.label, textAlign: "center" }}>DEFINIR META DE AHORRO (S/)</div>
                 <input style={{ ...s.input, marginTop: 12, marginBottom: 24, fontSize: 24, textAlign: "center", color: "#FCB606", fontWeight: 700 }} type={isEditingMeta ? "number" : "text"} placeholder="Ej: 100000" value={isEditingMeta ? metaAhorro : (metaAhorro ? formatMoney(metaAhorro) : "")} onFocus={() => setIsEditingMeta(true)} onBlur={() => setIsEditingMeta(false)} onChange={e => setMetaAhorro(e.target.value)} />
                 
@@ -934,7 +963,7 @@ export default function App() {
                 <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>Categorías</h3>
               </div>
 
-              <div style={s.card}>
+              <div style={{...s.card, marginBottom: 12}}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}><div style={{...s.label, marginBottom:0}}>Categorías Base</div></div>
                 {safeBase.length === 0 ? <div style={{ color: c.muted, fontSize: 14, fontWeight: 500, textAlign: "center", padding: "12px 0" }}>No hay categorías base</div> : safeBase.map((cat, i, arr) => (
                   editandoCatBase === cat.id ? (
