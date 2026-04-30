@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
-// Nombres clásicos y estables garantizados para funcionar en tu versión
+// Usamos los íconos más seguros y estables de la librería
 import { 
   Home, PieChart, FileText, Settings, Menu, RefreshCw, 
-  TrendingDown, TrendingUp, PiggyBank, Target, 
-  Edit2, Trash2, X, Calendar, Mail, CheckCircle, ChevronRight,
-  User, Lock, Trophy, Palette, Download, Headphones, LogOut, Info,
-  BarChart
+  ArrowDownToLine, ArrowUpFromLine, PiggyBank, Target, 
+  Edit2, Trash2, X, Calendar, Mail, CheckCircle2, ChevronRight,
+  UserCircle, Lock, Trophy, Palette, Download, Headphones, LogOut, AlertTriangle,
+  BarChart2
 } from "lucide-react";
 
 const SUPABASE_URL = "https://jboazxmcmvvcscqeerbz.supabase.co";
@@ -79,7 +79,6 @@ const getUITime = (isoStr) => {
 };
 
 const formatGroupDate = (dateStr) => {
-  if (!dateStr) return "";
   const todayIso = hoy();
   const ayerDate = new Date(Date.now() - 18000000 - 86400000);
   const ayerIso = ayerDate.toISOString().split("T")[0];
@@ -176,7 +175,7 @@ export default function App() {
   const [categoriasExtra, setCategoriasExtra] = useState([]);  
   
   const [tab, setTab] = useState("hoy");
-  const [form, setForm] = useState({ monto: "", descripcion: "", categoria: "comida", tipo: "gasto", fecha: hoy(), metodoPago: "Efectivo" });
+  const [form, setForm] = useState({ monto: "", descripcion: "", categoria: "comida", tipo: "gasto" });
   
   const [metaAhorro, setMetaAhorro] = useState("100000");
   const [fechaInicioPlan, setFechaInicioPlan] = useState(hoy());
@@ -325,15 +324,18 @@ export default function App() {
     if (!monto || monto <= 0) { showToast("Ingresa un monto válido", c.red); return; }
     setSaving(true);
     const catObj = categorias.find(cat => cat.id === form.categoria);
-    const defaultDesc = catObj ? (catObj.label.includes(" ") ? catObj.label.substring(catObj.label.indexOf(" ") + 1).trim() : catObj.label) : "Movimiento";
     
-    const nuevo = { fecha: form.fecha || hoy(), monto, descripcion: form.descripcion || defaultDesc, categoria: form.categoria, tipo: form.tipo };
-    
+    // Protección segura al obtener la descripción
+    let defaultDesc = "Movimiento";
+    if (catObj && catObj.label) {
+      defaultDesc = catObj.label.includes(" ") ? catObj.label.substring(catObj.label.indexOf(" ") + 1).trim() : catObj.label;
+    }
+
+    const nuevo = { fecha: hoy(), monto, descripcion: form.descripcion || defaultDesc, categoria: form.categoria, tipo: form.tipo };
     const { data, error: err } = await supabase.from("gastos").insert([nuevo]).select();
     if (err) { showToast("Error al guardar", c.red); setSaving(false); return; }
-    
     setGastos(prev => [{ ...data[0], fecha: getFechaLocal(data[0].created_at) }, ...prev]);
-    setForm(f => ({ ...f, monto: "", descripcion: "", fecha: hoy(), metodoPago: "Efectivo" }));
+    setForm(f => ({ ...f, monto: "", descripcion: "" }));
     showToast(`Registrado ✓`);
     setSaving(false);
     setShowAddModal(false);
@@ -347,17 +349,21 @@ export default function App() {
     showToast("Eliminado", c.muted);
   };
 
-  const abrirEdicion = (g) => { setEditando(g); setEditForm({ monto: g.monto, descripcion: g.descripcion, categoria: g.categoria, tipo: g.tipo, fecha: g.fecha, metodoPago: "Efectivo" }); };
+  const abrirEdicion = (g) => { setEditando(g); setEditForm({ monto: g.monto, descripcion: g.descripcion, categoria: g.categoria, tipo: g.tipo }); };
 
   const guardarEdicion = async () => {
     const monto = parseFloat(editForm.monto);
     if (!monto || monto <= 0) { showToast("Monto inválido", c.red); return; }
     setSaving(true);
     const catObj = categorias.find(cat => cat.id === editForm.categoria);
-    const defaultDesc = catObj ? (catObj.label.includes(" ") ? catObj.label.substring(catObj.label.indexOf(" ") + 1).trim() : catObj.label) : "Movimiento";
     
-    const updates = { fecha: editForm.fecha || hoy(), monto, descripcion: editForm.descripcion || defaultDesc, categoria: editForm.categoria, tipo: editForm.tipo };
-    
+    // Protección segura
+    let defaultDesc = "Movimiento";
+    if (catObj && catObj.label) {
+      defaultDesc = catObj.label.includes(" ") ? catObj.label.substring(catObj.label.indexOf(" ") + 1).trim() : catObj.label;
+    }
+
+    const updates = { monto, descripcion: editForm.descripcion || defaultDesc, categoria: editForm.categoria, tipo: editForm.tipo };
     const { error: err } = await supabase.from("gastos").update(updates).eq("id", editando.id);
     if (err) { showToast("Error", c.red); setSaving(false); return; }
     setGastos(prev => prev.map(g => g.id === editando.id ? { ...g, ...updates } : g));
@@ -444,11 +450,12 @@ export default function App() {
     showToast("Categoría eliminada", c.muted);
   };
 
+  // Función segura para mostrar descripciones en las listas
   const getDisplayDescUI = (g, categorias) => {
     const cat = categorias.find(c => c.id === g.categoria);
     if (!cat) return g.descripcion;
     if (g.descripcion === cat.label) {
-        return cat.label.includes(" ") ? cat.label.substring(cat.label.indexOf(" ") + 1).trim() : cat.label;
+      return cat.label.includes(" ") ? cat.label.substring(cat.label.indexOf(" ") + 1).trim() : cat.label;
     }
     return g.descripcion;
   };
@@ -555,6 +562,7 @@ export default function App() {
     metaLabel:  { fontSize: 16, color: "#FFF", marginBottom: 12 }, 
     label:      { fontSize: 16, fontWeight: 600, color: c.text, marginBottom: 12 },
     
+    // AQUÍ ESTÁN TUS CAMBIOS DE TIPOGRAFÍA DE INICIO
     bigNum:     { fontSize: 28, fontWeight: 600, color: "#FFF", lineHeight: 1 },
     smallNum:   { fontSize: 20, fontWeight: 600, color: c.text },
     redNum:     { fontSize: 20, fontWeight: 600, color: c.red },
@@ -584,11 +592,11 @@ export default function App() {
       position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480,
       background: c.nav, display: "flex", zIndex: 100,
       paddingTop: 0, paddingBottom: 0, 
-      boxShadow: isDark ? "0 -2px 10px rgba(0,0,0,0.4)" : "0 -2px 10px rgba(0,0,0,0.08)"
+      boxShadow: isDark ? "0 -2px 10px rgba(0,0,0,0.4)" : "0 -2px 10px rgba(0,0,0,0.08)" // AQUÍ REDUJE LA SOMBRA
     },
     navBtn: (a) => ({
       flex: 1, paddingTop: 10, paddingBottom: `calc(20px + env(safe-area-inset-bottom, 0px))`, backgroundColor: "transparent", WebkitAppearance: "none", border: "none",
-      color: a ? "#FCB606" : c.muted, fontSize: 12, fontWeight: 400, cursor: "pointer",
+      color: a ? "#FCB606" : c.muted, fontSize: 12, fontWeight: 400, cursor: "pointer", // AQUÍ ESTÁ EL TAMAÑO 12px Y GROSOR 400
       display: "flex", flexDirection: "column", alignItems: "center", gap: 2, fontFamily: "inherit",
       position: "relative"
     }),
@@ -601,7 +609,7 @@ export default function App() {
     },
 
     overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 200, padding: "0", backdropFilter: "blur(5px)" },
-    modal: { background: c.card, borderTop: `1px solid ${c.border}`, borderLeft: `1px solid ${c.border}`, borderRight: `1px solid ${c.border}`, borderRadius: "24px 24px 0 0", padding: "24px 20px calc(24px + env(safe-area-inset-bottom, 0px))", width: "100%", maxWidth: 480, boxSizing: "border-box", boxShadow: "0 -10px 40px rgba(0,0,0,0.3)" }
+    modal: { background: c.card, borderTop: `1px solid ${c.border}`, borderLeft: `1px solid ${c.border}`, borderRight: `1px solid ${c.border}`, borderRadius: "24px 24px 0 0", padding: "24px 24px calc(24px + env(safe-area-inset-bottom, 0px))", width: "100%", maxWidth: 480, boxSizing: "border-box", boxShadow: "0 -10px 40px rgba(0,0,0,0.3)" }
   };
 
   const IconBadge = ({ emoji, bg, color }) => (
@@ -749,7 +757,7 @@ export default function App() {
             );
           })()}
 
-          {error && <div style={s.errorCard}><Info size={16} style={{ verticalAlign: "middle", marginRight: 8 }} /> {error}</div>}
+          {error && <div style={s.errorCard}><AlertTriangle size={16} style={{ verticalAlign: "middle", marginRight: 8 }} /> {error}</div>}
 
           {tab === "hoy" && (
             <div style={s.section}>
@@ -786,7 +794,7 @@ export default function App() {
               <div style={s.grid2}>
                 <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                    <IconBadge emoji={<TrendingDown size={18} />} bg={c.iconBgGreen} color={c.green} />
+                    <IconBadge emoji={<ArrowDownToLine size={18} />} bg={c.iconBgGreen} color={c.green} />
                     <span style={{ fontSize: 13, fontWeight: 500, color: c.muted }}>Ingresos hoy</span>
                   </div>
                   <div style={{ ...s.greenNum, textAlign: "center", marginTop: 2 }}>{formatMoney(totalIngresosHoy)}</div>
@@ -794,7 +802,7 @@ export default function App() {
                 
                 <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                    <IconBadge emoji={<TrendingUp size={18} />} bg={c.iconBgRed} color={c.red} />
+                    <IconBadge emoji={<ArrowUpFromLine size={18} />} bg={c.iconBgRed} color={c.red} />
                     <span style={{ fontSize: 13, fontWeight: 500, color: c.muted }}>Gastos hoy</span>
                   </div>
                   <div style={{ ...s.redNum, textAlign: "center", marginTop: 2 }}>{formatMoney(totalGastadoHoy)}</div>
@@ -911,7 +919,7 @@ export default function App() {
                   <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: c.text }}>Ingresos por categoría</h3>
                   <div style={{ display: "flex", gap: 12 }}>
                     <button onClick={() => setTipoGraficoIngresos("bar")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoIngresos === "bar" ? 1 : 0.3, padding: 0 }}>
-                      <BarChart size={20} color={c.text} />
+                      <BarChart2 size={20} color={c.text} />
                     </button>
                     <button onClick={() => setTipoGraficoIngresos("donut")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoIngresos === "donut" ? 1 : 0.3, padding: 0 }}>
                       <PieChart size={20} color={c.text} />
@@ -966,7 +974,7 @@ export default function App() {
 
               <div style={{ ...s.card, display: "flex", alignItems: "center", gap: 16, padding: "16px 20px" }}>
                 <div style={{ width: 32, height: 32, borderRadius: "50%", background: isDark ? "rgba(16, 185, 129, 0.15)" : "#DCFCE7", color: c.green, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <CheckCircle size={20} />
+                  <CheckCircle2 size={20} />
                 </div>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: c.text }}>Ahorraste {formatMoney(ahorroR)} en este periodo</div>
@@ -980,7 +988,7 @@ export default function App() {
                   <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: c.text }}>Gastos por categoría</h3>
                   <div style={{ display: "flex", gap: 12 }}>
                     <button onClick={() => setTipoGraficoGastos("bar")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoGastos === "bar" ? 1 : 0.3, padding: 0 }}>
-                      <BarChart size={20} color={c.text} />
+                      <BarChart2 size={20} color={c.text} />
                     </button>
                     <button onClick={() => setTipoGraficoGastos("donut")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoGastos === "donut" ? 1 : 0.3, padding: 0 }}>
                       <PieChart size={20} color={c.text} />
@@ -1350,7 +1358,7 @@ export default function App() {
 
           <div style={{ marginBottom: 32 }}>
             <div style={{ fontSize: 14, color: "#FCB606", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Mi cuenta</div>
-            <MenuItem icon={<User size={24}/>} text="Mis datos" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("datos")} />
+            <MenuItem icon={<UserCircle size={24}/>} text="Mis datos" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("datos")} />
             <MenuItem icon={<Lock size={24}/>} text="Cambiar mi clave" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("clave")} />
             <MenuItem icon={<Trophy size={24}/>} text="Mis logros / Insignias" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("logros")} />
           </div>
@@ -1489,132 +1497,50 @@ export default function App() {
 
       {showAddModal && (
         <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setShowAddModal(false); }}>
-          <div style={{...s.modal, padding: "24px 20px calc(24px + env(safe-area-inset-bottom, 0px))", animation: "slideUp 0.3s ease-out"}}>
+          <div style={{...s.modal, animation: "slideUp 0.3s ease-out"}}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <h3 style={{ margin: 0, fontSize: 18, color: c.text, fontWeight: 700 }}>Registrar Movimiento</h3>
               <button onClick={() => setShowAddModal(false)} style={{ background: "none", border: "none", color: c.muted, fontSize: 24, cursor: "pointer", padding: 0 }}><X size={20}/></button>
             </div>
             
+            <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+              <button style={s.tipoBtn(form.tipo === "gasto", c.red)} onClick={() => setForm(f => ({ ...f, tipo: "gasto" }))}>− Gasto</button>
+              <button style={s.tipoBtn(form.tipo === "ingreso", c.green)} onClick={() => setForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
+            </div>
+            
+            <input autoFocus style={{ ...s.input, marginBottom: 16, fontSize: 32, textAlign: "center", fontWeight: 700, padding: "20px 10px", height: "auto" }} type="number" placeholder="0.00" value={form.monto} onChange={e => setForm(f => ({ ...f, monto: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
+            
             <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
-              <button style={{ flex: 1, padding: "12px", borderRadius: 12, border: form.tipo === "ingreso" ? `2px solid ${c.green}` : `1px solid ${c.border}`, background: form.tipo === "ingreso" ? c.iconBgGreen : c.input, color: form.tipo === "ingreso" ? c.green : c.muted, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }} onClick={() => setForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
-              <button style={{ flex: 1, padding: "12px", borderRadius: 12, border: form.tipo === "gasto" ? `2px solid ${c.red}` : `1px solid ${c.border}`, background: form.tipo === "gasto" ? c.iconBgRed : c.input, color: form.tipo === "gasto" ? c.red : c.muted, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }} onClick={() => setForm(f => ({ ...f, tipo: "gasto" }))}>− Gasto</button>
+              <select style={{ ...s.select, flex: 1, marginBottom: 0 }} value={form.categoria} onChange={e => setForm(f => ({ ...f, categoria: e.target.value }))}>
+                {categorias.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+              </select>
+              <input style={{ ...s.input, flex: 1, marginBottom: 0, fontSize: 15, fontWeight: 500 }} type="text" placeholder="Descripción" value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
             </div>
             
-            <div style={{ marginBottom: 24 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: c.muted, display: "block", marginBottom: 8 }}>Monto</label>
-              <div style={{ display: "flex", alignItems: "center", borderBottom: `2px solid ${c.border}`, paddingBottom: 8 }}>
-                <span style={{ fontSize: 32, fontWeight: 700, color: c.text, marginRight: 8 }}>S/</span>
-                <input autoFocus style={{ background: "transparent", border: "none", color: c.text, fontSize: 32, fontWeight: 700, width: "100%", outline: "none" }} type="number" placeholder="0.00" value={form.monto} onChange={e => setForm(f => ({ ...f, monto: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
-              </div>
-            </div>
-            
-            <div style={{ marginBottom: 24 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: c.muted, display: "block", marginBottom: 12 }}>Categoría</label>
-              <div className="hide-scroll" style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8 }}>
-                {categorias.map(cat => {
-                  const isSelected = form.categoria === cat.id;
-                  const catLabelStr = cat.label || "";
-                  const catEmoji = catLabelStr.includes(" ") ? catLabelStr.split(" ")[0] : "📌";
-                  const catName = catLabelStr.includes(" ") ? catLabelStr.substring(catLabelStr.indexOf(" ") + 1).trim() : catLabelStr;
-                  return (
-                    <div key={cat.id} onClick={() => setForm(f => ({ ...f, categoria: cat.id }))} style={{ minWidth: 70, padding: "12px 8px", borderRadius: 16, border: isSelected ? (form.tipo === 'ingreso' ? `2px solid ${c.green}` : `2px solid ${c.red}`) : `1px solid ${c.border}`, background: isSelected ? (form.tipo === 'ingreso' ? c.iconBgGreen : c.iconBgRed) : c.input, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer", transition: "all 0.2s" }}>
-                      <div style={{ fontSize: 24 }}>{catEmoji}</div>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: isSelected ? c.text : c.muted, textAlign: "center", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>{catName}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 24 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: c.muted, display: "block", marginBottom: 8 }}>Descripción <span style={{fontWeight: 400}}>(opcional)</span></label>
-              <input style={s.input} type="text" placeholder="Ej. Almuerzo con cliente" value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
-            </div>
-
-            <div style={{ display: "flex", gap: 12, marginBottom: 28 }}>
-               <div style={{ flex: 1, minWidth: 0 }}>
-                  <label style={{ fontSize: 13, fontWeight: 600, color: c.muted, display: "block", marginBottom: 8 }}>Fecha</label>
-                  <input type="date" style={s.input} value={form.fecha || hoy()} onChange={e => setForm(f => ({...f, fecha: e.target.value}))} />
-               </div>
-               <div style={{ flex: 1, minWidth: 0 }}>
-                  <label style={{ fontSize: 13, fontWeight: 600, color: c.muted, display: "block", marginBottom: 8 }}>Método de pago</label>
-                  <select style={s.select} value={form.metodoPago || "Efectivo"} onChange={e => setForm(f => ({...f, metodoPago: e.target.value}))}>
-                     <option value="Efectivo">Efectivo</option>
-                     <option value="Tarjeta de crédito">Tarjeta de crédito</option>
-                     <option value="Transferencia">Transferencia</option>
-                  </select>
-               </div>
-            </div>
-
-            <button style={{...s.btnPrimary, padding: "16px", background: form.tipo === "ingreso" ? c.green : "#FCB606", color: form.tipo === "ingreso" ? "#FFF" : "#000" }} onClick={agregarMovimiento} disabled={saving}>
-              {saving ? "Guardando..." : (form.tipo === "ingreso" ? "Guardar Ingreso" : "Guardar Gasto")}
-            </button>
+            <button style={{...s.btnPrimary, padding: "16px"}} onClick={agregarMovimiento} disabled={saving}>{saving ? "Guardando..." : "Guardar Registro"}</button>
           </div>
         </div>
       )}
 
       {editando && (
         <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setEditando(null); }}>
-          <div style={{...s.modal, padding: "24px 20px calc(24px + env(safe-area-inset-bottom, 0px))", animation: "slideUp 0.3s ease-out"}}>
+          <div style={{...s.modal, animation: "slideUp 0.3s ease-out"}}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <h3 style={{ margin: 0, fontSize: 18, color: c.text, fontWeight: 700 }}>Editar Movimiento</h3>
               <button onClick={() => setEditando(null)} style={{ background: "none", border: "none", color: c.muted, fontSize: 24, cursor: "pointer", padding: 0 }}><X size={20}/></button>
             </div>
-            
+            <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+              <button style={s.tipoBtn(editForm.tipo === "gasto", c.red)} onClick={() => setEditForm(f => ({ ...f, tipo: "gasto" }))}>− Gasto</button>
+              <button style={s.tipoBtn(editForm.tipo === "ingreso", c.green)} onClick={() => setForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
+            </div>
+            <input style={{ ...s.input, marginBottom: 16, fontSize: 32, textAlign: "center", fontWeight: 700, padding: "20px 10px", height: "auto" }} type="number" placeholder="0.00" value={editForm.monto} onChange={e => setEditForm(f => ({ ...f, monto: e.target.value }))} />
             <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
-              <button style={{ flex: 1, padding: "12px", borderRadius: 12, border: editForm.tipo === "ingreso" ? `2px solid ${c.green}` : `1px solid ${c.border}`, background: editForm.tipo === "ingreso" ? c.iconBgGreen : c.input, color: editForm.tipo === "ingreso" ? c.green : c.muted, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }} onClick={() => setEditForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
-              <button style={{ flex: 1, padding: "12px", borderRadius: 12, border: editForm.tipo === "gasto" ? `2px solid ${c.red}` : `1px solid ${c.border}`, background: editForm.tipo === "gasto" ? c.iconBgRed : c.input, color: editForm.tipo === "gasto" ? c.red : c.muted, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }} onClick={() => setEditForm(f => ({ ...f, tipo: "gasto" }))}>− Gasto</button>
+              <select style={{ ...s.select, flex: 1, marginBottom: 0 }} value={editForm.categoria} onChange={e => setEditForm(f => ({ ...f, categoria: e.target.value }))}>
+                {categorias.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+              </select>
+              <input style={{ ...s.input, flex: 1, marginBottom: 0, fontSize: 15, fontWeight: 500 }} type="text" placeholder="Descripción" value={editForm.descripcion} onChange={e => setEditForm(f => ({ ...f, descripcion: e.target.value }))} />
             </div>
-            
-            <div style={{ marginBottom: 24 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: c.muted, display: "block", marginBottom: 8 }}>Monto</label>
-              <div style={{ display: "flex", alignItems: "center", borderBottom: `2px solid ${c.border}`, paddingBottom: 8 }}>
-                <span style={{ fontSize: 32, fontWeight: 700, color: c.text, marginRight: 8 }}>S/</span>
-                <input style={{ background: "transparent", border: "none", color: c.text, fontSize: 32, fontWeight: 700, width: "100%", outline: "none" }} type="number" placeholder="0.00" value={editForm.monto} onChange={e => setEditForm(f => ({ ...f, monto: e.target.value }))} />
-              </div>
-            </div>
-            
-            <div style={{ marginBottom: 24 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: c.muted, display: "block", marginBottom: 12 }}>Categoría</label>
-              <div className="hide-scroll" style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8 }}>
-                {categorias.map(cat => {
-                  const isSelected = editForm.categoria === cat.id;
-                  const catLabelStr = cat.label || "";
-                  const catEmoji = catLabelStr.includes(" ") ? catLabelStr.split(" ")[0] : "📌";
-                  const catName = catLabelStr.includes(" ") ? catLabelStr.substring(catLabelStr.indexOf(" ") + 1).trim() : catLabelStr;
-                  return (
-                    <div key={cat.id} onClick={() => setEditForm(f => ({ ...f, categoria: cat.id }))} style={{ minWidth: 70, padding: "12px 8px", borderRadius: 16, border: isSelected ? (editForm.tipo === 'ingreso' ? `2px solid ${c.green}` : `2px solid ${c.red}`) : `1px solid ${c.border}`, background: isSelected ? (editForm.tipo === 'ingreso' ? c.iconBgGreen : c.iconBgRed) : c.input, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer", transition: "all 0.2s" }}>
-                      <div style={{ fontSize: 24 }}>{catEmoji}</div>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: isSelected ? c.text : c.muted, textAlign: "center", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%" }}>{catName}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 24 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: c.muted, display: "block", marginBottom: 8 }}>Descripción <span style={{fontWeight: 400}}>(opcional)</span></label>
-              <input style={s.input} type="text" placeholder="Ej. Almuerzo con cliente" value={editForm.descripcion} onChange={e => setEditForm(f => ({ ...f, descripcion: e.target.value }))} />
-            </div>
-
-            <div style={{ display: "flex", gap: 12, marginBottom: 28 }}>
-               <div style={{ flex: 1, minWidth: 0 }}>
-                  <label style={{ fontSize: 13, fontWeight: 600, color: c.muted, display: "block", marginBottom: 8 }}>Fecha</label>
-                  <input type="date" style={s.input} value={editForm.fecha || hoy()} onChange={e => setEditForm(f => ({...f, fecha: e.target.value}))} />
-               </div>
-               <div style={{ flex: 1, minWidth: 0 }}>
-                  <label style={{ fontSize: 13, fontWeight: 600, color: c.muted, display: "block", marginBottom: 8 }}>Método de pago</label>
-                  <select style={s.select} value={editForm.metodoPago || "Efectivo"} onChange={e => setEditForm(f => ({...f, metodoPago: e.target.value}))}>
-                     <option value="Efectivo">Efectivo</option>
-                     <option value="Tarjeta de crédito">Tarjeta de crédito</option>
-                     <option value="Transferencia">Transferencia</option>
-                  </select>
-               </div>
-            </div>
-
-            <button style={{...s.btnPrimary, padding: "16px", background: editForm.tipo === "ingreso" ? c.green : "#FCB606", color: editForm.tipo === "ingreso" ? "#FFF" : "#000" }} onClick={guardarEdicion} disabled={saving}>
-              {saving ? "Guardando..." : "Guardar Cambios"}
-            </button>
+            <button style={{...s.btnPrimary, padding: "16px"}} onClick={guardarEdicion} disabled={saving}>{saving ? "Guardando..." : "Guardar Cambios"}</button>
           </div>
         </div>
       )}
