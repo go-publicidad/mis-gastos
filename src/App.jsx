@@ -631,7 +631,7 @@ export default function App() {
     navBtn: (a) => ({
       flex: 1, paddingTop: 10, paddingBottom: `calc(20px + env(safe-area-inset-bottom, 0px))`, backgroundColor: "transparent", WebkitAppearance: "none", border: "none",
       color: a ? "#FF803C" : c.muted, fontSize: 12, fontWeight: 400, cursor: "pointer",
-      display: "flex", flexDirection: "column", alignItems: "center", gap: 2, fontFamily: "inherit",
+      display: "flex", flexDirection: "column", alignItems: "center", gap: 0, fontFamily: "inherit", // Cambio: gap 0
       position: "relative"
     }),
     fabCircle: {
@@ -1293,7 +1293,7 @@ export default function App() {
               { id: "resumen", icon: <PieChart size={24} strokeWidth={2.5} />, label: "Reportes" }].map(n => (
               <button key={n.id} style={s.navBtn(tab === n.id)} onClick={() => setTab(n.id)}>
                 {tab === n.id && <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 44, height: 3, background: "#FF803C", borderRadius: "0 0 4px 4px" }} />}
-                <div style={{ marginBottom: 2 }}>{n.icon}</div>
+                <div style={{ marginBottom: -2 }}>{n.icon}</div>
                 <span style={{ fontFamily: "'Montserrat', sans-serif" }}>{n.label}</span>
               </button>
             ))}
@@ -1306,7 +1306,7 @@ export default function App() {
               { id: "config", icon: <Settings size={24} strokeWidth={2.5} />, label: "Config" }].map(n => (
               <button key={n.id} style={s.navBtn(tab === n.id)} onClick={() => setTab(n.id)}>
                 {tab === n.id && <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 44, height: 3, background: "#FF803C", borderRadius: "0 0 4px 4px" }} />}
-                <div style={{ marginBottom: 2 }}>{n.icon}</div>
+                <div style={{ marginBottom: -2 }}>{n.icon}</div>
                 <span style={{ fontFamily: "'Montserrat', sans-serif" }}>{n.label}</span>
               </button>
             ))}
