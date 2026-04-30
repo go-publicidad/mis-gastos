@@ -618,12 +618,10 @@ export default function App() {
               <div style={{ ...s.label, textAlign: "center" }}>Filtrar por rango de fecha</div>
               <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                 <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                  <div style={{ fontSize: 12, color: c.muted, marginBottom: 4, textAlign: "center", fontWeight: 500 }}>Del</div>
-                  <input type="date" value={vtFechaDesde} onChange={e => setVtFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
+                  <input type={vtFechaDesde ? "date" : "text"} placeholder="Del" value={vtFechaDesde} onFocus={e => e.target.type = "date"} onBlur={e => { if(!e.target.value) e.target.type = "text" }} onChange={e => setVtFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
                 </div>
                 <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                  <div style={{ fontSize: 12, color: c.muted, marginBottom: 4, textAlign: "center", fontWeight: 500 }}>Al</div>
-                  <input type="date" value={vtFechaHasta} onChange={e => setVtFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
+                  <input type={vtFechaHasta ? "date" : "text"} placeholder="Al" value={vtFechaHasta} onFocus={e => e.target.type = "date"} onBlur={e => { if(!e.target.value) e.target.type = "text" }} onChange={e => setVtFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
                 </div>
               </div>
               {(vtFechaDesde || vtFechaHasta) && (
@@ -838,12 +836,10 @@ export default function App() {
                 <div style={{ ...s.card, padding: 16 }}>
                   <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
                     <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                      <div style={{ fontSize: 12, color: c.muted, marginBottom: 5, textAlign: "center", fontWeight: 500 }}>Del</div>
-                      <input type="date" value={filtroFechaResumenDesde} onChange={e => setFiltroFechaResumenDesde(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
+                      <input type={filtroFechaResumenDesde ? "date" : "text"} placeholder="Del" value={filtroFechaResumenDesde} onFocus={e => e.target.type = "date"} onBlur={e => { if(!e.target.value) e.target.type = "text" }} onChange={e => setFiltroFechaResumenDesde(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
                     </div>
                     <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                      <div style={{ fontSize: 12, color: c.muted, marginBottom: 5, textAlign: "center", fontWeight: 500 }}>Al</div>
-                      <input type="date" value={filtroFechaResumenHasta} onChange={e => setFiltroFechaResumenHasta(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
+                      <input type={filtroFechaResumenHasta ? "date" : "text"} placeholder="Al" value={filtroFechaResumenHasta} onFocus={e => e.target.type = "date"} onBlur={e => { if(!e.target.value) e.target.type = "text" }} onChange={e => setFiltroFechaResumenHasta(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
                     </div>
                   </div>
                   {(filtroFechaResumenDesde || filtroFechaResumenHasta) && (
@@ -990,8 +986,12 @@ export default function App() {
                 </div>
                 <div style={{ ...s.label, marginTop: 28, textAlign: "center" }}>Filtrar por rango de fecha</div>
                 <div style={{ display: "flex", gap: 12, alignItems: "center", marginTop: 16 }}>
-                  <div style={{ flex: 1 }}><div style={{ fontSize: 12, color: c.muted, marginBottom: 6, textAlign: "center", fontWeight: 500 }}>Del</div><input type="date" value={filtroHistFechaDesde} onChange={e => setFiltroHistFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center" }} /></div>
-                  <div style={{ flex: 1 }}><div style={{ fontSize: 12, color: c.muted, marginBottom: 6, textAlign: "center", fontWeight: 500 }}>Al</div><input type="date" value={filtroHistFechaHasta} onChange={e => setFiltroHistFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center" }} /></div>
+                  <div style={{ flex: 1 }}>
+                    <input type={filtroHistFechaDesde ? "date" : "text"} placeholder="Del" value={filtroHistFechaDesde} onFocus={e => e.target.type = "date"} onBlur={e => { if(!e.target.value) e.target.type = "text" }} onChange={e => setFiltroHistFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <input type={filtroHistFechaHasta ? "date" : "text"} placeholder="Al" value={filtroHistFechaHasta} onFocus={e => e.target.type = "date"} onBlur={e => { if(!e.target.value) e.target.type = "text" }} onChange={e => setFiltroHistFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
+                  </div>
                 </div>
                 {(filtroHistFechaDesde || filtroHistFechaHasta) && <button style={{ width: "100%", fontSize: 14, fontWeight: 700, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 16, fontFamily: "inherit" }} onClick={() => { setFiltroHistFechaDesde(""); setFiltroHistFechaHasta(""); }}>× Limpiar fechas</button>}
               </div>
@@ -1032,18 +1032,18 @@ export default function App() {
           {tab === "config" && (
             <div style={s.section}>
               
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>Plan actual</h3>
-              </div>
-
               <div style={{...s.card, marginBottom: 24}}>
                 <div style={{ ...s.label, textAlign: "center" }}>DEFINIR META DE AHORRO (S/)</div>
                 <input style={{ ...s.input, marginTop: 12, marginBottom: 24, fontSize: 24, textAlign: "center", color: "#FCB606", fontWeight: 700 }} type={isEditingMeta ? "number" : "text"} placeholder="Ej: 100000" value={isEditingMeta ? metaAhorro : (metaAhorro ? formatMoney(metaAhorro) : "")} onFocus={() => setIsEditingMeta(true)} onBlur={() => setIsEditingMeta(false)} onChange={e => setMetaAhorro(e.target.value)} />
                 
                 <div style={{ ...s.label, textAlign: "center" }}>PERÍODO DE AHORRO</div>
                 <div style={{ display: "flex", gap: 12, marginTop: 12, marginBottom: 24 }}>
-                  <div style={{ flex: 1 }}><div style={{ fontSize: 12, color: c.muted, marginBottom: 6, textAlign: "center", fontWeight: 500 }}>DEL</div><input style={{ ...s.input, textAlign: "center" }} type="date" value={fechaInicioPlan} onChange={e => setFechaInicioPlan(e.target.value)} /></div>
-                  <div style={{ flex: 1 }}><div style={{ fontSize: 12, color: c.muted, marginBottom: 6, textAlign: "center", fontWeight: 500 }}>AL</div><input style={{ ...s.input, textAlign: "center" }} type="date" value={fechaFinPlan} onChange={e => setFechaFinPlan(e.target.value)} /></div>
+                  <div style={{ flex: 1 }}>
+                    <input type={fechaInicioPlan ? "date" : "text"} placeholder="Del" value={fechaInicioPlan} onFocus={e => e.target.type = "date"} onBlur={e => { if(!e.target.value) e.target.type = "text" }} onChange={e => setFechaInicioPlan(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <input type={fechaFinPlan ? "date" : "text"} placeholder="Al" value={fechaFinPlan} onFocus={e => e.target.type = "date"} onBlur={e => { if(!e.target.value) e.target.type = "text" }} onChange={e => setFechaFinPlan(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
+                  </div>
                 </div>
                 
                 <div style={{ ...s.label, textAlign: "center" }}>INGRESO MENSUAL (S/)</div>
