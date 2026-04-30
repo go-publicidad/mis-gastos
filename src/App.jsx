@@ -231,6 +231,10 @@ export default function App() {
   const [filtroFechaResumenDesde, setFiltroFechaResumenDesde] = useState(hoy());
   const [filtroFechaResumenHasta, setFiltroFechaResumenHasta] = useState(hoy());
 
+  // NUEVOS ESTADOS PARA LOS GRÁFICOS Y FILTROS DEL RESUMEN
+  const [filtroTipoResumen, setFiltroTipoResumen] = useState("gasto"); // 'todos', 'gasto', 'ingreso'
+  const [tipoGrafico, setTipoGrafico] = useState("donut"); // 'donut', 'bar'
+
   const [viewAll, setViewAll] = useState(false);
   const [showVtFiltro, setShowVtFiltro] = useState(false);
   const [vtFechaDesde, setVtFechaDesde] = useState("");
@@ -484,17 +488,23 @@ export default function App() {
     if (filtroResumen === "rango") return gastos.filter(g => (!filtroFechaResumenDesde || g.fecha >= filtroFechaResumenDesde) && (!filtroFechaResumenHasta || g.fecha <= filtroFechaResumenHasta));
     return gastos;
   };
+  
   const gastosFiltradosResumen = getFiltradosResumen();
   const totalGastadoR = gastosFiltradosResumen.filter(g => g.tipo === "gasto").reduce((a, g) => a + g.monto, 0);
   const totalIngresosR = gastosFiltradosResumen.filter(g => g.tipo === "ingreso").reduce((a, g) => a + g.monto, 0);
   const ahorroR = totalIngresosR - totalGastadoR;
 
+  // NUEVO: Variables filtradas y dinámicas para el gráfico y la lista
+  const baseForChart = filtroTipoResumen === "todos" ? gastosFiltradosResumen : gastosFiltradosResumen.filter(g => g.tipo === filtroTipoResumen);
+  const listaMovimientosResumen = filtroTipoResumen === "todos" ? gastosFiltradosResumen : gastosFiltradosResumen.filter(g => g.tipo === filtroTipoResumen);
+
   const porCategoriaR = categorias.map(cat => ({
-    ...cat, total: gastosFiltradosResumen.filter(g => g.tipo === "gasto" && g.categoria === cat.id).reduce((a, g) => a + g.monto, 0),
+    ...cat, total: baseForChart.filter(g => g.categoria === cat.id).reduce((a, g) => a + g.monto, 0),
   })).filter(c => c.total > 0).sort((a, b) => b.total - a.total);
   
-  // LÓGICA PARA EL DONUT CHART (CSS)
+  const maxCatR = porCategoriaR[0]?.total || 1;
   const totalGastosDonut = porCategoriaR.reduce((sum, c) => sum + c.total, 0) || 1;
+  
   let currentDeg = 0;
   const conicString = porCategoriaR.length > 0 
     ? porCategoriaR.map(c => {
@@ -669,7 +679,7 @@ export default function App() {
       ) : (
         <>
           {tab === "resumen" ? (
-             <div style={{ padding: "20px 20px 10px", background: c.bg, position: "sticky", top: 0, zIndex: 90, display: "flex", alignItems: "center", gap: 16 }}>
+             <div style={{ padding: "24px 20px 16px", background: c.bg, position: "sticky", top: 0, zIndex: 90, display: "flex", alignItems: "center", gap: 16 }}>
                <button onClick={() => setShowMenu(true)} style={{ backgroundColor: "transparent", border: "none", color: c.text, fontSize: 26, cursor: "pointer", padding: 0 }}>☰</button>
                <h1 style={{ fontSize: 28, fontWeight: 700, color: c.text, margin: 0, fontFamily: "'Montserrat', sans-serif" }}>Resumen</h1>
              </div>
@@ -776,7 +786,7 @@ export default function App() {
                             <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text }}>
                               {getDisplayDesc(g, categorias)}
                             </div>
-                            <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ingresos"}</div>
+                            <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ahorros"}</div>
                           </div>
                         </div>
                         <div style={{ textAlign: "right" }}>
@@ -801,7 +811,6 @@ export default function App() {
           {tab === "resumen" && (
             <div style={s.section}>
               
-              {/* PÍLDORAS DE FILTRO TIPO TREINTA */}
               <div className="hide-scroll" style={{ display: "flex", gap: 8, marginBottom: 24, overflowX: "auto", paddingBottom: 4 }}>
                 {[{ id: "hoy", label: "Hoy" }, { id: "mes", label: "Mes" }, { id: "rango", label: "Personalizado 📅" }].map(f => (
                   <button key={f.id} style={{
@@ -834,7 +843,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* TARJETAS SUPERIORES (Ingresos / Gastos) */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
                 <div style={{ background: isDark ? "rgba(16, 185, 129, 0.1)" : "#F0FDF4", borderRadius: 16, padding: 16, border: isDark ? "1px solid rgba(16, 185, 129, 0.2)" : "none" }}>
                   <div style={{ fontSize: 13, color: c.muted, marginBottom: 6, fontWeight: 500 }}>Total ingresos</div>
@@ -846,16 +854,30 @@ export default function App() {
                 </div>
               </div>
 
-              {/* GRÁFICO CIRCULAR DE DONA Y LEYENDA */}
+              {/* GRÁFICO DINÁMICO (Dona / Barras) */}
               <div style={{ ...s.card, padding: "20px" }}>
-                <div style={{ display: "flex", gap: 24, borderBottom: `1px solid ${c.border}`, paddingBottom: 12, marginBottom: 20 }}>
-                   <span style={{ fontSize: 14, fontWeight: 700, color: c.text, borderBottom: `2px solid ${c.red}`, paddingBottom: 12, marginBottom: -13 }}>Gastos</span>
-                   <span style={{ fontSize: 14, fontWeight: 600, color: c.muted }}>Ahorros</span>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, paddingBottom: 0, marginBottom: 20 }}>
+                  <div style={{ display: "flex", gap: 16 }}>
+                    {[{ id: "todos", label: "Total" }, { id: "gasto", label: "Gastos" }, { id: "ingreso", label: "Ahorros" }].map(opt => (
+                      <button key={opt.id} onClick={() => setFiltroTipoResumen(opt.id)} style={{
+                        background: "none", border: "none", padding: "0 0 12px 0", fontSize: 14, fontWeight: 700,
+                        color: filtroTipoResumen === opt.id ? c.text : c.muted,
+                        borderBottom: filtroTipoResumen === opt.id ? `2px solid ${c.red}` : "2px solid transparent",
+                        cursor: "pointer", fontFamily: "inherit", marginBottom: -1
+                      }}>
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{ display: "flex", gap: 12, paddingBottom: 12 }}>
+                    <button onClick={() => setTipoGrafico("bar")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGrafico === "bar" ? 1 : 0.3, fontSize: 18, padding: 0 }}>📊</button>
+                    <button onClick={() => setTipoGrafico("donut")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGrafico === "donut" ? 1 : 0.3, fontSize: 18, padding: 0 }}>🍩</button>
+                  </div>
                 </div>
                 
                 {porCategoriaR.length === 0 ? (
-                  <div style={{ textAlign: "center", color: c.muted, padding: "20px 0", fontSize: 14 }}>Aún no hay gastos registrados</div>
-                ) : (
+                  <div style={{ textAlign: "center", color: c.muted, padding: "20px 0", fontSize: 14 }}>Aún no hay registros en esta vista</div>
+                ) : tipoGrafico === "donut" ? (
                   <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
                     <div style={{ width: 130, height: 130, borderRadius: "50%", background: `conic-gradient(${conicString})`, position: "relative", flexShrink: 0 }}>
                        <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 70, height: 70, background: c.card, borderRadius: "50%" }}></div>
@@ -872,10 +894,19 @@ export default function App() {
                        ))}
                     </div>
                   </div>
+                ) : (
+                  <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 140, marginTop: 16 }}>
+                    {porCategoriaR.slice(0, 6).map((cat) => (
+                      <div key={cat.id} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, height: "100%", justifyContent: "flex-end" }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: c.text }}>{Math.round((cat.total / totalGastosDonut) * 100)}%</span>
+                        <div style={{ width: "100%", maxWidth: 36, height: `${Math.max(4, (cat.total / maxCatR) * 90)}px`, background: cat.color, borderRadius: "4px 4px 0 0" }} />
+                        <span style={{ fontSize: 10, fontWeight: 500, color: c.muted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", width: "100%", textAlign: "center" }}>{cat.label.substring(cat.label.indexOf(" ") + 1)}</span>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
 
-              {/* TARJETA DE ÉXITO DE AHORRO */}
               <div style={{ ...s.card, display: "flex", alignItems: "center", gap: 16, padding: "16px 20px" }}>
                 <div style={{ width: 32, height: 32, borderRadius: "50%", background: isDark ? "rgba(16, 185, 129, 0.15)" : "#DCFCE7", color: c.green, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>✓</div>
                 <div>
@@ -884,16 +915,27 @@ export default function App() {
                 </div>
               </div>
 
-              {/* LISTA DE MOVIMIENTOS FILTRADOS */}
+              {/* LISTA DE MOVIMIENTOS DINÁMICA */}
               <div style={s.card}>
-                <div style={{ display: "flex", gap: 24, borderBottom: `1px solid ${c.border}`, paddingBottom: 12, marginBottom: 12 }}>
-                   <span style={{ fontSize: 14, fontWeight: 700, color: c.text, borderBottom: `2px solid ${c.red}`, paddingBottom: 12, marginBottom: -13 }}>Movimientos</span>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, paddingBottom: 0, marginBottom: 12 }}>
+                  <div style={{ display: "flex", gap: 16 }}>
+                    {[{ id: "todos", label: "Total" }, { id: "gasto", label: "Gastos" }, { id: "ingreso", label: "Ahorros" }].map(opt => (
+                      <button key={opt.id} onClick={() => setFiltroTipoResumen(opt.id)} style={{
+                        background: "none", border: "none", padding: "0 0 12px 0", fontSize: 14, fontWeight: 700,
+                        color: filtroTipoResumen === opt.id ? c.text : c.muted,
+                        borderBottom: filtroTipoResumen === opt.id ? `2px solid ${c.red}` : "2px solid transparent",
+                        cursor: "pointer", fontFamily: "inherit", marginBottom: -1
+                      }}>
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 
-                {gastosFiltradosResumen.length === 0 ? (
+                {listaMovimientosResumen.length === 0 ? (
                   <div style={{ textAlign: "center", color: c.muted, padding: "20px 0", fontSize: 14 }}>No hay registros en este periodo</div>
                 ) : (
-                  gastosFiltradosResumen.map((g, i, arr) => {
+                  listaMovimientosResumen.map((g, i, arr) => {
                     const cat = categorias.find(c => c.id === g.categoria);
                     const isLast = i === arr.length - 1;
                     return (
@@ -911,10 +953,14 @@ export default function App() {
                             <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)}</div>
                           </div>
                         </div>
-                        <div style={{ textAlign: "right" }}>
+                        <div style={{ textAlign: "right", display: "flex", alignItems: "center", gap: 12 }}>
                            <span style={{ fontSize: 16, fontWeight: 700, color: g.tipo === "gasto" ? c.text : c.green }}>
                             {g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}
                           </span>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                            <button style={{...s.editBtn, padding: 2}} onClick={() => abrirEdicion(g)}>✏️</button>
+                            <button style={{...s.deleteBtn, padding: 2}} onClick={() => eliminar(g.id)}>×</button>
+                          </div>
                         </div>
                       </div>
                     );
