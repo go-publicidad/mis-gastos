@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
-// Nombres actualizados a la versión más reciente de Lucide React
 import { 
   Home, PieChart, FileText, Settings, Menu, RefreshCw, 
   ArrowDown, ArrowUp, PiggyBank, Target, 
