@@ -1412,18 +1412,18 @@ export default function App() {
           </div>
 
           <div style={{ marginBottom: 32 }}>
-            <div style={{ fontSize: 14, color: "#FF803C", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Mi cuenta</div>
-            <MenuItem icon={<UserCircle size={24}/>} text="Mis datos" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("datos")} />
-            <MenuItem icon={<Lock size={24}/>} text="Cambiar mi clave" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("clave")} />
-            <MenuItem icon={<Trophy size={24}/>} text="Mis logros / Insignias" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("logros")} />
+            <div style={{ fontSize: 14, color: c.text, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Mi cuenta</div>
+            <MenuItem icon={<UserCircle size={24} color="#FF803C" />} text="Mis datos" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("datos")} />
+            <MenuItem icon={<Lock size={24} color="#FF803C" />} text="Cambiar mi clave" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("clave")} />
+            <MenuItem icon={<Trophy size={24} color="#FF803C" />} text="Mis logros / Insignias" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("logros")} />
           </div>
 
           <div style={{ marginBottom: 32 }}>
-            <div style={{ fontSize: 14, color: "#FF803C", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Ajustes</div>
-            <MenuItem icon={<Target size={24}/>} text="Mi Meta de Ahorro" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowMenu(false); setTab("config"); }} />
-            <MenuItem icon={<Palette size={24}/>} text="Apariencia (Tema Claro/Oscuro)" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowApariencia(true); setProfileScreen(null); }} />
-            <MenuItem icon={<Download size={24}/>} text="Exportar Reportes" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowMenu(false); setShowEmailModal(true); }} />
-            <MenuItem icon={<Headphones size={24}/>} text="Centro de ayuda" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("ayuda")} />
+            <div style={{ fontSize: 14, color: c.text, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Ajustes</div>
+            <MenuItem icon={<Target size={24} color="#FF803C" />} text="Mi Meta de Ahorro" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowMenu(false); setTab("config"); }} />
+            <MenuItem icon={<Palette size={24} color="#FF803C" />} text="Apariencia (Tema Claro/Oscuro)" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowApariencia(true); setProfileScreen(null); }} />
+            <MenuItem icon={<Download size={24} color="#FF803C" />} text="Exportar Reportes" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowMenu(false); setShowEmailModal(true); }} />
+            <MenuItem icon={<Headphones size={24} color="#FF803C" />} text="Centro de ayuda" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("ayuda")} />
           </div>
 
           <div style={{ marginTop: "auto", paddingTop: 32 }}>
