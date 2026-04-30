@@ -619,12 +619,12 @@ export default function App() {
       position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480,
       background: c.nav, display: "flex", zIndex: 100,
       paddingTop: 0, paddingBottom: 0, 
-      boxShadow: isDark ? "0 -4px 24px rgba(0,0,0,0.4)" : "0 -4px 24px rgba(0,0,0,0.06)"
+      boxShadow: isDark ? "0 -4px 24px rgba(0,0,0,0.6)" : "0 -8px 24px rgba(0,0,0,0.12)"
     },
     navBtn: (a) => ({
-      flex: 1, paddingTop: 8, paddingBottom: `calc(12px + env(safe-area-inset-bottom, 0px))`, backgroundColor: "transparent", WebkitAppearance: "none", border: "none",
-      color: a ? "#FCB606" : c.muted, fontSize: 11, fontWeight: a ? 700 : 500, cursor: "pointer",
-      display: "flex", flexDirection: "column", alignItems: "center", gap: 4, fontFamily: "inherit",
+      flex: 1, paddingTop: 10, paddingBottom: `calc(20px + env(safe-area-inset-bottom, 0px))`, backgroundColor: "transparent", WebkitAppearance: "none", border: "none",
+      color: a ? "#FCB606" : c.muted, fontSize: 12, fontWeight: 600, cursor: "pointer",
+      display: "flex", flexDirection: "column", alignItems: "center", gap: 2, fontFamily: "inherit",
       position: "relative"
     }),
     fabCircle: {
@@ -1255,7 +1255,7 @@ export default function App() {
             {[{ id: "hoy", icon: "🏠", label: "Inicio" }, { id: "resumen", icon: "📊", label: "Reportes" }].map(n => (
               <button key={n.id} style={s.navBtn(tab === n.id)} onClick={() => setTab(n.id)}>
                 {tab === n.id && <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 44, height: 3, background: "#FCB606", borderRadius: "0 0 4px 4px" }} />}
-                <span style={{ fontSize: 24, marginBottom: 2 }}>{n.icon}</span>
+                <span style={{ fontSize: 24 }}>{n.icon}</span>
                 <span style={{ fontFamily: "'Montserrat', sans-serif" }}>{n.label}</span>
               </button>
             ))}
@@ -1267,7 +1267,7 @@ export default function App() {
             {[{ id: "historial", icon: "📋", label: "Historial" }, { id: "config", icon: "⚙️", label: "Config" }].map(n => (
               <button key={n.id} style={s.navBtn(tab === n.id)} onClick={() => setTab(n.id)}>
                 {tab === n.id && <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 44, height: 3, background: "#FCB606", borderRadius: "0 0 4px 4px" }} />}
-                <span style={{ fontSize: 24, marginBottom: 2 }}>{n.icon}</span>
+                <span style={{ fontSize: 24 }}>{n.icon}</span>
                 <span style={{ fontFamily: "'Montserrat', sans-serif" }}>{n.label}</span>
               </button>
             ))}
