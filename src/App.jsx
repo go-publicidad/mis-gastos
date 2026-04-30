@@ -678,7 +678,7 @@ export default function App() {
               headTitle = (
                 <>
                   <span style={{ fontWeight: 500 }}>¡Hola</span>
-                  <span>, {userName}! 👋</span>
+                  <span style={{ fontWeight: 600 }}>, {userName}! 👋</span>
                 </>
               ); 
               headSub = "Este es el resumen de tu negocio"; 
@@ -688,11 +688,11 @@ export default function App() {
             else if (tab === "config") headTitle = "Configuración";
 
             return (
-              <div style={{ padding: "12px 20px 8px", background: c.bg, position: "sticky", top: 0, zIndex: 90 }}>
+              <div style={{ padding: "8px 20px 4px", background: c.bg, position: "sticky", top: 0, zIndex: 90 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
                     <button onClick={() => setShowMenu(true)} style={{ backgroundColor: "transparent", border: "none", color: c.text, fontSize: 26, cursor: "pointer", padding: 0, display: "flex" }}>☰</button>
-                    <h1 style={{ fontSize: 24, fontWeight: 700, color: c.text, margin: 0, fontFamily: "'Montserrat', sans-serif", lineHeight: 1.1 }}>{headTitle}</h1>
+                    <h1 style={{ fontSize: 20, fontWeight: 600, color: c.text, margin: 0, fontFamily: "'Montserrat', sans-serif", lineHeight: 1.1 }}>{headTitle}</h1>
                   </div>
                   <button onClick={() => window.location.reload()} style={{ backgroundColor: "transparent", border: "none", fontSize: 20, cursor: "pointer", padding: 0, color: c.text }}>🔄</button>
                 </div>
