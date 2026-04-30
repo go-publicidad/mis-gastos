@@ -198,7 +198,7 @@ export default function App() {
   const [fechaFinPlan, setFechaFinPlan] = useState(calcularFechaFutura(150));
   const [ingresoMensual, setIngresoMensual] = useState("");
   
-  const [userName, setUserName] = useState("Emprendedor");
+  const [userName, setUserName] = useState("Paul Flores");
 
   const [isEditingMeta, setIsEditingMeta] = useState(false);
   const [isEditingIngreso, setIsEditingIngreso] = useState(false);
@@ -676,19 +676,33 @@ export default function App() {
         </>
       ) : (
         <>
-          {tab === "resumen" ? (
+          {tab === "resumen" && (
              <div style={{ padding: "24px 20px 16px", background: c.bg, position: "sticky", top: 0, zIndex: 90, display: "flex", alignItems: "center", gap: 16 }}>
                <button onClick={() => setShowMenu(true)} style={{ backgroundColor: "transparent", border: "none", color: c.text, fontSize: 26, cursor: "pointer", padding: 0 }}>☰</button>
                <h1 style={{ fontSize: 28, fontWeight: 700, color: c.text, margin: 0, fontFamily: "'Montserrat', sans-serif" }}>Resumen</h1>
              </div>
-          ) : (
+          )}
+          
+          {tab === "hoy" && (
+            <div style={{ padding: "24px 20px 16px", background: c.bg, position: "sticky", top: 0, zIndex: 90, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <button onClick={() => setShowMenu(true)} style={{ backgroundColor: "transparent", border: "none", color: c.green, fontSize: 26, cursor: "pointer", padding: 0 }}>☰</button>
+                <div>
+                  <h1 style={{ fontSize: 22, fontWeight: 700, color: c.text, margin: 0, fontFamily: "'Montserrat', sans-serif" }}>¡Hola, {userName}! 👋</h1>
+                  <div style={{ fontSize: 13, color: c.muted, marginTop: 4, fontWeight: 500 }}>Este es el resumen de tu negocio</div>
+                </div>
+              </div>
+              <button onClick={() => window.location.reload()} style={{ backgroundColor: "transparent", border: "none", fontSize: 18, cursor: "pointer", padding: 0, color: c.text }}>🔄</button>
+            </div>
+          )}
+
+          {(tab === "historial" || tab === "config") && (
             <div style={s.header}>
               <div style={{ display: "flex", justifyContent: "center", alignItems: "center", position: "relative", marginBottom: 4 }}>
                 <button onClick={() => setShowMenu(true)} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: c.green, fontSize: 26, cursor: "pointer", position: "absolute", left: 0, padding: 0 }}>☰</button>
                 <h1 style={s.title}>Ahorro Meta</h1>
                 <button onClick={() => window.location.reload()} style={{ ...s.refreshBtn, position: "absolute", right: 0 }}>🔄</button>
               </div>
-              <p style={{ ...s.subtitle, textAlign: "center", width: "100%", display: "block" }}>Día {diasTranscurridosPlan} de {diasTotalPlan}</p>
             </div>
           )}
 
@@ -713,7 +727,7 @@ export default function App() {
                 </div>
 
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#AAA", fontWeight: 500, marginBottom: 8 }}>
-                  <span>{progreso.toFixed(1)}%</span>
+                  <span>{progreso.toFixed(1)}% <span style={{opacity: 0.5, margin: "0 6px"}}>|</span> Día {diasTranscurridosPlan} de {diasTotalPlan}</span>
                   <span>de {formatMoney(metaTotalNum)}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#AAA", fontWeight: 500 }}>
@@ -1011,13 +1025,7 @@ export default function App() {
                             <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} | {g.tipo === "gasto" ? "Gastos" : "Ahorros"}</div>
                           </div>
                         </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                          <span style={{ fontSize: 16, fontWeight: 700, color: g.tipo === "gasto" ? c.text : c.green }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
-                          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                            <button style={{...s.editBtn, padding: 2}} onClick={() => abrirEdicion(g)}>✏️</button>
-                            <button style={{...s.deleteBtn, padding: 2}} onClick={() => eliminar(g.id)}>×</button>
-                          </div>
-                        </div>
+                        <span style={{ fontSize: 16, fontWeight: 700, color: g.tipo === "gasto" ? c.text : c.green }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
                       </div>
                     );
                   })}
