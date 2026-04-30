@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
+// 👇 Importamos los nuevos íconos profesionales
+import { 
+  Home, PieChart, FileText, Settings, Menu, RefreshCw, 
+  ArrowDownToLine, ArrowUpFromLine, PiggyBank, Target, 
+  Edit2, Trash2, X, Calendar, Mail, CheckCircle2, ChevronRight,
+  UserCircle, Lock, Trophy, Palette, Download, Headphones, LogOut, AlertTriangle
+} from "lucide-react";
 
 const SUPABASE_URL = "https://jboazxmcmvvcscqeerbz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impib2F6eG1jbXZ2Y3NjcWVlcmJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNTMxMjksImV4cCI6MjA5MjcyOTEyOX0.zFKEHscM7-PaXqoSgbk7ra8JFZ3Hh69JJKktm7N4IwY";
@@ -213,9 +220,9 @@ const exportarPDF = (gastos, categorias) => {
 
 const MenuItem = ({ icon, text, color, mutedColor, border, onClick }) => (
   <button onClick={onClick} style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", padding: "16px 0", cursor: "pointer", color: color, fontSize: 16, fontWeight: 500, borderBottom: `1px solid ${border}`, textAlign: "left", fontFamily: "inherit" }}>
-    <span style={{ fontSize: 24 }}>{icon}</span>
+    <span style={{ display: "flex", alignItems: "center", color: color }}>{icon}</span>
     <span style={{ flex: 1 }}>{text}</span>
-    <span style={{ color: mutedColor, fontSize: 20 }}>›</span>
+    <span style={{ color: mutedColor }}><ChevronRight size={20} /></span>
   </button>
 );
 
@@ -682,8 +689,12 @@ export default function App() {
             <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FCB606", fontSize: 24, cursor: "pointer", padding: 0 }} onClick={() => { setViewAll(false); window.scrollTo(0, 0); }}>←</button>
             <h2 style={{ margin: 0, fontSize: 18, color: c.text, fontWeight: 600 }}>Movimientos</h2>
             <div style={{ display: "flex", gap: 16 }}>
-              <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FCB606", fontSize: 20, cursor: "pointer", padding: 0 }} onClick={() => setShowEmailModal(true)}>✉️</button>
-              <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FCB606", fontSize: 20, cursor: "pointer", padding: 0 }} onClick={() => setShowVtFiltro(!showVtFiltro)}>📅</button>
+              <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FCB606", fontSize: 20, cursor: "pointer", padding: 0 }} onClick={() => setShowEmailModal(true)}>
+                <Mail size={20} />
+              </button>
+              <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FCB606", fontSize: 20, cursor: "pointer", padding: 0 }} onClick={() => setShowVtFiltro(!showVtFiltro)}>
+                <Calendar size={20} />
+              </button>
             </div>
           </div>
           {showVtFiltro && (
@@ -698,7 +709,9 @@ export default function App() {
                 </div>
               </div>
               {(vtFechaDesde || vtFechaHasta) && (
-                <button style={{ width: "100%", fontSize: 14, fontWeight: 600, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", padding: "12px 0 0", marginTop: 4, fontFamily: "inherit" }} onClick={() => { setVtFechaDesde(""); setVtFechaHasta(""); }}>× Limpiar fechas</button>
+                <button style={{ width: "100%", fontSize: 14, fontWeight: 600, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", padding: "12px 0 0", marginTop: 4, fontFamily: "inherit" }} onClick={() => { setVtFechaDesde(""); setVtFechaHasta(""); }}>
+                  <X size={14} style={{ marginRight: 4, verticalAlign: "middle" }} /> Limpiar fechas
+                </button>
               )}
             </div>
           )}
@@ -730,8 +743,8 @@ export default function App() {
                           {g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}
                         </span>
                         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                          <button style={{...s.editBtn, padding: 2}} onClick={() => abrirEdicion(g)}>✏️</button>
-                          <button style={{...s.deleteBtn, padding: 2}} onClick={() => eliminar(g.id)}>×</button>
+                          <button style={{...s.editBtn, padding: 2}} onClick={() => abrirEdicion(g)}><Edit2 size={16} /></button>
+                          <button style={{...s.deleteBtn, padding: 2}} onClick={() => eliminar(g.id)}><Trash2 size={16} /></button>
                         </div>
                       </div>
                     </div>
@@ -764,17 +777,21 @@ export default function App() {
               <div style={{ padding: "8px 20px 4px", background: c.bg, position: "sticky", top: 0, zIndex: 90 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                    <button onClick={() => setShowMenu(true)} style={{ backgroundColor: "transparent", border: "none", color: c.text, fontSize: 26, cursor: "pointer", padding: 0, display: "flex" }}>☰</button>
+                    <button onClick={() => setShowMenu(true)} style={{ backgroundColor: "transparent", border: "none", color: c.text, cursor: "pointer", padding: 0, display: "flex" }}>
+                      <Menu size={28} />
+                    </button>
                     <h1 style={{ fontSize: 20, fontWeight: 600, color: c.text, margin: 0, fontFamily: "'Montserrat', sans-serif", lineHeight: 1.1 }}>{headTitle}</h1>
                   </div>
-                  <button onClick={() => window.location.reload()} style={{ backgroundColor: "transparent", border: "none", fontSize: 20, cursor: "pointer", padding: 0, color: c.text }}>🔄</button>
+                  <button onClick={() => window.location.reload()} style={{ backgroundColor: "transparent", border: "none", cursor: "pointer", padding: 0, color: c.text }}>
+                    <RefreshCw size={22} />
+                  </button>
                 </div>
-                {headSub && <div style={{ fontSize: 13, color: c.muted, marginTop: 4, fontWeight: 500, paddingLeft: 42 }}>{headSub}</div>}
+                {headSub && <div style={{ fontSize: 13, color: c.muted, marginTop: 4, fontWeight: 500, paddingLeft: 44 }}>{headSub}</div>}
               </div>
             );
           })()}
 
-          {error && <div style={s.errorCard}>⚠️ {error}</div>}
+          {error && <div style={s.errorCard}><AlertTriangle size={16} style={{ verticalAlign: "middle", marginRight: 8 }} /> {error}</div>}
 
           {tab === "hoy" && (
             <div style={s.section}>
@@ -811,7 +828,7 @@ export default function App() {
               <div style={s.grid2}>
                 <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                    <IconBadge emoji="⬇️" bg={c.iconBgGreen} color={c.green} />
+                    <IconBadge emoji={<ArrowDownToLine size={18} />} bg={c.iconBgGreen} color={c.green} />
                     <span style={{ fontSize: 13, fontWeight: 600, color: c.muted }}>Ingresos hoy</span>
                   </div>
                   <div style={{ ...s.greenNum, textAlign: "center", marginTop: 2 }}>{formatMoney(totalIngresosHoy)}</div>
@@ -819,7 +836,7 @@ export default function App() {
                 
                 <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                    <IconBadge emoji="⬆️" bg={c.iconBgRed} color={c.red} />
+                    <IconBadge emoji={<ArrowUpFromLine size={18} />} bg={c.iconBgRed} color={c.red} />
                     <span style={{ fontSize: 13, fontWeight: 600, color: c.muted }}>Gastos hoy</span>
                   </div>
                   <div style={{ ...s.redNum, textAlign: "center", marginTop: 2 }}>{formatMoney(totalGastadoHoy)}</div>
@@ -827,7 +844,7 @@ export default function App() {
 
                 <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                    <IconBadge emoji="🐷" bg={c.iconBgYellow} color="#FCB606" />
+                    <IconBadge emoji={<PiggyBank size={18} />} bg={c.iconBgYellow} color="#FCB606" />
                     <span style={{ fontSize: 13, fontWeight: 600, color: c.muted }}>Ahorro hoy</span>
                   </div>
                   <div style={{ fontSize: 22, fontWeight: 700, color: "#FCB606", textAlign: "center", marginTop: 2 }}>{formatMoney(totalIngresosHoy - totalGastadoHoy)}</div>
@@ -835,7 +852,7 @@ export default function App() {
 
                 <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                    <IconBadge emoji="🎯" bg={c.iconBgPurple} color={c.iconTextPurple} />
+                    <IconBadge emoji={<Target size={18} />} bg={c.iconBgPurple} color={c.iconTextPurple} />
                     <span style={{ fontSize: 13, fontWeight: 600, color: c.muted }}>Límite / día</span>
                   </div>
                   <div style={{ fontSize: 22, fontWeight: 700, color: c.text, textAlign: "center", marginTop: 2 }}>{formatMoney(ahorroMetaDiario)}</div>
@@ -912,7 +929,9 @@ export default function App() {
                     </div>
                   </div>
                   {(filtroFechaResumenDesde || filtroFechaResumenHasta) && (
-                    <button style={{ width: "100%", fontSize: 14, fontWeight: 700, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 16, fontFamily: "inherit" }} onClick={() => { setFiltroFechaResumenDesde(""); setFiltroFechaResumenHasta(""); }}>× Limpiar fechas</button>
+                    <button style={{ width: "100%", fontSize: 14, fontWeight: 700, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 16, fontFamily: "inherit" }} onClick={() => { setFiltroFechaResumenDesde(""); setFiltroFechaResumenHasta(""); }}>
+                      <X size={14} style={{ marginRight: 4, verticalAlign: "middle" }} /> Limpiar fechas
+                    </button>
                   )}
                 </div>
               )}
@@ -933,8 +952,12 @@ export default function App() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, paddingBottom: 12, marginBottom: 20 }}>
                   <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: c.text }}>Ingresos por categoría</h3>
                   <div style={{ display: "flex", gap: 12 }}>
-                    <button onClick={() => setTipoGraficoIngresos("bar")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoIngresos === "bar" ? 1 : 0.3, fontSize: 18, padding: 0 }}>📊</button>
-                    <button onClick={() => setTipoGraficoIngresos("donut")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoIngresos === "donut" ? 1 : 0.3, fontSize: 18, padding: 0 }}>🍩</button>
+                    <button onClick={() => setTipoGraficoIngresos("bar")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoIngresos === "bar" ? 1 : 0.3, padding: 0 }}>
+                      <BarChart2 size={20} color={c.text} />
+                    </button>
+                    <button onClick={() => setTipoGraficoIngresos("donut")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoIngresos === "donut" ? 1 : 0.3, padding: 0 }}>
+                      <PieChart size={20} color={c.text} />
+                    </button>
                   </div>
                 </div>
                 
@@ -984,7 +1007,9 @@ export default function App() {
               </div>
 
               <div style={{ ...s.card, display: "flex", alignItems: "center", gap: 16, padding: "16px 20px" }}>
-                <div style={{ width: 32, height: 32, borderRadius: "50%", background: isDark ? "rgba(16, 185, 129, 0.15)" : "#DCFCE7", color: c.green, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>✓</div>
+                <div style={{ width: 32, height: 32, borderRadius: "50%", background: isDark ? "rgba(16, 185, 129, 0.15)" : "#DCFCE7", color: c.green, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <CheckCircle2 size={20} />
+                </div>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: c.text }}>Ahorraste {formatMoney(ahorroR)} en este periodo</div>
                   <div style={{ fontSize: 12, color: c.muted, marginTop: 4, fontWeight: 500 }}>¡Buen trabajo gestionando tu dinero!</div>
@@ -996,8 +1021,12 @@ export default function App() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, paddingBottom: 12, marginBottom: 20 }}>
                   <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: c.text }}>Gastos por categoría</h3>
                   <div style={{ display: "flex", gap: 12 }}>
-                    <button onClick={() => setTipoGraficoGastos("bar")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoGastos === "bar" ? 1 : 0.3, fontSize: 18, padding: 0 }}>📊</button>
-                    <button onClick={() => setTipoGraficoGastos("donut")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoGastos === "donut" ? 1 : 0.3, fontSize: 18, padding: 0 }}>🍩</button>
+                    <button onClick={() => setTipoGraficoGastos("bar")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoGastos === "bar" ? 1 : 0.3, padding: 0 }}>
+                      <BarChart2 size={20} color={c.text} />
+                    </button>
+                    <button onClick={() => setTipoGraficoGastos("donut")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoGastos === "donut" ? 1 : 0.3, padding: 0 }}>
+                      <PieChart size={20} color={c.text} />
+                    </button>
                   </div>
                 </div>
                 
@@ -1071,7 +1100,7 @@ export default function App() {
                   background: c.card, display: "flex", alignItems: "center", justifyContent: "center",
                   cursor: "pointer", flexShrink: 0
                 }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c.text} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+                  <Settings size={20} color={c.text} />
                 </button>
               </div>
 
@@ -1097,7 +1126,9 @@ export default function App() {
                       <input type={filtroHistFechaHasta ? "date" : "text"} placeholder="Al" value={filtroHistFechaHasta} onFocus={e => e.target.type = "date"} onBlur={e => { if(!e.target.value) e.target.type = "text" }} onChange={e => setFiltroHistFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
                     </div>
                   </div>
-                  {(filtroHistFechaDesde || filtroHistFechaHasta) && <button style={{ width: "100%", fontSize: 14, fontWeight: 700, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 16, fontFamily: "inherit" }} onClick={() => { setFiltroHistFechaDesde(""); setFiltroHistFechaHasta(""); }}>× Limpiar fechas</button>}
+                  {(filtroHistFechaDesde || filtroHistFechaHasta) && <button style={{ width: "100%", fontSize: 14, fontWeight: 700, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 16, fontFamily: "inherit" }} onClick={() => { setFiltroHistFechaDesde(""); setFiltroHistFechaHasta(""); }}>
+                    <X size={14} style={{ marginRight: 4, verticalAlign: "middle" }} /> Limpiar fechas
+                  </button>}
                 </div>
               )}
 
@@ -1197,7 +1228,10 @@ export default function App() {
                         </div>
                         <span style={{ fontSize: 15, fontWeight: 600 }}>{cat.label.substring(cat.label.indexOf(" ") + 1)}</span>
                       </div>
-                      <div><button style={s.editBtn} onClick={() => abrirEdicionCatBase(cat)}>✏️</button><button style={s.deleteBtn} onClick={() => eliminarCategoriaBase(cat.id)}>×</button></div>
+                      <div>
+                        <button style={s.editBtn} onClick={() => abrirEdicionCatBase(cat)}><Edit2 size={16}/></button>
+                        <button style={s.deleteBtn} onClick={() => eliminarCategoriaBase(cat.id)}><Trash2 size={16}/></button>
+                      </div>
                     </div>
                   )
                 ))}
@@ -1229,7 +1263,10 @@ export default function App() {
                         </div>
                         <span style={{ fontSize: 15, fontWeight: 600 }}>{cat.label.substring(cat.label.indexOf(" ") + 1)}</span>
                       </div>
-                      <div><button style={s.editBtn} onClick={() => abrirEdicionCat(cat)}>✏️</button><button style={s.deleteBtn} onClick={() => eliminarCategoria(cat.id)}>×</button></div>
+                      <div>
+                        <button style={s.editBtn} onClick={() => abrirEdicionCat(cat)}><Edit2 size={16}/></button>
+                        <button style={s.deleteBtn} onClick={() => eliminarCategoria(cat.id)}><Trash2 size={16}/></button>
+                      </div>
                     </div>
                   )
                 ))}
@@ -1252,10 +1289,11 @@ export default function App() {
           )}
 
           <div style={s.navBar}>
-            {[{ id: "hoy", icon: "🏠", label: "Inicio" }, { id: "resumen", icon: "📊", label: "Reportes" }].map(n => (
+            {[{ id: "hoy", icon: <Home size={24} strokeWidth={2.5} />, label: "Inicio" }, 
+              { id: "resumen", icon: <PieChart size={24} strokeWidth={2.5} />, label: "Reportes" }].map(n => (
               <button key={n.id} style={s.navBtn(tab === n.id)} onClick={() => setTab(n.id)}>
                 {tab === n.id && <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 44, height: 3, background: "#FCB606", borderRadius: "0 0 4px 4px" }} />}
-                <span style={{ fontSize: 24 }}>{n.icon}</span>
+                <div style={{ marginBottom: 2 }}>{n.icon}</div>
                 <span style={{ fontFamily: "'Montserrat', sans-serif" }}>{n.label}</span>
               </button>
             ))}
@@ -1264,10 +1302,11 @@ export default function App() {
               <button style={s.fabCircle} onClick={() => setShowAddModal(true)}>+</button>
             </div>
 
-            {[{ id: "historial", icon: "📋", label: "Historial" }, { id: "config", icon: "⚙️", label: "Config" }].map(n => (
+            {[{ id: "historial", icon: <FileText size={24} strokeWidth={2.5} />, label: "Historial" }, 
+              { id: "config", icon: <Settings size={24} strokeWidth={2.5} />, label: "Config" }].map(n => (
               <button key={n.id} style={s.navBtn(tab === n.id)} onClick={() => setTab(n.id)}>
                 {tab === n.id && <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 44, height: 3, background: "#FCB606", borderRadius: "0 0 4px 4px" }} />}
-                <span style={{ fontSize: 24 }}>{n.icon}</span>
+                <div style={{ marginBottom: 2 }}>{n.icon}</div>
                 <span style={{ fontFamily: "'Montserrat', sans-serif" }}>{n.label}</span>
               </button>
             ))}
@@ -1353,22 +1392,22 @@ export default function App() {
 
           <div style={{ marginBottom: 32 }}>
             <div style={{ fontSize: 14, color: "#FCB606", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Mi cuenta</div>
-            <MenuItem icon="🪪" text="Mis datos" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("datos")} />
-            <MenuItem icon="🔒" text="Cambiar mi clave" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("clave")} />
-            <MenuItem icon="🏆" text="Mis logros / Insignias" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("logros")} />
+            <MenuItem icon={<UserCircle size={24}/>} text="Mis datos" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("datos")} />
+            <MenuItem icon={<Lock size={24}/>} text="Cambiar mi clave" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("clave")} />
+            <MenuItem icon={<Trophy size={24}/>} text="Mis logros / Insignias" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("logros")} />
           </div>
 
           <div style={{ marginBottom: 32 }}>
             <div style={{ fontSize: 14, color: "#FCB606", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Ajustes</div>
-            <MenuItem icon="🎯" text="Mi Meta de Ahorro" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowMenu(false); setTab("config"); }} />
-            <MenuItem icon="🎨" text="Apariencia (Tema Claro/Oscuro)" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowApariencia(true); setProfileScreen(null); }} />
-            <MenuItem icon="📊" text="Exportar Reportes" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowMenu(false); setShowEmailModal(true); }} />
-            <MenuItem icon="🎧" text="Centro de ayuda" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("ayuda")} />
+            <MenuItem icon={<Target size={24}/>} text="Mi Meta de Ahorro" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowMenu(false); setTab("config"); }} />
+            <MenuItem icon={<Palette size={24}/>} text="Apariencia (Tema Claro/Oscuro)" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowApariencia(true); setProfileScreen(null); }} />
+            <MenuItem icon={<Download size={24}/>} text="Exportar Reportes" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowMenu(false); setShowEmailModal(true); }} />
+            <MenuItem icon={<Headphones size={24}/>} text="Centro de ayuda" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("ayuda")} />
           </div>
 
           <div style={{ marginTop: "auto", paddingTop: 32 }}>
-            <MenuItem icon="🚪" text="Cerrar sesión" color={c.red} mutedColor={c.muted} border={c.border} />
-            <MenuItem icon="🗑️" text="Eliminar mi cuenta" color={c.red} mutedColor={c.muted} border={c.border} />
+            <MenuItem icon={<LogOut size={24}/>} text="Cerrar sesión" color={c.red} mutedColor={c.muted} border={c.border} />
+            <MenuItem icon={<Trash2 size={24}/>} text="Eliminar mi cuenta" color={c.red} mutedColor={c.muted} border={c.border} />
           </div>
         </div>
       )}
