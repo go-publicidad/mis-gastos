@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
-// 👇 Importamos los nuevos íconos profesionales
 import { 
   Home, PieChart, FileText, Settings, Menu, RefreshCw, 
   ArrowDownToLine, ArrowUpFromLine, PiggyBank, Target, 
   Edit2, Trash2, X, Calendar, Mail, CheckCircle2, ChevronRight,
-  UserCircle, Lock, Trophy, Palette, Download, Headphones, LogOut, AlertTriangle
+  UserCircle, Lock, Trophy, Palette, Download, Headphones, LogOut, AlertTriangle,
+  BarChart2
 } from "lucide-react";
 
 const SUPABASE_URL = "https://jboazxmcmvvcscqeerbz.supabase.co";
