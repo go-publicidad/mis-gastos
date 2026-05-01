@@ -319,7 +319,6 @@ export default function App() {
   const [isAutoTheme, setIsAutoTheme] = useState(false);
   const [useBold, setUseBold] = useState(false);
 
-  // ESTADO NUEVO PARA ANIMACIONES DE SALIDA
   const [isClosing, setIsClosing] = useState("");
 
   const safeBase = categoriasBase || [];
@@ -350,7 +349,6 @@ export default function App() {
     setTimeout(() => setToast(null), 2500);
   };
 
-  // FUNCION PARA CERRAR PANTALLAS CON ANIMACION
   const cerrarPantalla = (screenName, action) => {
     setIsClosing(screenName);
     setTimeout(() => {
@@ -716,8 +714,8 @@ export default function App() {
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
         @keyframes spin { to { transform: rotate(360deg) } }
-        @keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
-        @keyframes slideOutLeft { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+        @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes slideOutRight { from { transform: translateX(0); } to { transform: translateX(100%); } }
       `}</style>
 
       {viewAll ? (
@@ -796,7 +794,7 @@ export default function App() {
       ) : (
         <>
           {/* ENCABEZADO UNIFICADO PARA TODAS LAS PESTAÑAS */}
-          {!viewAll && (() => {
+          {(() => {
             let headTitle;
             if (tab === "hoy") { 
               headTitle = (
@@ -1330,6 +1328,35 @@ export default function App() {
             </div>
           )}
 
+          {showMenu && (
+            <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 9999, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: isClosing === 'menu' ? "slideOutRight 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInRight 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+              <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
+                <button onClick={() => cerrarPantalla('menu', () => setShowMenu(false))} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+                <h2 style={{ margin: 0, fontSize: 22, color: c.text, fontWeight: 700 }}>Mi Perfil</h2>
+              </div>
+
+              <div style={{ marginBottom: 32 }}>
+                <div style={{ fontSize: 14, color: c.text, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Mi cuenta</div>
+                <MenuItem icon={<UserCircle size={24} color="#FF803C" />} text="Mis datos" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("datos")} />
+                <MenuItem icon={<Lock size={24} color="#FF803C" />} text="Cambiar mi clave" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("clave")} />
+                <MenuItem icon={<Trophy size={24} color="#FF803C" />} text="Mis logros / Insignias" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("logros")} />
+              </div>
+
+              <div style={{ marginBottom: 32 }}>
+                <div style={{ fontSize: 14, color: c.text, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Ajustes</div>
+                <MenuItem icon={<Target size={24} color="#FF803C" />} text="Mi Meta de Ahorro" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { cerrarPantalla('menu', () => { setShowMenu(false); setTab("config"); }); }} />
+                <MenuItem icon={<Palette size={24} color="#FF803C" />} text="Apariencia (Tema Claro/Oscuro)" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowApariencia(true); setProfileScreen(null); }} />
+                <MenuItem icon={<Download size={24} color="#FF803C" />} text="Exportar Reportes" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { cerrarPantalla('menu', () => { setShowMenu(false); setShowEmailModal(true); }); }} />
+                <MenuItem icon={<Headphones size={24} color="#FF803C" />} text="Centro de ayuda" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("ayuda")} />
+              </div>
+
+              <div style={{ marginTop: "auto", paddingTop: 32 }}>
+                <MenuItem icon={<LogOut size={24}/>} text="Cerrar sesión" color={c.red} mutedColor={c.muted} border={c.border} />
+                <MenuItem icon={<Trash2 size={24}/>} text="Eliminar mi cuenta" color={c.red} mutedColor={c.muted} border={c.border} />
+              </div>
+            </div>
+          )}
+
           <div style={s.navBar}>
             {[{ id: "hoy", icon: <Home size={24} strokeWidth={2.5} />, label: "Inicio" }, 
               { id: "resumen", icon: <PieChart size={24} strokeWidth={2.5} />, label: "Reportes" }].map(n => (
@@ -1357,7 +1384,7 @@ export default function App() {
       )}
 
       {showApariencia && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: isClosing === 'apariencia' ? "slideOutLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: isClosing === 'apariencia' ? "slideOutRight 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInRight 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
             <button onClick={() => cerrarPantalla('apariencia', () => { setShowApariencia(false); setShowMenu(true); })} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
             <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: "700" }}>Pantalla y brillo</h2>
@@ -1425,37 +1452,8 @@ export default function App() {
         </div>
       )}
 
-      {showMenu && !showApariencia && !profileScreen && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 9999, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: isClosing === 'menu' ? "slideOutLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
-            <button onClick={() => cerrarPantalla('menu', () => setShowMenu(false))} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
-            <h2 style={{ margin: 0, fontSize: 22, color: c.text, fontWeight: 700 }}>Mi Perfil</h2>
-          </div>
-
-          <div style={{ marginBottom: 32 }}>
-            <div style={{ fontSize: 14, color: c.text, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Mi cuenta</div>
-            <MenuItem icon={<UserCircle size={24} color="#FF803C" />} text="Mis datos" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("datos")} />
-            <MenuItem icon={<Lock size={24} color="#FF803C" />} text="Cambiar mi clave" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("clave")} />
-            <MenuItem icon={<Trophy size={24} color="#FF803C" />} text="Mis logros / Insignias" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("logros")} />
-          </div>
-
-          <div style={{ marginBottom: 32 }}>
-            <div style={{ fontSize: 14, color: c.text, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Ajustes</div>
-            <MenuItem icon={<Target size={24} color="#FF803C" />} text="Mi Meta de Ahorro" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { cerrarPantalla('menu', () => { setShowMenu(false); setTab("config"); }); }} />
-            <MenuItem icon={<Palette size={24} color="#FF803C" />} text="Apariencia (Tema Claro/Oscuro)" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowApariencia(true); setProfileScreen(null); }} />
-            <MenuItem icon={<Download size={24} color="#FF803C" />} text="Exportar Reportes" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { cerrarPantalla('menu', () => { setShowMenu(false); setShowEmailModal(true); }); }} />
-            <MenuItem icon={<Headphones size={24} color="#FF803C" />} text="Centro de ayuda" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("ayuda")} />
-          </div>
-
-          <div style={{ marginTop: "auto", paddingTop: 32 }}>
-            <MenuItem icon={<LogOut size={24}/>} text="Cerrar sesión" color={c.red} mutedColor={c.muted} border={c.border} />
-            <MenuItem icon={<Trash2 size={24}/>} text="Eliminar mi cuenta" color={c.red} mutedColor={c.muted} border={c.border} />
-          </div>
-        </div>
-      )}
-
       {showMenu && profileScreen === "datos" && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'datos' ? "slideOutLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'datos' ? "slideOutRight 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInRight 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
             <button onClick={() => cerrarPantalla('datos', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
             <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Mis datos</h2>
@@ -1483,7 +1481,7 @@ export default function App() {
       )}
 
       {showMenu && profileScreen === "clave" && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'clave' ? "slideOutLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'clave' ? "slideOutRight 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInRight 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
             <button onClick={() => cerrarPantalla('clave', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
             <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Cambiar mi clave</h2>
@@ -1509,7 +1507,7 @@ export default function App() {
       )}
 
       {showMenu && profileScreen === "logros" && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'logros' ? "slideOutLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'logros' ? "slideOutRight 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInRight 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 24, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
             <button onClick={() => cerrarPantalla('logros', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
             <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Mis logros</h2>
@@ -1544,7 +1542,7 @@ export default function App() {
       )}
 
       {showMenu && profileScreen === "ayuda" && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'ayuda' ? "slideOutLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'ayuda' ? "slideOutRight 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInRight 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 24, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
             <button onClick={() => cerrarPantalla('ayuda', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
             <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Centro de ayuda</h2>
