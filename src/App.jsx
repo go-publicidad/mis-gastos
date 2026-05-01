@@ -65,10 +65,12 @@ const getTexto = (label) => {
   return text;
 };
 
+// --- FIX: TRUNCAR A 8 CARACTERES PARA LOS GRÁFICOS ---
 const formatCatName = (label) => {
   const clean = getTexto(label);
-  return clean.length > 12 ? clean.substring(0, 12) + "..." : clean;
+  return clean.length > 8 ? clean.substring(0, 8) + "..." : clean;
 };
+// -----------------------------------------------------
 
 const formatFecha = (fechaStr) => {
   if (!fechaStr) return "";
@@ -1112,7 +1114,7 @@ export default function App() {
                 <div style={{ display: "flex", gap: 8 }}>
                   {[{ id: "todos", label: "Total" }, { id: "ingreso", label: "Ingresos" }, { id: "gasto", label: "Gastos" }].map(opt => (
                     <button key={opt.id} onClick={() => setFiltroHistTipo(opt.id)} style={{
-                      padding: "10px 20px", borderRadius: 24,
+                      padding: "10px 24px", borderRadius: 24,
                       border: `1px solid ${filtroHistTipo === opt.id ? (isDark ? "#FFF" : "#000") : c.border}`,
                       background: filtroHistTipo === opt.id ? (isDark ? "#FFF" : "#000") : c.card,
                       color: filtroHistTipo === opt.id ? (isDark ? "#000" : "#FFF") : c.muted,
