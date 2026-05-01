@@ -1000,18 +1000,16 @@ export default function App() {
                 {catsIngresos.length === 0 ? (
                   <div style={{ textAlign: "center", color: c.muted, padding: "20px 0", fontSize: 14 }}>Aún no hay registros en esta vista</div>
                 ) : tipoGraficoIngresos === "donut" ? (
-                  <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 28 }}>
                     <div style={{ width: 130, height: 130, borderRadius: "50%", background: `conic-gradient(${conicIngresos})`, position: "relative", flexShrink: 0 }}>
                        <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 70, height: 70, background: c.card, borderRadius: "50%" }}></div>
                     </div>
-                    <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                        {catsIngresos.slice(0, 5).map(cat => (
-                         <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                             <div style={{ width: 10, height: 10, borderRadius: "50%", background: cat.color }}></div>
-                             <span style={{ fontSize: 13, fontWeight: 600, color: c.text, whiteSpace: "nowrap" }}>{formatCatName(cat.label)}</span>
-                           </div>
-                           <span style={{ fontSize: 13, fontWeight: 600, color: c.muted }}>{Math.round((cat.total / totIngresosDonut) * 100)}%</span>
+                         <div key={cat.id} style={{ display: "flex", alignItems: "center" }}>
+                           <div style={{ width: 10, height: 10, borderRadius: "50%", background: cat.color, marginRight: 8, flexShrink: 0 }}></div>
+                           <span style={{ fontSize: 13, fontWeight: 500, color: c.text, width: 85, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{formatCatName(cat.label)}</span>
+                           <span style={{ fontSize: 13, fontWeight: 500, color: c.muted, width: 35, textAlign: "right" }}>{Math.round((cat.total / totIngresosDonut) * 100)}%</span>
                          </div>
                        ))}
                     </div>
@@ -1069,18 +1067,16 @@ export default function App() {
                 {catsGastos.length === 0 ? (
                   <div style={{ textAlign: "center", color: c.muted, padding: "20px 0", fontSize: 14 }}>Aún no hay registros en esta vista</div>
                 ) : tipoGraficoGastos === "donut" ? (
-                  <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 28 }}>
                     <div style={{ width: 130, height: 130, borderRadius: "50%", background: `conic-gradient(${conicGastos})`, position: "relative", flexShrink: 0 }}>
                        <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 70, height: 70, background: c.card, borderRadius: "50%" }}></div>
                     </div>
-                    <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                        {catsGastos.slice(0, 5).map(cat => (
-                         <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                             <div style={{ width: 10, height: 10, borderRadius: "50%", background: cat.color }}></div>
-                             <span style={{ fontSize: 13, fontWeight: 600, color: c.text, whiteSpace: "nowrap" }}>{formatCatName(cat.label)}</span>
-                           </div>
-                           <span style={{ fontSize: 13, fontWeight: 600, color: c.muted }}>{Math.round((cat.total / totGastosDonut) * 100)}%</span>
+                         <div key={cat.id} style={{ display: "flex", alignItems: "center" }}>
+                           <div style={{ width: 10, height: 10, borderRadius: "50%", background: cat.color, marginRight: 8, flexShrink: 0 }}></div>
+                           <span style={{ fontSize: 13, fontWeight: 500, color: c.text, width: 85, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{formatCatName(cat.label)}</span>
+                           <span style={{ fontSize: 13, fontWeight: 500, color: c.muted, width: 35, textAlign: "right" }}>{Math.round((cat.total / totGastosDonut) * 100)}%</span>
                          </div>
                        ))}
                     </div>
@@ -1598,7 +1594,7 @@ export default function App() {
             </div>
           </div>
           
-          <button style={{ ...s.btnPrimary, marginTop: 30 }} onClick={() => { guardarConfig(); cerrarPantalla('apariencia', () => { setShowApariencia(false); }); }}>Guardar Preferencias</button>
+          <button style={{ ...s.btnPrimary, marginTop: 30 }} onClick={() => { guardarConfig(); cerrarPantalla('apariencia', () => setShowApariencia(false)); }}>Guardar Preferencias</button>
         </div>
       )}
 
@@ -1762,7 +1758,7 @@ export default function App() {
               <select style={{ ...s.select, flex: 1, marginBottom: 0 }} value={editForm.categoria} onChange={e => setEditForm(f => ({ ...f, categoria: e.target.value }))}>
                 {categorias.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
               </select>
-              <input style={{ ...s.input, flex: 1, marginBottom: 0, fontSize: 15, fontWeight: 500 }} type="text" placeholder="Descripción" value={editForm.descripcion} onChange={e => setEditForm(f => ({ ...f, descripcion: e.target.value }))} />
+              <input style={{ ...s.input, flex: 1, marginBottom: 0, fontSize: 15, fontWeight: 500 }} type="text" placeholder="Descripción" value={editForm.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} />
             </div>
             <button style={{...s.btnPrimary, padding: "16px"}} onClick={guardarEdicion} disabled={saving}>{saving ? "Guardando..." : "Guardar Cambios"}</button>
           </div>
