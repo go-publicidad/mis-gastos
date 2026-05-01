@@ -326,6 +326,9 @@ export default function App() {
   const categorias = [...safeBase, ...safeExtra];
   const isDark = theme === "dark";
 
+  // Identificador dinámico de bloqueo de scroll para ventanas modales (Add, Edit, Email)
+  const isModalOpen = showAddModal || !!editando || showEmailModal;
+
   const c = {
     bg: isDark ? "#0A0A0A" : "#F4F5F7",
     card: isDark ? "#111111" : "#FFFFFF",
@@ -654,7 +657,7 @@ export default function App() {
     errorCard:  { background: isDark ? "#1A0A0A" : "#FEF2F2", border: `1px solid ${c.red}`, borderRadius: 12, padding: "16px", margin: "20px", color: c.red, fontSize: 14, fontWeight: 400 },
     
     filterRow:  { display: "flex", gap: 6, marginBottom: 24, flexWrap: "nowrap", overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" },
-    filterBtn: (a) => ({ whiteSpace: "nowrap", flexShrink: 0, padding: "8px 16px", borderRadius: 20, border: `1px solid ${a ? "#FF803C" : c.border}`, background: a ? "#FF803C" : c.card, color: a ? "#FFF" : c.muted, fontSize: 13, fontWeight: a ? 600 : 500, cursor: "pointer", fontFamily: "inherit" }),
+    filterBtn: (a) => ({ whiteSpace: "nowrap", flexShrink: 0, padding: "8px 16px", borderRadius: 20, border: `1px solid ${a ? "#FF803C" : c.border}`, background: a ? "#FF803C" : c.card, color: a ? "#000" : c.muted, fontSize: 13, fontWeight: a ? 600 : 500, cursor: "pointer", fontFamily: "inherit" }),
     
     navBar: {
       position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480,
@@ -676,7 +679,8 @@ export default function App() {
       boxShadow: "0 4px 12px rgba(255, 128, 60, 0.4)", zIndex: 105, padding: 0
     },
 
-    overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 200, padding: "0", backdropFilter: "blur(5px)" },
+    // AQUI OSCURECEMOS EL FONDO DEL MODAL Y AUMENTAMOS EL DESENFOQUE
+    overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 99999, padding: "0", backdropFilter: "blur(10px)" },
     modal: { background: c.card, borderTop: `1px solid ${c.border}`, borderLeft: `1px solid ${c.border}`, borderRight: `1px solid ${c.border}`, borderRadius: "24px 24px 0 0", padding: "24px 24px calc(24px + env(safe-area-inset-bottom, 0px))", width: "100%", maxWidth: 480, boxSizing: "border-box", boxShadow: "0 -10px 40px rgba(0,0,0,0.3)" }
   };
 
@@ -697,6 +701,7 @@ export default function App() {
 
   return (
     <div style={s.app}>
+      {/* BLOQUEO DEL SCROLL DEL FONDO AL ABRIR LA VENTANA */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
         * { box-sizing: border-box; } 
@@ -705,17 +710,19 @@ export default function App() {
           color: ${c.text}; 
           margin: 0; padding: 0; 
           width: 100vw; max-width: 100%; 
-          overflow-x: hidden; overflow-y: auto; 
+          overflow-x: hidden; 
+          overflow-y: ${isModalOpen ? 'hidden' : 'auto'} !important; 
           font-family: 'Montserrat', sans-serif;
           transition: background 0.3s ease, color 0.3s ease;
         }
         body * { font-weight: ${useBold ? '700' : 'inherit'}; }
-        #root { background: ${c.bg}; min-height: 100vh; width: 100%; max-width: 100%; overflow-x: hidden; overflow-y: auto; }
+        #root { background: ${c.bg}; min-height: 100vh; width: 100%; max-width: 100%; overflow-x: hidden; overflow-y: ${isModalOpen ? 'hidden' : 'auto'}; }
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
         @keyframes spin { to { transform: rotate(360deg) } }
         @keyframes slideInFromLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
         @keyframes slideOutToLeft { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
       `}</style>
 
       {viewAll ? (
@@ -1071,11 +1078,13 @@ export default function App() {
                     <div style={{ width: 130, height: 130, borderRadius: "50%", background: `conic-gradient(${conicGastos})`, position: "relative", flexShrink: 0 }}>
                        <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 70, height: 70, background: c.card, borderRadius: "50%" }}></div>
                     </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div style={{ flex: 1 }}>
                        {catsGastos.slice(0, 5).map(cat => (
-                         <div key={cat.id} style={{ display: "flex", alignItems: "center" }}>
-                           <div style={{ width: 10, height: 10, borderRadius: "50%", background: cat.color, marginRight: 8, flexShrink: 0 }}></div>
-                           <span style={{ fontSize: 13, fontWeight: 500, color: c.text, width: 85, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{formatCatName(cat.label)}</span>
+                         <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                             <div style={{ width: 10, height: 10, borderRadius: "50%", background: cat.color }}></div>
+                             <span style={{ fontSize: 13, fontWeight: 500, color: c.text, width: 85, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{formatCatName(cat.label)}</span>
+                           </div>
                            <span style={{ fontSize: 13, fontWeight: 500, color: c.muted, width: 35, textAlign: "right" }}>{Math.round((cat.total / totGastosDonut) * 100)}%</span>
                          </div>
                        ))}
@@ -1155,7 +1164,7 @@ export default function App() {
                       <input type="date" placeholder="Del" value={filtroHistFechaDesde} onChange={e => setFiltroHistFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroHistFechaDesde ? c.text : "transparent" }} />
                     </div>
                     <div style={{ flex: 1 }}>
-                      <input type="date" placeholder="Al" value={filtroHistFechaHasta} onChange={e => setFiltroHistFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroHistFechaHasta ? c.text : "transparent" }} />
+                      <input type="date" placeholder="Al" value={filtroHistFechaHasta} onChange={e => setFiltroFechaResumenHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroHistFechaHasta ? c.text : "transparent" }} />
                     </div>
                   </div>
                   {(filtroHistFechaDesde || filtroHistFechaHasta) && <button style={{ width: "100%", fontSize: 14, fontWeight: 700, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 16, fontFamily: "inherit" }} onClick={() => { setFiltroHistFechaDesde(""); setFiltroHistFechaHasta(""); }}>
@@ -1758,7 +1767,7 @@ export default function App() {
               <select style={{ ...s.select, flex: 1, marginBottom: 0 }} value={editForm.categoria} onChange={e => setEditForm(f => ({ ...f, categoria: e.target.value }))}>
                 {categorias.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
               </select>
-              <input style={{ ...s.input, flex: 1, marginBottom: 0, fontSize: 15, fontWeight: 500 }} type="text" placeholder="Descripción" value={editForm.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} />
+              <input style={{ ...s.input, flex: 1, marginBottom: 0, fontSize: 15, fontWeight: 500 }} type="text" placeholder="Descripción" value={editForm.descripcion} onChange={e => setEditForm(f => ({ ...f, descripcion: e.target.value }))} />
             </div>
             <button style={{...s.btnPrimary, padding: "16px"}} onClick={guardarEdicion} disabled={saving}>{saving ? "Guardando..." : "Guardar Cambios"}</button>
           </div>
