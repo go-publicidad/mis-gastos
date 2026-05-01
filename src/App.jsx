@@ -5,7 +5,7 @@ import {
   ArrowDownToLine, ArrowUpFromLine, PiggyBank, Target, 
   Edit2, Trash2, X, Calendar, Mail, CheckCircle2, ChevronRight,
   UserCircle, Lock, Trophy, Palette, Download, Headphones, LogOut, AlertTriangle,
-  BarChart2
+  BarChart2, Plane, Laptop, ShieldCheck, TrendingUp, Plus
 } from "lucide-react";
 
 const SUPABASE_URL = "https://jboazxmcmvvcscqeerbz.supabase.co";
@@ -561,7 +561,7 @@ export default function App() {
     else proyeccionTexto = `en ${mesesProyeccion} mes${mesesProyeccion !== 1 ? "es" : ""} y ${diasExtra} día${diasExtra !== 1 ? "s" : ""}`;
   } else if (ahorroDiarioProm <= 0 && diasTranscurridosPlan > 1) proyeccionTexto = "Sin ahorro neto aún";
 
-  // DATOS PARA PESTAÑA REPORTES
+  // DATOS PARA PESTAÑA REPORTES Y METAS
   const getFiltradosResumen = () => {
     if (filtroResumen === "hoy") return gastos.filter(g => g.fecha === hoy());
     if (filtroResumen === "mes") return gastos.filter(g => g.fecha.startsWith(hoy().slice(0, 7)));
@@ -806,7 +806,7 @@ export default function App() {
             }
             else if (tab === "resumen") headTitle = "Reportes";
             else if (tab === "historial") headTitle = "Historial";
-            else if (tab === "config") headTitle = "Configuración";
+            else if (tab === "metas") headTitle = "Metas"; // NUEVO ENCABEZADO
 
             return (
               <div style={{ padding: "8px 20px 12px", background: c.bg, position: "sticky", top: 0, zIndex: 90 }}>
@@ -1123,7 +1123,7 @@ export default function App() {
                       padding: "10px 24px", borderRadius: 24,
                       border: `1px solid ${filtroHistTipo === opt.id ? (isDark ? "#FFF" : "#000") : c.border}`,
                       background: filtroHistTipo === opt.id ? (isDark ? "#FFF" : "#000") : c.card,
-                      color: filtroHistTipo === opt.id ? (isDark ? "#000" : "#FFF") : c.muted,
+                      color: filtroHistTipo === opt.id ? "#000" : c.muted,
                       fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s"
                     }}>
                       {opt.label}
@@ -1210,149 +1210,148 @@ export default function App() {
             </div>
           )}
 
-          {tab === "config" && (
+          {/* NUEVA PESTAÑA METAS */}
+          {tab === "metas" && (
             <div style={s.section}>
-              
-              <div style={{...s.card, marginBottom: 24}}>
-                <div style={{ ...s.label, textAlign: "center", marginBottom: 4 }}>Definir meta de ahorro (S/)</div>
-                <input style={{ ...s.input, marginBottom: 24, fontSize: 20, textAlign: "center", color: "#FF803C", fontWeight: 600 }} type={isEditingMeta ? "number" : "text"} placeholder="Ej: 100000" value={isEditingMeta ? metaAhorro : (metaAhorro ? formatMoney(metaAhorro) : "")} onFocus={() => setIsEditingMeta(true)} onBlur={() => setIsEditingMeta(false)} onChange={e => setMetaAhorro(e.target.value)} />
-                
-                <div style={{ ...s.label, textAlign: "center", marginBottom: 4 }}>Período de ahorro</div>
-                <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
-                  <div style={{ flex: 1 }}>
-                    <input type="date" placeholder="Del" value={fechaInicioPlan} onChange={e => setFechaInicioPlan(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <input type="date" placeholder="Al" value={fechaFinPlan} onChange={e => setFechaFinPlan(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
-                  </div>
-                </div>
-                
-                <div style={{ ...s.label, textAlign: "center", marginBottom: 4 }}>Ingreso mensual (S/)</div>
-                <input style={{ ...s.input, marginBottom: 24, fontSize: 20, textAlign: "center", color: c.green, fontWeight: 600 }} type={isEditingIngreso ? "number" : "text"} placeholder="Ej: 5000" value={isEditingIngreso ? ingresoMensual : (ingresoMensual ? formatMoney(ingresoMensual) : "")} onFocus={() => setIsEditingIngreso(true)} onBlur={() => setIsEditingIngreso(false)} onChange={e => setIngresoMensual(e.target.value)} />
-                <button style={s.btnPrimary} onClick={guardarConfig} disabled={saving}>{saving ? "Guardando..." : "Guardar configuración"}</button>
+              <div className="hide-scroll" style={{ display: "flex", gap: 8, marginBottom: 24, overflowX: "auto", paddingBottom: 4 }}>
+                {[{ id: "hoy", label: "Hoy" }, { id: "mes", label: "Mes" }, { id: "rango", label: "Personalizado 📅" }].map(f => (
+                  <button key={f.id} style={{
+                    padding: "10px 20px", borderRadius: 24, 
+                    border: `1px solid ${filtroResumen === f.id ? (isDark ? "#FFF" : "#000") : c.border}`,
+                    background: filtroResumen === f.id ? (isDark ? "#FFF" : "#000") : c.card, 
+                    color: filtroResumen === f.id ? (isDark ? "#000" : "#FFF") : c.muted,
+                    fontSize: 14, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit"
+                  }} onClick={() => setFiltroResumen(f.id)}>
+                    {f.label}
+                  </button>
+                ))}
               </div>
 
-              {ingMensual > 0 && metaTotalNum > 0 && (
-                <div style={s.metaCard}>
-                  <div style={{ ...s.metaLabel, textAlign: "center", marginBottom: 0 }}>Tu plan para {formatMoney(metaTotalNum)}</div>
-                  <div style={{ fontSize: 14, color: "#CCC", lineHeight: 1.9, marginTop: 12, textAlign: "center", fontWeight: 500 }}>
-                    <div>📥 Ingreso mensual: <strong style={{ color: "#E8E0D0", fontWeight: 700 }}>{formatMoney(ingMensual)}</strong></div>
-                    <div>🎯 Ahorro necesario/mes: <strong style={{ color: "#FF803C", fontWeight: 700 }}>{formatMoney(ahorroMetaDiario * 30)}</strong></div>
-                    <div>💸 Gasto máximo/mes: <strong style={{ color: c.green, fontWeight: 700 }}>{formatMoney(ingMensual - (ahorroMetaDiario * 30))}</strong></div>
-                    <div>📆 Gasto máximo/día: <strong style={{ color: c.green, fontWeight: 700 }}>{formatMoney(presupuestoDiario)}</strong></div>
+              {filtroResumen === "rango" && (
+                <div style={{ ...s.card, padding: 16 }}>
+                  <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
+                    <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
+                      <input type="date" placeholder="Del" value={filtroFechaResumenDesde} onChange={e => setFiltroFechaResumenDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenDesde ? c.text : "transparent" }} />
+                    </div>
+                    <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
+                      <input type="date" placeholder="Al" value={filtroFechaResumenHasta} onChange={e => setFiltroFechaResumenHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenHasta ? c.text : "transparent" }} />
+                    </div>
                   </div>
+                  {(filtroFechaResumenDesde || filtroFechaResumenHasta) && (
+                    <button style={{ width: "100%", fontSize: 14, fontWeight: 700, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 16, fontFamily: "inherit" }} onClick={() => { setFiltroFechaResumenDesde(""); setFiltroFechaResumenHasta(""); }}>
+                      <X size={14} style={{ marginRight: 4, verticalAlign: "middle" }} /> Limpiar fechas
+                    </button>
+                  )}
                 </div>
               )}
 
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>Categorías</h3>
-              </div>
-
-              <div style={{...s.card, marginBottom: 12}}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}><div style={{...s.label, marginBottom:0}}>Categorías Base</div></div>
-                {safeBase.length === 0 ? <div style={{ color: c.muted, fontSize: 14, fontWeight: 500, textAlign: "center", padding: "12px 0" }}>No hay categorías base</div> : safeBase.map((cat, i, arr) => (
-                  editandoCatBase === cat.id ? (
-                    <div key={cat.id} style={{ background: c.input, borderRadius: 12, padding: 16, margin: "8px 0" }}>
-                      <input style={{ ...s.input, marginBottom: 12 }} value={editCatBaseLabel} onChange={e => setEditCatBaseLabel(e.target.value)} />
-                      <div style={{ ...s.label, marginBottom: 8 }}>Elige un color</div>
-                      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
-                        {COLORES_CUSTOM.map(col => <div key={col} onClick={() => setEditCatBaseColor(col)} style={{ width: 28, height: 28, borderRadius: "50%", background: col, cursor: "pointer", border: editCatBaseColor === col ? `3px solid ${c.text}` : "3px solid transparent" }} />)}
-                      </div>
-                      <div style={{ display: "flex", gap: 10 }}><button style={s.btnSecondary} onClick={() => setEditandoCatBase(null)}>Cancelar</button><button style={s.btnPrimary} onClick={guardarEdicionCatBase}>Guardar</button></div>
-                    </div>
-                  ) : (
-                    <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: i === arr.length - 1 ? "none" : `1px solid ${c.border}` }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <div style={{ width: 36, height: 36, borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
-                           {getIcono(cat.label)}
-                        </div>
-                        <span style={{ fontSize: 15, fontWeight: 600 }}>{getTexto(cat.label)}</span>
-                      </div>
-                      <div>
-                        <button style={s.editBtn} onClick={() => abrirEdicionCatBase(cat)}><Edit2 size={16}/></button>
-                        <button style={s.deleteBtn} onClick={() => eliminarCategoriaBase(cat.id)}><Trash2 size={16}/></button>
-                      </div>
-                    </div>
-                  )
-                ))}
-              </div>
-
-              <div style={s.card}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}><div style={{...s.label, marginBottom:0}}>Categorías personalizadas</div><button style={{ backgroundColor: "#FF803C", WebkitAppearance: "none", color: "#FFF", border: "none", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontWeight: 600, fontFamily: "inherit", fontSize: 13 }} onClick={() => setShowNuevaCat(v => !v)}>+ Nueva</button></div>
-                {showNuevaCat && (
-                  <div style={{ background: c.input, borderRadius: 12, padding: 16, marginBottom: 16 }}>
-                    <input style={{ ...s.input, marginBottom: 12 }} placeholder="Ej: 🛍️ Compras" value={nuevaCatLabel} onChange={e => setNuevaCatLabel(e.target.value)} />
-                    <div style={{ ...s.label, marginBottom: 8 }}>Elige un color</div>
-                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>{COLORES_CUSTOM.map(col => <div key={col} onClick={() => setNuevaCatColor(col)} style={{ width: 28, height: 28, borderRadius: "50%", background: col, cursor: "pointer", border: nuevaCatColor === col ? `3px solid ${c.text}` : "3px solid transparent" }} />)}</div>
-                    <div style={{ display: "flex", gap: 10 }}><button style={s.btnSecondary} onClick={() => setShowNuevaCat(false)}>Cancelar</button><button style={s.btnPrimary} onClick={agregarCategoria}>Agregar</button></div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
+                <div style={{ background: isDark ? "rgba(16, 185, 129, 0.1)" : "#F0FDF4", borderRadius: 16, padding: "16px 12px", border: isDark ? "1px solid rgba(16, 185, 129, 0.2)" : "none", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <div style={{ fontSize: 12, color: c.muted, marginBottom: 6, fontWeight: 500 }}>Total ahorrado este mes</div>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: c.text }}>{formatMoney(ahorroR)}</div>
                   </div>
-                )}
-                {safeExtra.length === 0 ? <div style={{ color: c.muted, fontSize: 14, fontWeight: 500, textAlign: "center", padding: "12px 0" }}>Aún no hay categorías</div> : safeExtra.map((cat, i, arr) => (
-                  editandoCat === cat.id ? (
-                    <div key={cat.id} style={{ background: c.input, borderRadius: 12, padding: 16, margin: "8px 0" }}>
-                      <input style={{ ...s.input, marginBottom: 12 }} value={editCatLabel} onChange={e => setEditCatLabel(e.target.value)} />
-                      <div style={{ ...s.label, marginBottom: 8 }}>Elige un color</div>
-                      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>{COLORES_CUSTOM.map(col => <div key={col} onClick={() => setEditCatColor(col)} style={{ width: 28, height: 28, borderRadius: "50%", background: col, cursor: "pointer", border: editCatColor === col ? `3px solid ${c.text}` : "3px solid transparent" }} />)}</div>
-                      <div style={{ display: "flex", gap: 10 }}><button style={s.btnSecondary} onClick={() => setEditandoCat(null)}>Cancelar</button><button style={s.btnPrimary} onClick={guardarEdicionCat}>Guardar</button></div>
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#4ADE80", color: "#FFF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <PiggyBank size={20} />
+                  </div>
+                </div>
+                <div style={{ background: isDark ? "rgba(239, 68, 68, 0.1)" : "#FEF2F2", borderRadius: 16, padding: "16px 12px", border: isDark ? "1px solid rgba(239, 68, 68, 0.2)" : "none", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <div style={{ fontSize: 12, color: c.muted, marginBottom: 6, fontWeight: 500 }}>Falta por ahorrar</div>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: c.red }}>{formatMoney(Math.max(0, metaTotalNum - ahorroR))}</div>
+                  </div>
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#F87171", color: "#FFF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <Target size={20} />
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ ...s.card, padding: "20px 16px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: c.text }}>Mis Metas</h3>
+                  <button style={{ background: "none", border: "none", color: c.muted, fontWeight: 600, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+                    <PlusCircle size={16} color="#FF803C" /> Nueva meta
+                  </button>
+                </div>
+
+                {/* META 1 */}
+                <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24 }}>
+                  <div style={{ width: 52, height: 52, borderRadius: 26, background: "#EFF6FF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <Plane size={24} color="#3B82F6" />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                      <span style={{ fontSize: 15, fontWeight: 600, color: c.text }}>Viaje a Cusco</span>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: c.green }}>S/ 720.00</span>
                     </div>
-                  ) : (
-                    <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: i === arr.length - 1 ? "none" : `1px solid ${c.border}` }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <div style={{ width: 36, height: 36, borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
-                           {getIcono(cat.label)}
-                        </div>
-                        <span style={{ fontSize: 15, fontWeight: 600 }}>{getTexto(cat.label)}</span>
-                      </div>
-                      <div>
-                        <button style={s.editBtn} onClick={() => abrirEdicionCat(cat)}><Edit2 size={16}/></button>
-                        <button style={s.deleteBtn} onClick={() => eliminarCategoria(cat.id)}><Trash2 size={16}/></button>
-                      </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                      <span style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}>S/ 1,200.00</span>
+                      <span style={{ fontSize: 12, color: c.green, fontWeight: 600 }}>60%</span>
                     </div>
-                  )
-                ))}
-              </div>
+                    <div style={{ background: isDark ? "#333" : "#F3F4F6", borderRadius: 4, height: 6, width: "100%", overflow: "hidden", marginBottom: 6 }}>
+                      <div style={{ background: c.green, height: "100%", width: "60%", borderRadius: 4 }}></div>
+                    </div>
+                    <div style={{ fontSize: 12, color: c.muted, fontWeight: 500 }}>Faltan S/ 480.00</div>
+                  </div>
+                  <ChevronRight size={20} color={c.muted} />
+                </div>
 
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, marginTop: 24 }}>
-                <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0, color: c.red }}>Opciones avanzadas</h3>
-              </div>
+                {/* META 2 */}
+                <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24 }}>
+                  <div style={{ width: 52, height: 52, borderRadius: 26, background: "#FFF7ED", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <Laptop size={24} color="#4B5563" />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                      <span style={{ fontSize: 15, fontWeight: 600, color: c.text }}>Nueva Laptop</span>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: "#FF803C" }}>S/ 1,250.00</span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                      <span style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}>S/ 2,500.00</span>
+                      <span style={{ fontSize: 12, color: "#FF803C", fontWeight: 600 }}>50%</span>
+                    </div>
+                    <div style={{ background: isDark ? "#333" : "#F3F4F6", borderRadius: 4, height: 6, width: "100%", overflow: "hidden", marginBottom: 6 }}>
+                      <div style={{ background: "#FF803C", height: "100%", width: "50%", borderRadius: 4 }}></div>
+                    </div>
+                    <div style={{ fontSize: 12, color: c.muted, fontWeight: 500 }}>Faltan S/ 1,250.00</div>
+                  </div>
+                  <ChevronRight size={20} color={c.muted} />
+                </div>
 
-              <div style={{ ...s.card, borderColor: isDark ? "#3A1A1A" : "#FECACA", padding: 20 }}>
-                <div style={{ ...s.label, marginBottom: 16, color: c.red, textAlign: "center" }}>Zona de peligro</div>
-                <button style={{ ...s.btnSecondary, padding: 14, color: c.red, borderColor: isDark ? "#5A1A1A" : "#F87171", fontWeight: 600 }} onClick={async () => {
-                  if (window.prompt("Escribe BORRAR TODO para confirmar:") === "BORRAR TODO") {
-                    await supabase.from("gastos").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-                    setGastos([]); showToast("Todos los movimientos eliminados", c.muted);
-                  }
-                }}>Eliminar todos los movimientos</button>
-              </div>
-            </div>
-          )}
+                {/* META 3 */}
+                <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24 }}>
+                  <div style={{ width: 52, height: 52, borderRadius: 26, background: "#ECFDF5", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <ShieldCheck size={24} color="#10B981" />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                      <span style={{ fontSize: 15, fontWeight: 600, color: c.text }}>Fondo de emergencia</span>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: c.green }}>S/ 430.00</span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                      <span style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}>S/ 1,000.00</span>
+                      <span style={{ fontSize: 12, color: c.green, fontWeight: 600 }}>43%</span>
+                    </div>
+                    <div style={{ background: isDark ? "#333" : "#F3F4F6", borderRadius: 4, height: 6, width: "100%", overflow: "hidden", marginBottom: 6 }}>
+                      <div style={{ background: c.green, height: "100%", width: "43%", borderRadius: 4 }}></div>
+                    </div>
+                    <div style={{ fontSize: 12, color: c.muted, fontWeight: 500 }}>Faltan S/ 570.00</div>
+                  </div>
+                  <ChevronRight size={20} color={c.muted} />
+                </div>
 
-          {showMenu && (
-            <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 9999, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: isClosing === 'menu' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
-              <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
-                <button onClick={() => cerrarPantalla('menu', () => setShowMenu(false))} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
-                <h2 style={{ margin: 0, fontSize: 22, color: c.text, fontWeight: 700 }}>Mi Perfil</h2>
-              </div>
+                <div style={{ background: isDark ? "rgba(16, 185, 129, 0.1)" : "#F0FDF4", borderRadius: 12, padding: 16, display: "flex", gap: 16, alignItems: "center" }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 20, background: c.green, color: "#FFF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <TrendingUp size={20} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: c.text, marginBottom: 4 }}>¡Vas por buen camino!</div>
+                    <div style={{ fontSize: 12, color: c.muted, fontWeight: 500, lineHeight: 1.4 }}>
+                      Has ahorrado {formatMoney(ahorroR)} este mes. Sigue así para alcanzar tus metas más rápido.
+                    </div>
+                  </div>
+                </div>
 
-              <div style={{ marginBottom: 32 }}>
-                <div style={{ fontSize: 14, color: c.text, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Mi cuenta</div>
-                <MenuItem icon={<UserCircle size={24} color="#FF803C" />} text="Mis datos" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("datos")} />
-                <MenuItem icon={<Lock size={24} color="#FF803C" />} text="Cambiar mi clave" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("clave")} />
-                <MenuItem icon={<Trophy size={24} color="#FF803C" />} text="Mis logros / Insignias" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("logros")} />
-              </div>
-
-              <div style={{ marginBottom: 32 }}>
-                <div style={{ fontSize: 14, color: c.text, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Ajustes</div>
-                <MenuItem icon={<Target size={24} color="#FF803C" />} text="Mi Meta de Ahorro" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { cerrarPantalla('menu', () => { setShowMenu(false); setTab("config"); }); }} />
-                <MenuItem icon={<Palette size={24} color="#FF803C" />} text="Apariencia (Tema Claro/Oscuro)" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowApariencia(true); setProfileScreen(null); }} />
-                <MenuItem icon={<Download size={24} color="#FF803C" />} text="Exportar Reportes" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { cerrarPantalla('menu', () => { setShowMenu(false); setShowEmailModal(true); }); }} />
-                <MenuItem icon={<Headphones size={24} color="#FF803C" />} text="Centro de ayuda" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("ayuda")} />
-              </div>
-
-              <div style={{ marginTop: "auto", paddingTop: 32 }}>
-                <MenuItem icon={<LogOut size={24}/>} text="Cerrar sesión" color={c.red} mutedColor={c.muted} border={c.border} />
-                <MenuItem icon={<Trash2 size={24}/>} text="Eliminar mi cuenta" color={c.red} mutedColor={c.muted} border={c.border} />
               </div>
             </div>
           )}
@@ -1368,11 +1367,11 @@ export default function App() {
             ))}
 
             <div style={{ width: 72, position: "relative", display: "flex", justifyContent: "center" }}>
-              <button style={s.fabCircle} onClick={() => setShowAddModal(true)}>+</button>
+              <button style={s.fabCircle} onClick={() => setShowAddModal(true)}><Plus size={32} /></button>
             </div>
 
             {[{ id: "historial", icon: <FileText size={24} strokeWidth={2.5} />, label: "Historial" }, 
-              { id: "config", icon: <Settings size={24} strokeWidth={2.5} />, label: "Config" }].map(n => (
+              { id: "metas", icon: <Target size={24} strokeWidth={2.5} />, label: "Metas" }].map(n => (
               <button key={n.id} style={s.navBtn(tab === n.id)} onClick={() => setTab(n.id)}>
                 {tab === n.id && <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 44, height: 3, background: "#FF803C", borderRadius: "0 0 4px 4px" }} />}
                 <div style={{ marginBottom: -2 }}>{n.icon}</div>
@@ -1386,7 +1385,7 @@ export default function App() {
       {showApariencia && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: isClosing === 'apariencia' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
-            <button onClick={() => cerrarPantalla('apariencia', () => setShowApariencia(false))} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <button onClick={() => cerrarPantalla('apariencia', () => { setShowApariencia(false); setShowMenu(true); })} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
             <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: "700" }}>Pantalla y brillo</h2>
           </div>
 
@@ -1449,6 +1448,157 @@ export default function App() {
           </div>
           
           <button style={{ ...s.btnPrimary, marginTop: 30 }} onClick={() => { guardarConfig(); cerrarPantalla('apariencia', () => setShowApariencia(false)); }}>Guardar Preferencias</button>
+        </div>
+      )}
+
+      {showMenu && !showApariencia && !profileScreen && (
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 9999, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: isClosing === 'menu' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
+            <button onClick={() => cerrarPantalla('menu', () => setShowMenu(false))} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <h2 style={{ margin: 0, fontSize: 22, color: c.text, fontWeight: 700 }}>Mi Perfil</h2>
+          </div>
+
+          <div style={{ marginBottom: 32 }}>
+            <div style={{ fontSize: 14, color: c.text, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Mi cuenta</div>
+            <MenuItem icon={<UserCircle size={24} color="#FF803C" />} text="Mis datos" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("datos")} />
+            <MenuItem icon={<Lock size={24} color="#FF803C" />} text="Cambiar mi clave" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("clave")} />
+            <MenuItem icon={<Trophy size={24} color="#FF803C" />} text="Mis logros / Insignias" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("logros")} />
+          </div>
+
+          <div style={{ marginBottom: 32 }}>
+            <div style={{ fontSize: 14, color: c.text, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Ajustes</div>
+            <MenuItem icon={<Target size={24} color="#FF803C" />} text="Mi Meta de Ahorro" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("configuracion")} />
+            <MenuItem icon={<Palette size={24} color="#FF803C" />} text="Apariencia (Tema Claro/Oscuro)" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowApariencia(true); setProfileScreen(null); }} />
+            <MenuItem icon={<Download size={24} color="#FF803C" />} text="Exportar Reportes" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { cerrarPantalla('menu', () => { setShowMenu(false); setShowEmailModal(true); }); }} />
+            <MenuItem icon={<Headphones size={24} color="#FF803C" />} text="Centro de ayuda" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("ayuda")} />
+          </div>
+
+          <div style={{ marginTop: "auto", paddingTop: 32 }}>
+            <MenuItem icon={<LogOut size={24}/>} text="Cerrar sesión" color={c.red} mutedColor={c.muted} border={c.border} />
+            <MenuItem icon={<Trash2 size={24}/>} text="Eliminar mi cuenta" color={c.red} mutedColor={c.muted} border={c.border} />
+          </div>
+        </div>
+      )}
+
+      {showMenu && profileScreen === "configuracion" && (
+        <div className="hide-scroll" style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'configuracion' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
+            <button onClick={() => cerrarPantalla('configuracion', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Mi Meta de Ahorro</h2>
+          </div>
+          
+          <div style={{...s.card, marginBottom: 24}}>
+            <div style={{ ...s.label, textAlign: "center", marginBottom: 4 }}>Definir meta de ahorro (S/)</div>
+            <input style={{ ...s.input, marginBottom: 24, fontSize: 20, textAlign: "center", color: "#FF803C", fontWeight: 600 }} type={isEditingMeta ? "number" : "text"} placeholder="Ej: 100000" value={isEditingMeta ? metaAhorro : (metaAhorro ? formatMoney(metaAhorro) : "")} onFocus={() => setIsEditingMeta(true)} onBlur={() => setIsEditingMeta(false)} onChange={e => setMetaAhorro(e.target.value)} />
+            
+            <div style={{ ...s.label, textAlign: "center", marginBottom: 4 }}>Período de ahorro</div>
+            <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
+              <div style={{ flex: 1 }}>
+                <input type="date" placeholder="Del" value={fechaInicioPlan} onChange={e => setFechaInicioPlan(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <input type="date" placeholder="Al" value={fechaFinPlan} onChange={e => setFechaFinPlan(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
+              </div>
+            </div>
+            
+            <div style={{ ...s.label, textAlign: "center", marginBottom: 4 }}>Ingreso mensual (S/)</div>
+            <input style={{ ...s.input, marginBottom: 24, fontSize: 20, textAlign: "center", color: c.green, fontWeight: 600 }} type={isEditingIngreso ? "number" : "text"} placeholder="Ej: 5000" value={isEditingIngreso ? ingresoMensual : (ingresoMensual ? formatMoney(ingresoMensual) : "")} onFocus={() => setIsEditingIngreso(true)} onBlur={() => setIsEditingIngreso(false)} onChange={e => setIngresoMensual(e.target.value)} />
+            <button style={s.btnPrimary} onClick={guardarConfig} disabled={saving}>{saving ? "Guardando..." : "Guardar configuración"}</button>
+          </div>
+
+          {ingMensual > 0 && metaTotalNum > 0 && (
+            <div style={s.metaCard}>
+              <div style={{ ...s.metaLabel, textAlign: "center", marginBottom: 0 }}>Tu plan para {formatMoney(metaTotalNum)}</div>
+              <div style={{ fontSize: 14, color: "#CCC", lineHeight: 1.9, marginTop: 12, textAlign: "center", fontWeight: 500 }}>
+                <div>📥 Ingreso mensual: <strong style={{ color: "#E8E0D0", fontWeight: 700 }}>{formatMoney(ingMensual)}</strong></div>
+                <div>🎯 Ahorro necesario/mes: <strong style={{ color: "#FF803C", fontWeight: 700 }}>{formatMoney(ahorroMetaDiario * 30)}</strong></div>
+                <div>💸 Gasto máximo/mes: <strong style={{ color: c.green, fontWeight: 700 }}>{formatMoney(ingMensual - (ahorroMetaDiario * 30))}</strong></div>
+                <div>📆 Gasto máximo/día: <strong style={{ color: c.green, fontWeight: 700 }}>{formatMoney(presupuestoDiario)}</strong></div>
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>Categorías</h3>
+          </div>
+
+          <div style={{...s.card, marginBottom: 12}}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}><div style={{...s.label, marginBottom:0}}>Categorías Base</div></div>
+            {safeBase.length === 0 ? <div style={{ color: c.muted, fontSize: 14, fontWeight: 500, textAlign: "center", padding: "12px 0" }}>No hay categorías base</div> : safeBase.map((cat, i, arr) => (
+              editandoCatBase === cat.id ? (
+                <div key={cat.id} style={{ background: c.input, borderRadius: 12, padding: 16, margin: "8px 0" }}>
+                  <input style={{ ...s.input, marginBottom: 12 }} value={editCatBaseLabel} onChange={e => setEditCatBaseLabel(e.target.value)} />
+                  <div style={{ ...s.label, marginBottom: 8 }}>Elige un color</div>
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
+                    {COLORES_CUSTOM.map(col => <div key={col} onClick={() => setEditCatBaseColor(col)} style={{ width: 28, height: 28, borderRadius: "50%", background: col, cursor: "pointer", border: editCatBaseColor === col ? `3px solid ${c.text}` : "3px solid transparent" }} />)}
+                  </div>
+                  <div style={{ display: "flex", gap: 10 }}><button style={s.btnSecondary} onClick={() => setEditandoCatBase(null)}>Cancelar</button><button style={s.btnPrimary} onClick={guardarEdicionCatBase}>Guardar</button></div>
+                </div>
+              ) : (
+                <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: i === arr.length - 1 ? "none" : `1px solid ${c.border}` }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
+                       {getIcono(cat.label)}
+                    </div>
+                    <span style={{ fontSize: 15, fontWeight: 600 }}>{getTexto(cat.label)}</span>
+                  </div>
+                  <div>
+                    <button style={s.editBtn} onClick={() => abrirEdicionCatBase(cat)}><Edit2 size={16}/></button>
+                    <button style={s.deleteBtn} onClick={() => eliminarCategoriaBase(cat.id)}><Trash2 size={16}/></button>
+                  </div>
+                </div>
+              )
+            ))}
+          </div>
+
+          <div style={s.card}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}><div style={{...s.label, marginBottom:0}}>Categorías personalizadas</div><button style={{ backgroundColor: "#FF803C", WebkitAppearance: "none", color: "#FFF", border: "none", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontWeight: 600, fontFamily: "inherit", fontSize: 13 }} onClick={() => setShowNuevaCat(v => !v)}>+ Nueva</button></div>
+            {showNuevaCat && (
+              <div style={{ background: c.input, borderRadius: 12, padding: 16, marginBottom: 16 }}>
+                <input style={{ ...s.input, marginBottom: 12 }} placeholder="Ej: 🛍️ Compras" value={nuevaCatLabel} onChange={e => setNuevaCatLabel(e.target.value)} />
+                <div style={{ ...s.label, marginBottom: 8 }}>Elige un color</div>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>{COLORES_CUSTOM.map(col => <div key={col} onClick={() => setNuevaCatColor(col)} style={{ width: 28, height: 28, borderRadius: "50%", background: col, cursor: "pointer", border: nuevaCatColor === col ? `3px solid ${c.text}` : "3px solid transparent" }} />)}</div>
+                <div style={{ display: "flex", gap: 10 }}><button style={s.btnSecondary} onClick={() => setShowNuevaCat(false)}>Cancelar</button><button style={s.btnPrimary} onClick={agregarCategoria}>Agregar</button></div>
+              </div>
+            )}
+            {safeExtra.length === 0 ? <div style={{ color: c.muted, fontSize: 14, fontWeight: 500, textAlign: "center", padding: "12px 0" }}>Aún no hay categorías</div> : safeExtra.map((cat, i, arr) => (
+              editandoCat === cat.id ? (
+                <div key={cat.id} style={{ background: c.input, borderRadius: 12, padding: 16, margin: "8px 0" }}>
+                  <input style={{ ...s.input, marginBottom: 12 }} value={editCatLabel} onChange={e => setEditCatLabel(e.target.value)} />
+                  <div style={{ ...s.label, marginBottom: 8 }}>Elige un color</div>
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>{COLORES_CUSTOM.map(col => <div key={col} onClick={() => setEditCatColor(col)} style={{ width: 28, height: 28, borderRadius: "50%", background: col, cursor: "pointer", border: editCatColor === col ? `3px solid ${c.text}` : "3px solid transparent" }} />)}</div>
+                  <div style={{ display: "flex", gap: 10 }}><button style={s.btnSecondary} onClick={() => setEditandoCat(null)}>Cancelar</button><button style={s.btnPrimary} onClick={guardarEdicionCat}>Guardar</button></div>
+                </div>
+              ) : (
+                <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: i === arr.length - 1 ? "none" : `1px solid ${c.border}` }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
+                       {getIcono(cat.label)}
+                    </div>
+                    <span style={{ fontSize: 15, fontWeight: 600 }}>{getTexto(cat.label)}</span>
+                  </div>
+                  <div>
+                    <button style={s.editBtn} onClick={() => abrirEdicionCat(cat)}><Edit2 size={16}/></button>
+                    <button style={s.deleteBtn} onClick={() => eliminarCategoria(cat.id)}><Trash2 size={16}/></button>
+                  </div>
+                </div>
+              )
+            ))}
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, marginTop: 24 }}>
+            <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0, color: c.red }}>Opciones avanzadas</h3>
+          </div>
+
+          <div style={{ ...s.card, borderColor: isDark ? "#3A1A1A" : "#FECACA", padding: 20 }}>
+            <div style={{ ...s.label, marginBottom: 16, color: c.red, textAlign: "center" }}>Zona de peligro</div>
+            <button style={{ ...s.btnSecondary, padding: 14, color: c.red, borderColor: isDark ? "#5A1A1A" : "#F87171", fontWeight: 600 }} onClick={async () => {
+              if (window.prompt("Escribe BORRAR TODO para confirmar:") === "BORRAR TODO") {
+                await supabase.from("gastos").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+                setGastos([]); showToast("Todos los movimientos eliminados", c.muted);
+              }
+            }}>Eliminar todos los movimientos</button>
+          </div>
         </div>
       )}
 
