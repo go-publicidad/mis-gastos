@@ -723,13 +723,13 @@ export default function App() {
           </div>
           {showVtFiltro && (
             <div style={{ padding: "16px 20px", background: c.card, borderBottom: `1px solid ${c.border}` }}>
-              <div style={{ ...s.label, textAlign: "center" }}>Filtrar por rango de fecha</div>
+              <div style={{ ...s.label, textAlign: "center" }}>Filtrar por fecha</div>
               <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                 <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                  <input type={vtFechaDesde ? "date" : "text"} placeholder="Del" value={vtFechaDesde} onFocus={e => e.target.type = "date"} onBlur={e => { if(!e.target.value) e.target.type = "text" }} onChange={e => setVtFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
+                  <input type="date" placeholder="Del" value={vtFechaDesde} onChange={e => setVtFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: vtFechaDesde ? c.text : "transparent" }} />
                 </div>
                 <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                  <input type={vtFechaHasta ? "date" : "text"} placeholder="Al" value={vtFechaHasta} onFocus={e => e.target.type = "date"} onBlur={e => { if(!e.target.value) e.target.type = "text" }} onChange={e => setVtFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
+                  <input type="date" placeholder="Al" value={vtFechaHasta} onChange={e => setVtFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: vtFechaHasta ? c.text : "transparent" }} />
                 </div>
               </div>
               {(vtFechaDesde || vtFechaHasta) && (
@@ -950,10 +950,10 @@ export default function App() {
                 <div style={{ ...s.card, padding: 16 }}>
                   <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
                     <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                      <input type={filtroFechaResumenDesde ? "date" : "text"} placeholder="Del" value={filtroFechaResumenDesde} onFocus={e => e.target.type = "date"} onBlur={e => { if(!e.target.value) e.target.type = "text" }} onChange={e => setFiltroFechaResumenDesde(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
+                      <input type="date" placeholder="Del" value={filtroFechaResumenDesde} onChange={e => setFiltroFechaResumenDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenDesde ? c.text : "transparent" }} />
                     </div>
                     <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                      <input type={filtroFechaResumenHasta ? "date" : "text"} placeholder="Al" value={filtroFechaResumenHasta} onFocus={e => e.target.type = "date"} onBlur={e => { if(!e.target.value) e.target.type = "text" }} onChange={e => setFiltroFechaResumenHasta(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
+                      <input type="date" placeholder="Al" value={filtroFechaResumenHasta} onChange={e => setFiltroFechaResumenHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenHasta ? c.text : "transparent" }} />
                     </div>
                   </div>
                   {(filtroFechaResumenDesde || filtroFechaResumenHasta) && (
@@ -1112,7 +1112,7 @@ export default function App() {
                 <div style={{ display: "flex", gap: 8 }}>
                   {[{ id: "todos", label: "Total" }, { id: "ingreso", label: "Ingresos" }, { id: "gasto", label: "Gastos" }].map(opt => (
                     <button key={opt.id} onClick={() => setFiltroHistTipo(opt.id)} style={{
-                      padding: "10px 24px", borderRadius: 24,
+                      padding: "10px 20px", borderRadius: 24,
                       border: `1px solid ${filtroHistTipo === opt.id ? (isDark ? "#FFF" : "#000") : c.border}`,
                       background: filtroHistTipo === opt.id ? (isDark ? "#FFF" : "#000") : c.card,
                       color: filtroHistTipo === opt.id ? (isDark ? "#000" : "#FFF") : c.muted,
@@ -1145,13 +1145,13 @@ export default function App() {
                     {categorias.map(c => <button key={c.id} style={s.filterBtn(filtroHistCat === c.id)} onClick={() => setFiltroHistCat(c.id)}>{c.label}</button>)}
                   </div>
                   
-                  <div style={{ ...s.label, marginTop: 28, textAlign: "center" }}>Filtrar por rango de fecha</div>
+                  <div style={{ ...s.label, marginTop: 28, textAlign: "center" }}>Filtrar por fecha</div>
                   <div style={{ display: "flex", gap: 12, alignItems: "center", marginTop: 16 }}>
                     <div style={{ flex: 1 }}>
-                      <input type={filtroHistFechaDesde ? "date" : "text"} placeholder="Del" value={filtroHistFechaDesde} onFocus={e => e.target.type = "date"} onBlur={e => { if(!e.target.value) e.target.type = "text" }} onChange={e => setFiltroHistFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
+                      <input type="date" placeholder="Del" value={filtroHistFechaDesde} onChange={e => setFiltroHistFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroHistFechaDesde ? c.text : "transparent" }} />
                     </div>
                     <div style={{ flex: 1 }}>
-                      <input type={filtroHistFechaHasta ? "date" : "text"} placeholder="Al" value={filtroHistFechaHasta} onFocus={e => e.target.type = "date"} onBlur={e => { if(!e.target.value) e.target.type = "text" }} onChange={e => setFiltroHistFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
+                      <input type="date" placeholder="Al" value={filtroHistFechaHasta} onChange={e => setFiltroHistFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroHistFechaHasta ? c.text : "transparent" }} />
                     </div>
                   </div>
                   {(filtroHistFechaDesde || filtroHistFechaHasta) && <button style={{ width: "100%", fontSize: 14, fontWeight: 700, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 16, fontFamily: "inherit" }} onClick={() => { setFiltroHistFechaDesde(""); setFiltroHistFechaHasta(""); }}>
@@ -1212,10 +1212,10 @@ export default function App() {
                 <div style={{ ...s.label, textAlign: "center", marginBottom: 4 }}>Período de ahorro</div>
                 <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
                   <div style={{ flex: 1 }}>
-                    <input type={fechaInicioPlan ? "date" : "text"} placeholder="Del" value={fechaInicioPlan} onFocus={e => e.target.type = "date"} onBlur={e => { if(!e.target.value) e.target.type = "text" }} onChange={e => setFechaInicioPlan(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
+                    <input type="date" placeholder="Del" value={fechaInicioPlan} onChange={e => setFechaInicioPlan(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
                   </div>
                   <div style={{ flex: 1 }}>
-                    <input type={fechaFinPlan ? "date" : "text"} placeholder="Al" value={fechaFinPlan} onFocus={e => e.target.type = "date"} onBlur={e => { if(!e.target.value) e.target.type = "text" }} onChange={e => setFechaFinPlan(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
+                    <input type="date" placeholder="Al" value={fechaFinPlan} onChange={e => setFechaFinPlan(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
                   </div>
                 </div>
                 
