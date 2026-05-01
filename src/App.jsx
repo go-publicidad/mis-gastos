@@ -807,7 +807,7 @@ export default function App() {
                     <RefreshCw size={22} />
                   </button>
                 </div>
-                {headSub && <div style={{ fontSize: 13, color: c.muted, marginTop: 4, fontWeight: 500, paddingLeft: 44 }}>{headSub}</div>}
+                {headSub && <div style={{ fontSize: 13, color: c.muted, marginTop: -2, fontWeight: 500, paddingLeft: 44 }}>{headSub}</div>}
               </div>
             );
           })()}
@@ -824,7 +824,7 @@ export default function App() {
                   </div>
                   <div style={{ textAlign: "right" }}>
                     <div style={{ fontSize: 13, color: "#AAA", fontWeight: 500, marginBottom: 6 }}>Falta ahorrar</div>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: "#FF803C" }}>{formatMoney(Math.max(0, metaTotalNum - ahorroAcumulado))}</div>
+                    <div style={{ fontSize: 18, fontWeight: 600, color: "#FF803C" }}>{formatMoney(Math.max(0, metaTotalNum - ahorroAcumulado))}</div>
                   </div>
                 </div>
 
@@ -848,35 +848,35 @@ export default function App() {
 
               <div style={s.grid2}>
                 <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 0 }}>
                     <IconBadge emoji={<ArrowDownToLine size={18} />} bg={c.iconBgGreen} color={c.green} />
                     <span style={{ fontSize: 13, fontWeight: 500, color: c.muted }}>Ingresos hoy</span>
                   </div>
-                  <div style={{ ...s.greenNum, textAlign: "center", marginTop: 2 }}>{formatMoney(totalIngresosHoy)}</div>
+                  <div style={{ ...s.greenNum, textAlign: "center", marginTop: 0 }}>{formatMoney(totalIngresosHoy)}</div>
                 </div>
                 
                 <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 0 }}>
                     <IconBadge emoji={<ArrowUpFromLine size={18} />} bg={c.iconBgRed} color={c.red} />
                     <span style={{ fontSize: 13, fontWeight: 500, color: c.muted }}>Gastos hoy</span>
                   </div>
-                  <div style={{ ...s.redNum, textAlign: "center", marginTop: 2 }}>{formatMoney(totalGastadoHoy)}</div>
+                  <div style={{ ...s.redNum, textAlign: "center", marginTop: 0 }}>{formatMoney(totalGastadoHoy)}</div>
                 </div>
 
                 <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 0 }}>
                     <IconBadge emoji={<PiggyBank size={18} />} bg={c.iconBgOrange} color="#FF803C" />
                     <span style={{ fontSize: 13, fontWeight: 500, color: c.muted }}>Ahorro hoy</span>
                   </div>
-                  <div style={{ fontSize: 20, fontWeight: 600, color: "#FF803C", textAlign: "center", marginTop: 2 }}>{formatMoney(totalIngresosHoy - totalGastadoHoy)}</div>
+                  <div style={{ fontSize: 20, fontWeight: 600, color: "#FF803C", textAlign: "center", marginTop: 0 }}>{formatMoney(totalIngresosHoy - totalGastadoHoy)}</div>
                 </div>
 
                 <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 0 }}>
                     <IconBadge emoji={<Target size={18} />} bg={c.iconBgPurple} color={c.iconTextPurple} />
                     <span style={{ fontSize: 13, fontWeight: 500, color: c.muted }}>Límite / día</span>
                   </div>
-                  <div style={{ fontSize: 20, fontWeight: 600, color: c.text, textAlign: "center", marginTop: 2 }}>{formatMoney(ahorroMetaDiario)}</div>
+                  <div style={{ fontSize: 20, fontWeight: 600, color: c.text, textAlign: "center", marginTop: 0 }}>{formatMoney(ahorroMetaDiario)}</div>
                 </div>
               </div>
 
@@ -888,7 +888,7 @@ export default function App() {
               </div>
 
               {movimientosHoy.length > 0 ? (
-                <div style={{ ...s.card, padding: "8px 16px" }}>
+                <div style={{ ...s.card, padding: "0 16px" }}>
                   {movimientosHoy.map((g, i, arr) => {
                     const cat = categorias.find(c => c.id === g.categoria);
                     const isLast = i === arr.length - 1;
@@ -1161,7 +1161,7 @@ export default function App() {
                      <div style={{ fontSize: 14, fontWeight: 600, color: c.text, marginBottom: 12, paddingLeft: 4 }}>
                        {formatGroupDate(dateKey)}
                      </div>
-                     <div style={{ ...s.card, padding: "8px 16px", marginBottom: 0 }}>
+                     <div style={{ ...s.card, padding: "0 16px", marginBottom: 0 }}>
                        {groupedHistorial[dateKey].map((g, i, arr) => {
                          const cat = categorias.find(c => c.id === g.categoria);
                          const isLast = i === arr.length - 1;
