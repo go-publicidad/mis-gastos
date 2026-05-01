@@ -65,12 +65,10 @@ const getTexto = (label) => {
   return text;
 };
 
-// --- FIX: TRUNCAR A 8 CARACTERES PARA LOS GRÁFICOS ---
 const formatCatName = (label) => {
   const clean = getTexto(label);
   return clean.length > 8 ? clean.substring(0, 8) + "..." : clean;
 };
-// -----------------------------------------------------
 
 const formatFecha = (fechaStr) => {
   if (!fechaStr) return "";
@@ -706,7 +704,7 @@ export default function App() {
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
         @keyframes spin { to { transform: rotate(360deg) } }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
       `}</style>
 
       {viewAll ? (
@@ -1349,7 +1347,7 @@ export default function App() {
       )}
 
       {showApariencia && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column" }}>
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: "slideInRight 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
             <button onClick={() => { setShowApariencia(false); setShowMenu(true); }} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
             <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: "700" }}>Pantalla y brillo</h2>
@@ -1418,7 +1416,7 @@ export default function App() {
       )}
 
       {showMenu && !showApariencia && !profileScreen && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 9999, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column" }}>
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 9999, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: "slideInRight 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
             <button onClick={() => setShowMenu(false)} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
             <h2 style={{ margin: 0, fontSize: 22, color: c.text, fontWeight: 700 }}>Mi Perfil</h2>
@@ -1447,7 +1445,7 @@ export default function App() {
       )}
 
       {showMenu && profileScreen === "datos" && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden" }}>
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: "slideInRight 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
             <button onClick={() => setProfileScreen(null)} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
             <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Mis datos</h2>
@@ -1475,7 +1473,7 @@ export default function App() {
       )}
 
       {showMenu && profileScreen === "clave" && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden" }}>
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: "slideInRight 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
             <button onClick={() => setProfileScreen(null)} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
             <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Cambiar mi clave</h2>
@@ -1501,7 +1499,7 @@ export default function App() {
       )}
 
       {showMenu && profileScreen === "logros" && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden" }}>
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: "slideInRight 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 24, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
             <button onClick={() => setProfileScreen(null)} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
             <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Mis logros</h2>
@@ -1536,7 +1534,7 @@ export default function App() {
       )}
 
       {showMenu && profileScreen === "ayuda" && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden" }}>
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: "slideInRight 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 24, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
             <button onClick={() => setProfileScreen(null)} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
             <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Centro de ayuda</h2>
