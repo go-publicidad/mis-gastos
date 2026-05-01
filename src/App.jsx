@@ -112,38 +112,6 @@ const formatGroupDate = (dateStr) => {
   return `${day} de ${meses[d.getMonth()]}, ${d.getFullYear()}`;
 };
 
-const getUIFechaHora = (isoStr) => {
-  if (!isoStr) return "";
-  const validIsoStr = isoStr.includes('Z') || isoStr.includes('+') ? isoStr : `${isoStr}Z`;
-  const dt = new Date(validIsoStr);
-  const limaDate = new Date(dt.getTime() - 18000000);
-
-  let h = limaDate.getUTCHours();
-  let m = limaDate.getUTCMinutes();
-  const ampm = h >= 12 ? 'p.m.' : 'a.m.';
-  h = h % 12;
-  h = h ? h : 12; 
-  m = m < 10 ? '0' + m : m;
-  const strTime = `${h}:${m} ${ampm}`;
-
-  const isoDate = limaDate.toISOString().split("T")[0];
-  const todayIso = hoy();
-  const ayerDate = new Date(Date.now() - 18000000 - 86400000);
-  const ayerIso = ayerDate.toISOString().split("T")[0];
-
-  if (isoDate === todayIso) {
-    return `Hoy ${strTime}`;
-  } else if (isoDate === ayerIso) {
-    return `Ayer ${strTime}`;
-  } else {
-    const meses = ["Ene.", "Feb.", "Mar.", "Abr.", "May.", "Jun.", "Jul.", "Ago.", "Sep.", "Oct.", "Nov.", "Dic."];
-    const day = limaDate.getUTCDate();
-    const month = meses[limaDate.getUTCMonth()];
-    const year = limaDate.getUTCFullYear();
-    return `${day} ${month} ${year} - ${strTime}`;
-  }
-};
-
 const getDisplayDesc = (g, categorias) => {
   const cat = categorias.find(c => c.id === g.categoria);
   if (!cat) return g.descripcion;
@@ -743,6 +711,7 @@ export default function App() {
             ) : (
               gastosVerTodos.map(g => {
                 const cat = categorias.find(c => c.id === g.categoria);
+                const descAdicional = g.descripcion && cat && g.descripcion !== getTexto(cat.label) ? g.descripcion : "";
                 return (
                   <div key={g.id} style={{ ...s.card, padding: "12px 16px", marginBottom: 8 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -754,7 +723,8 @@ export default function App() {
                         )}
                         <div style={{ minWidth: 0 }}>
                           <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2, color: c.text }}>
-                            {getDisplayDesc(g, categorias)}
+                            {cat ? getTexto(cat.label) : g.descripcion}
+                            {descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400 }}>{descAdicional}</span>}
                           </div>
                           <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ingresos"}</div>
                         </div>
@@ -891,6 +861,7 @@ export default function App() {
                 <div style={{ ...s.card, padding: "0 16px" }}>
                   {movimientosHoy.map((g, i, arr) => {
                     const cat = categorias.find(c => c.id === g.categoria);
+                    const descAdicional = g.descripcion && cat && g.descripcion !== getTexto(cat.label) ? g.descripcion : "";
                     const isLast = i === arr.length - 1;
                     return (
                       <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: isLast ? "none" : `1px solid ${c.border}` }}>
@@ -902,7 +873,8 @@ export default function App() {
                           )}
                           <div style={{ minWidth: 0 }}>
                             <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text }}>
-                              {getDisplayDesc(g, categorias)}
+                              {cat ? getTexto(cat.label) : g.descripcion}
+                              {descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400 }}>{descAdicional}</span>}
                             </div>
                             <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ahorros"}</div>
                           </div>
@@ -1164,6 +1136,7 @@ export default function App() {
                      <div style={{ ...s.card, padding: "0 16px", marginBottom: 0 }}>
                        {groupedHistorial[dateKey].map((g, i, arr) => {
                          const cat = categorias.find(c => c.id === g.categoria);
+                         const descAdicional = g.descripcion && cat && g.descripcion !== getTexto(cat.label) ? g.descripcion : "";
                          const isLast = i === arr.length - 1;
                          return (
                            <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: isLast ? "none" : `1px solid ${c.border}` }}>
@@ -1174,7 +1147,10 @@ export default function App() {
                                  </div>
                                )}
                                <div style={{ minWidth: 0 }}>
-                                 <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2 }}>{getDisplayDesc(g, categorias)}</div>
+                                 <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2 }}>
+                                    {cat ? getTexto(cat.label) : g.descripcion}
+                                    {descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400 }}>{descAdicional}</span>}
+                                 </div>
                                  <div style={{ fontSize: 12, fontWeight: 500, color: c.muted }}>{getUITime(g.created_at)}</div>
                                </div>
                              </div>
@@ -1195,11 +1171,11 @@ export default function App() {
             <div style={s.section}>
               
               <div style={{...s.card, marginBottom: 24}}>
-                <div style={{ ...s.label, textAlign: "center" }}>Definir meta de ahorro (S/)</div>
-                <input style={{ ...s.input, marginTop: 12, marginBottom: 24, fontSize: 24, textAlign: "center", color: "#FF803C", fontWeight: 500 }} type={isEditingMeta ? "number" : "text"} placeholder="Ej: 100000" value={isEditingMeta ? metaAhorro : (metaAhorro ? formatMoney(metaAhorro) : "")} onFocus={() => setIsEditingMeta(true)} onBlur={() => setIsEditingMeta(false)} onChange={e => setMetaAhorro(e.target.value)} />
+                <div style={{ ...s.label, textAlign: "center", marginBottom: 4 }}>Definir meta de ahorro (S/)</div>
+                <input style={{ ...s.input, marginBottom: 24, fontSize: 20, textAlign: "center", color: "#FF803C", fontWeight: 500 }} type={isEditingMeta ? "number" : "text"} placeholder="Ej: 100000" value={isEditingMeta ? metaAhorro : (metaAhorro ? formatMoney(metaAhorro) : "")} onFocus={() => setIsEditingMeta(true)} onBlur={() => setIsEditingMeta(false)} onChange={e => setMetaAhorro(e.target.value)} />
                 
-                <div style={{ ...s.label, textAlign: "center" }}>Período de ahorro</div>
-                <div style={{ display: "flex", gap: 12, marginTop: 12, marginBottom: 24 }}>
+                <div style={{ ...s.label, textAlign: "center", marginBottom: 4 }}>Período de ahorro</div>
+                <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
                   <div style={{ flex: 1 }}>
                     <input type={fechaInicioPlan ? "date" : "text"} placeholder="Del" value={fechaInicioPlan} onFocus={e => e.target.type = "date"} onBlur={e => { if(!e.target.value) e.target.type = "text" }} onChange={e => setFechaInicioPlan(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
                   </div>
@@ -1208,8 +1184,8 @@ export default function App() {
                   </div>
                 </div>
                 
-                <div style={{ ...s.label, textAlign: "center" }}>Ingreso mensual (S/)</div>
-                <input style={{ ...s.input, marginTop: 12, marginBottom: 24, fontSize: 20, textAlign: "center", color: c.green, fontWeight: 500 }} type={isEditingIngreso ? "number" : "text"} placeholder="Ej: 5000" value={isEditingIngreso ? ingresoMensual : (ingresoMensual ? formatMoney(ingresoMensual) : "")} onFocus={() => setIsEditingIngreso(true)} onBlur={() => setIsEditingIngreso(false)} onChange={e => setIngresoMensual(e.target.value)} />
+                <div style={{ ...s.label, textAlign: "center", marginBottom: 4 }}>Ingreso mensual (S/)</div>
+                <input style={{ ...s.input, marginBottom: 24, fontSize: 20, textAlign: "center", color: c.green, fontWeight: 500 }} type={isEditingIngreso ? "number" : "text"} placeholder="Ej: 5000" value={isEditingIngreso ? ingresoMensual : (ingresoMensual ? formatMoney(ingresoMensual) : "")} onFocus={() => setIsEditingIngreso(true)} onBlur={() => setIsEditingIngreso(false)} onChange={e => setIngresoMensual(e.target.value)} />
                 <button style={s.btnPrimary} onClick={guardarConfig} disabled={saving}>{saving ? "Guardando..." : "Guardar configuración"}</button>
               </div>
 
