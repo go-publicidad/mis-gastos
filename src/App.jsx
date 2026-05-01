@@ -5,7 +5,7 @@ import {
   ArrowDownToLine, ArrowUpFromLine, PiggyBank, Target, 
   Edit2, Trash2, X, Calendar, Mail, CheckCircle2, ChevronRight,
   UserCircle, Lock, Trophy, Palette, Download, Headphones, LogOut, AlertTriangle,
-  BarChart2, Plane, Laptop, ShieldCheck, TrendingUp, Plus, PlusCircle
+  BarChart2, Plane, Laptop, ShieldCheck, TrendingUp, Plus
 } from "lucide-react";
 
 const SUPABASE_URL = "https://jboazxmcmvvcscqeerbz.supabase.co";
@@ -1382,76 +1382,7 @@ export default function App() {
         </>
       )}
 
-      {showApariencia && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: isClosing === 'apariencia' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
-            <button onClick={() => cerrarPantalla('apariencia', () => { setShowApariencia(false); setShowMenu(true); })} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
-            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: "700" }}>Pantalla y brillo</h2>
-          </div>
-
-          <div style={{ fontSize: 14, color: c.muted, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 12, fontWeight: 700 }}>Aspecto</div>
-          <div style={{ background: c.card, borderRadius: 16, padding: "20px 20px 0", marginBottom: 24, border: `1px solid ${c.border}`, boxShadow: c.shadow }}>
-            
-            <div style={{ display: "flex", justifyContent: "space-around", paddingBottom: 24 }}>
-              <div onClick={() => { setTheme("light"); showToast("Tema Claro activado"); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer" }}>
-                <div style={{ width: 66, height: 130, borderRadius: 12, background: "#FFF", border: theme === "light" ? "3px solid #34C759" : "1px solid #CCC", position: "relative", overflow: "hidden" }}>
-                  <div style={{ position: "absolute", top: 12, left: 6, right: 6, height: 24, background: "#E5E5E5", borderRadius: 4 }} />
-                  <div style={{ position: "absolute", top: 44, left: 6, right: 6, height: 18, background: "#E5E5E5", borderRadius: 4 }} />
-                </div>
-                <span style={{ fontSize: 16, fontWeight: 600 }}>Claro</span>
-                <div style={{ width: 22, height: 22, borderRadius: "50%", border: theme === "light" ? "none" : `1px solid ${c.muted}`, background: theme === "light" ? "#34C759" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {theme === "light" && <span style={{ color: "#FFF", fontSize: 14 }}>✓</span>}
-                </div>
-              </div>
-
-              <div onClick={() => { setTheme("dark"); showToast("Tema Oscuro activado"); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer" }}>
-                <div style={{ width: 66, height: 130, borderRadius: 12, background: "#111", border: theme === "dark" ? "3px solid #34C759" : "1px solid #444", position: "relative", overflow: "hidden" }}>
-                  <div style={{ position: "absolute", top: 12, left: 6, right: 6, height: 24, background: "#333", borderRadius: 4 }} />
-                  <div style={{ position: "absolute", top: 44, left: 6, right: 6, height: 18, background: "#333", borderRadius: 4 }} />
-                </div>
-                <span style={{ fontSize: 16, fontWeight: 600 }}>Oscuro</span>
-                <div style={{ width: 22, height: 22, borderRadius: "50%", border: theme === "dark" ? "none" : `1px solid ${c.muted}`, background: theme === "dark" ? "#34C759" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {theme === "dark" && <span style={{ color: "#FFF", fontSize: 14 }}>✓</span>}
-                </div>
-              </div>
-            </div>
-
-            <div style={{ borderTop: `1px solid ${c.border}`, padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: 16, fontWeight: 600 }}>Automático</span>
-              <div onClick={() => setIsAutoTheme(!isAutoTheme)} style={{ width: 50, height: 30, background: isAutoTheme ? "#34C759" : c.border, borderRadius: 15, position: "relative", cursor: "pointer", transition: "0.3s" }}>
-                <div style={{ width: 26, height: 26, background: "#FFF", borderRadius: "50%", position: "absolute", top: 2, left: isAutoTheme ? 22 : 2, transition: "0.3s", boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}/>
-              </div>
-            </div>
-
-            {isAutoTheme && (
-              <div style={{ borderTop: `1px solid ${c.border}`, padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
-                <span style={{ fontSize: 16, fontWeight: 600 }}>Opciones</span>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ color: c.muted, fontSize: 14, fontWeight: 400 }}>Claro hasta el atardecer</span>
-                  <span style={{ color: c.muted, fontSize: 18 }}>›</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div style={{ background: c.card, borderRadius: 16, padding: "0 20px", border: `1px solid ${c.border}`, boxShadow: c.shadow }}>
-            <div style={{ padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, cursor: "pointer" }}>
-              <span style={{ fontSize: 16, fontWeight: 600 }}>Tamaño del texto</span>
-              <span style={{ color: c.muted, fontSize: 18 }}>›</span>
-            </div>
-            <div style={{ padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: 16, fontWeight: 600 }}>Negritas</span>
-              <div onClick={() => setUseBold(!useBold)} style={{ width: 50, height: 30, background: useBold ? "#34C759" : c.border, borderRadius: 15, position: "relative", cursor: "pointer", transition: "0.3s" }}>
-                <div style={{ width: 26, height: 26, background: "#FFF", borderRadius: "50%", position: "absolute", top: 2, left: useBold ? 22 : 2, transition: "0.3s", boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}/>
-              </div>
-            </div>
-          </div>
-          
-          <button style={{ ...s.btnPrimary, marginTop: 30 }} onClick={() => { guardarConfig(); cerrarPantalla('apariencia', () => { setShowApariencia(false); setShowMenu(true); }); }}>Guardar Preferencias</button>
-        </div>
-      )}
-
-      {showMenu && !showApariencia && !profileScreen && (
+      {showMenu && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 9999, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: isClosing === 'menu' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
             <button onClick={() => cerrarPantalla('menu', () => setShowMenu(false))} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
@@ -1599,6 +1530,75 @@ export default function App() {
               }
             }}>Eliminar todos los movimientos</button>
           </div>
+        </div>
+      )}
+
+      {showApariencia && (
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: isClosing === 'apariencia' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
+            <button onClick={() => cerrarPantalla('apariencia', () => setShowApariencia(false))} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: "700" }}>Pantalla y brillo</h2>
+          </div>
+
+          <div style={{ fontSize: 14, color: c.muted, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 12, fontWeight: 700 }}>Aspecto</div>
+          <div style={{ background: c.card, borderRadius: 16, padding: "20px 20px 0", marginBottom: 24, border: `1px solid ${c.border}`, boxShadow: c.shadow }}>
+            
+            <div style={{ display: "flex", justifyContent: "space-around", paddingBottom: 24 }}>
+              <div onClick={() => { setTheme("light"); showToast("Tema Claro activado"); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer" }}>
+                <div style={{ width: 66, height: 130, borderRadius: 12, background: "#FFF", border: theme === "light" ? "3px solid #34C759" : "1px solid #CCC", position: "relative", overflow: "hidden" }}>
+                  <div style={{ position: "absolute", top: 12, left: 6, right: 6, height: 24, background: "#E5E5E5", borderRadius: 4 }} />
+                  <div style={{ position: "absolute", top: 44, left: 6, right: 6, height: 18, background: "#E5E5E5", borderRadius: 4 }} />
+                </div>
+                <span style={{ fontSize: 16, fontWeight: 600 }}>Claro</span>
+                <div style={{ width: 22, height: 22, borderRadius: "50%", border: theme === "light" ? "none" : `1px solid ${c.muted}`, background: theme === "light" ? "#34C759" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {theme === "light" && <span style={{ color: "#FFF", fontSize: 14 }}>✓</span>}
+                </div>
+              </div>
+
+              <div onClick={() => { setTheme("dark"); showToast("Tema Oscuro activado"); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer" }}>
+                <div style={{ width: 66, height: 130, borderRadius: 12, background: "#111", border: theme === "dark" ? "3px solid #34C759" : "1px solid #444", position: "relative", overflow: "hidden" }}>
+                  <div style={{ position: "absolute", top: 12, left: 6, right: 6, height: 24, background: "#333", borderRadius: 4 }} />
+                  <div style={{ position: "absolute", top: 44, left: 6, right: 6, height: 18, background: "#333", borderRadius: 4 }} />
+                </div>
+                <span style={{ fontSize: 16, fontWeight: 600 }}>Oscuro</span>
+                <div style={{ width: 22, height: 22, borderRadius: "50%", border: theme === "dark" ? "none" : `1px solid ${c.muted}`, background: theme === "dark" ? "#34C759" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {theme === "dark" && <span style={{ color: "#FFF", fontSize: 14 }}>✓</span>}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ borderTop: `1px solid ${c.border}`, padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 16, fontWeight: 600 }}>Automático</span>
+              <div onClick={() => setIsAutoTheme(!isAutoTheme)} style={{ width: 50, height: 30, background: isAutoTheme ? "#34C759" : c.border, borderRadius: 15, position: "relative", cursor: "pointer", transition: "0.3s" }}>
+                <div style={{ width: 26, height: 26, background: "#FFF", borderRadius: "50%", position: "absolute", top: 2, left: isAutoTheme ? 22 : 2, transition: "0.3s", boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}/>
+              </div>
+            </div>
+
+            {isAutoTheme && (
+              <div style={{ borderTop: `1px solid ${c.border}`, padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                <span style={{ fontSize: 16, fontWeight: 600 }}>Opciones</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ color: c.muted, fontSize: 14, fontWeight: 400 }}>Claro hasta el atardecer</span>
+                  <span style={{ color: c.muted, fontSize: 18 }}>›</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div style={{ background: c.card, borderRadius: 16, padding: "0 20px", border: `1px solid ${c.border}`, boxShadow: c.shadow }}>
+            <div style={{ padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, cursor: "pointer" }}>
+              <span style={{ fontSize: 16, fontWeight: 600 }}>Tamaño del texto</span>
+              <span style={{ color: c.muted, fontSize: 18 }}>›</span>
+            </div>
+            <div style={{ padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 16, fontWeight: 600 }}>Negritas</span>
+              <div onClick={() => setUseBold(!useBold)} style={{ width: 50, height: 30, background: useBold ? "#34C759" : c.border, borderRadius: 15, position: "relative", cursor: "pointer", transition: "0.3s" }}>
+                <div style={{ width: 26, height: 26, background: "#FFF", borderRadius: "50%", position: "absolute", top: 2, left: useBold ? 22 : 2, transition: "0.3s", boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}/>
+              </div>
+            </div>
+          </div>
+          
+          <button style={{ ...s.btnPrimary, marginTop: 30 }} onClick={() => { guardarConfig(); cerrarPantalla('apariencia', () => setShowApariencia(false)); }}>Guardar Preferencias</button>
         </div>
       )}
 
