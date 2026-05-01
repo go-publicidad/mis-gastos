@@ -5,7 +5,7 @@ import {
   ArrowDownToLine, ArrowUpFromLine, PiggyBank, Target, 
   Edit2, Trash2, X, Calendar, Mail, CheckCircle2, ChevronRight,
   UserCircle, Lock, Trophy, Palette, Download, Headphones, LogOut, AlertTriangle,
-  BarChart2, Plane, Laptop, ShieldCheck, TrendingUp, Plus
+  BarChart2, Plane, Laptop, ShieldCheck, TrendingUp, Plus, PlusCircle
 } from "lucide-react";
 
 const SUPABASE_URL = "https://jboazxmcmvvcscqeerbz.supabase.co";
@@ -806,18 +806,18 @@ export default function App() {
             }
             else if (tab === "resumen") headTitle = "Reportes";
             else if (tab === "historial") headTitle = "Historial";
-            else if (tab === "metas") headTitle = "Metas"; // NUEVO ENCABEZADO
+            else if (tab === "metas") headTitle = "Metas"; 
 
             return (
               <div style={{ padding: "8px 20px 12px", background: c.bg, position: "sticky", top: 0, zIndex: 90 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                    <button onClick={() => setShowMenu(true)} style={{ backgroundColor: "transparent", border: "none", color: c.text, cursor: "pointer", padding: 0, display: "flex" }}>
+                    <button onClick={() => setShowMenu(true)} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: c.text, cursor: "pointer", padding: 0, display: "flex" }}>
                       <Menu size={28} />
                     </button>
                     <h1 style={{ fontSize: 20, fontWeight: 600, color: c.text, margin: 0, fontFamily: "'Montserrat', sans-serif", lineHeight: 1.1 }}>{headTitle}</h1>
                   </div>
-                  <button onClick={() => window.location.reload()} style={{ backgroundColor: "transparent", border: "none", cursor: "pointer", padding: 0, color: c.text }}>
+                  <button onClick={() => window.location.reload()} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", padding: 0, color: c.text }}>
                     <RefreshCw size={22} />
                   </button>
                 </div>
@@ -1123,7 +1123,7 @@ export default function App() {
                       padding: "10px 24px", borderRadius: 24,
                       border: `1px solid ${filtroHistTipo === opt.id ? (isDark ? "#FFF" : "#000") : c.border}`,
                       background: filtroHistTipo === opt.id ? (isDark ? "#FFF" : "#000") : c.card,
-                      color: filtroHistTipo === opt.id ? "#000" : c.muted,
+                      color: filtroHistTipo === opt.id ? (isDark ? "#000" : "#FFF") : c.muted,
                       fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s"
                     }}>
                       {opt.label}
@@ -1447,7 +1447,7 @@ export default function App() {
             </div>
           </div>
           
-          <button style={{ ...s.btnPrimary, marginTop: 30 }} onClick={() => { guardarConfig(); cerrarPantalla('apariencia', () => setShowApariencia(false)); }}>Guardar Preferencias</button>
+          <button style={{ ...s.btnPrimary, marginTop: 30 }} onClick={() => { guardarConfig(); cerrarPantalla('apariencia', () => { setShowApariencia(false); setShowMenu(true); }); }}>Guardar Preferencias</button>
         </div>
       )}
 
