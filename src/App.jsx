@@ -319,6 +319,9 @@ export default function App() {
   const [isAutoTheme, setIsAutoTheme] = useState(false);
   const [useBold, setUseBold] = useState(false);
 
+  // ESTADO NUEVO PARA ANIMACIONES DE SALIDA
+  const [isClosing, setIsClosing] = useState("");
+
   const safeBase = categoriasBase || [];
   const safeExtra = categoriasExtra || [];
   const categorias = [...safeBase, ...safeExtra];
@@ -345,6 +348,15 @@ export default function App() {
   const showToast = (msg, color = "#FF803C") => {
     setToast({ msg, color });
     setTimeout(() => setToast(null), 2500);
+  };
+
+  // FUNCION PARA CERRAR PANTALLAS CON ANIMACION
+  const cerrarPantalla = (screenName, action) => {
+    setIsClosing(screenName);
+    setTimeout(() => {
+      action();
+      setIsClosing("");
+    }, 280);
   };
 
   useEffect(() => {
@@ -463,7 +475,7 @@ export default function App() {
     await supabase.from("config").upsert([{ key: "userName", value: userName }], { onConflict: "key" });
     setSaving(false);
     showToast("Datos actualizados ✓", c.green);
-    setProfileScreen(null);
+    cerrarPantalla('datos', () => setProfileScreen(null));
   };
 
   const agregarCategoria = async () => {
@@ -705,15 +717,14 @@ export default function App() {
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
         @keyframes spin { to { transform: rotate(360deg) } }
         @keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+        @keyframes slideOutLeft { from { transform: translateX(0); } to { transform: translateX(-100%); } }
       `}</style>
 
       {viewAll ? (
         <>
-          <div style={{ padding: "8px 20px 4px", borderBottom: `1px solid ${c.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: c.bg, position: "sticky", top: 0, zIndex: 10 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 24, cursor: "pointer", padding: 0 }} onClick={() => { setViewAll(false); window.scrollTo(0, 0); }}>←</button>
-              <h2 style={{ margin: 0, fontSize: 18, color: c.text, fontWeight: 600 }}>Movimientos</h2>
-            </div>
+          <div style={{ padding: "12px 20px", borderBottom: `1px solid ${c.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: c.bg, position: "sticky", top: 0, zIndex: 10 }}>
+            <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 24, cursor: "pointer", padding: 0 }} onClick={() => { setViewAll(false); window.scrollTo(0, 0); }}>←</button>
+            <h2 style={{ margin: 0, fontSize: 18, color: c.text, fontWeight: 600 }}>Movimientos</h2>
             <div style={{ display: "flex", gap: 16 }}>
               <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 20, cursor: "pointer", padding: 0 }} onClick={() => setShowEmailModal(true)}>
                 <Mail size={20} />
@@ -1114,7 +1125,7 @@ export default function App() {
                       padding: "10px 24px", borderRadius: 24,
                       border: `1px solid ${filtroHistTipo === opt.id ? (isDark ? "#FFF" : "#000") : c.border}`,
                       background: filtroHistTipo === opt.id ? (isDark ? "#FFF" : "#000") : c.card,
-                      color: filtroHistTipo === opt.id ? "#000" : c.muted,
+                      color: filtroHistTipo === opt.id ? (isDark ? "#000" : "#FFF") : c.muted,
                       fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s"
                     }}>
                       {opt.label}
@@ -1346,9 +1357,9 @@ export default function App() {
       )}
 
       {showApariencia && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: "slideInLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: isClosing === 'apariencia' ? "slideOutLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
-            <button onClick={() => { setShowApariencia(false); setShowMenu(true); }} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <button onClick={() => cerrarPantalla('apariencia', () => { setShowApariencia(false); setShowMenu(true); })} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
             <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: "700" }}>Pantalla y brillo</h2>
           </div>
 
@@ -1410,14 +1421,14 @@ export default function App() {
             </div>
           </div>
           
-          <button style={{ ...s.btnPrimary, marginTop: 30 }} onClick={() => { guardarConfig(); setShowApariencia(false); setShowMenu(true); }}>Guardar Preferencias</button>
+          <button style={{ ...s.btnPrimary, marginTop: 30 }} onClick={() => { guardarConfig(); cerrarPantalla('apariencia', () => { setShowApariencia(false); setShowMenu(true); }); }}>Guardar Preferencias</button>
         </div>
       )}
 
       {showMenu && !showApariencia && !profileScreen && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 9999, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: "slideInLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 9999, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: isClosing === 'menu' ? "slideOutLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
-            <button onClick={() => setShowMenu(false)} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <button onClick={() => cerrarPantalla('menu', () => setShowMenu(false))} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
             <h2 style={{ margin: 0, fontSize: 22, color: c.text, fontWeight: 700 }}>Mi Perfil</h2>
           </div>
 
@@ -1430,9 +1441,9 @@ export default function App() {
 
           <div style={{ marginBottom: 32 }}>
             <div style={{ fontSize: 14, color: c.text, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Ajustes</div>
-            <MenuItem icon={<Target size={24} color="#FF803C" />} text="Mi Meta de Ahorro" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowMenu(false); setTab("config"); }} />
+            <MenuItem icon={<Target size={24} color="#FF803C" />} text="Mi Meta de Ahorro" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { cerrarPantalla('menu', () => { setShowMenu(false); setTab("config"); }); }} />
             <MenuItem icon={<Palette size={24} color="#FF803C" />} text="Apariencia (Tema Claro/Oscuro)" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowApariencia(true); setProfileScreen(null); }} />
-            <MenuItem icon={<Download size={24} color="#FF803C" />} text="Exportar Reportes" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowMenu(false); setShowEmailModal(true); }} />
+            <MenuItem icon={<Download size={24} color="#FF803C" />} text="Exportar Reportes" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { cerrarPantalla('menu', () => { setShowMenu(false); setShowEmailModal(true); }); }} />
             <MenuItem icon={<Headphones size={24} color="#FF803C" />} text="Centro de ayuda" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("ayuda")} />
           </div>
 
@@ -1444,9 +1455,9 @@ export default function App() {
       )}
 
       {showMenu && profileScreen === "datos" && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: "slideInLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'datos' ? "slideOutLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
-            <button onClick={() => setProfileScreen(null)} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <button onClick={() => cerrarPantalla('datos', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
             <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Mis datos</h2>
           </div>
           
@@ -1472,9 +1483,9 @@ export default function App() {
       )}
 
       {showMenu && profileScreen === "clave" && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: "slideInLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'clave' ? "slideOutLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
-            <button onClick={() => setProfileScreen(null)} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <button onClick={() => cerrarPantalla('clave', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
             <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Cambiar mi clave</h2>
           </div>
           
@@ -1493,14 +1504,14 @@ export default function App() {
             <input type="password" style={s.input} placeholder="••••••••" />
           </div>
           
-          <button style={s.btnPrimary} onClick={() => { showToast("Clave actualizada ✓", c.green); setProfileScreen(null); }}>Actualizar clave</button>
+          <button style={s.btnPrimary} onClick={() => { showToast("Clave actualizada ✓", c.green); cerrarPantalla('clave', () => setProfileScreen(null)); }}>Actualizar clave</button>
         </div>
       )}
 
       {showMenu && profileScreen === "logros" && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: "slideInLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'logros' ? "slideOutLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 24, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
-            <button onClick={() => setProfileScreen(null)} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <button onClick={() => cerrarPantalla('logros', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
             <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Mis logros</h2>
           </div>
           
@@ -1533,9 +1544,9 @@ export default function App() {
       )}
 
       {showMenu && profileScreen === "ayuda" && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: "slideInLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'ayuda' ? "slideOutLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 24, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
-            <button onClick={() => setProfileScreen(null)} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <button onClick={() => cerrarPantalla('ayuda', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
             <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Centro de ayuda</h2>
           </div>
           
