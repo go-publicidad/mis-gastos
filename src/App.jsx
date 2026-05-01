@@ -40,7 +40,6 @@ const getFechaLocal = (isoStr) => {
 
 const formatMoney = (n) => `${CURRENCY} ${Number(n || 0).toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-// --- SISTEMA BLINDADO CONTRA ERRORES DE TEXTO ---
 const getIcono = (label) => {
   if (!label || !label.trim()) return "📌";
   const text = label.trim();
@@ -65,7 +64,6 @@ const getTexto = (label) => {
   }
   return text;
 };
-// ------------------------------------------------
 
 const formatCatName = (label) => {
   const clean = getTexto(label);
@@ -980,7 +978,7 @@ export default function App() {
               {/* GRÁFICO 1: INGRESOS */}
               <div style={{ ...s.card, padding: "20px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, paddingBottom: 12, marginBottom: 20 }}>
-                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: c.text }}>Ingresos por categoría</h3>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: c.text }}>Reporte de Ingresos</h3>
                   <div style={{ display: "flex", gap: 12 }}>
                     <button onClick={() => setTipoGraficoIngresos("bar")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoIngresos === "bar" ? 1 : 0.3, padding: 0 }}>
                       <BarChart2 size={20} color={c.text} />
@@ -1049,7 +1047,7 @@ export default function App() {
               {/* GRÁFICO 2: GASTOS */}
               <div style={{ ...s.card, padding: "20px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, paddingBottom: 12, marginBottom: 20 }}>
-                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: c.text }}>Gastos por categoría</h3>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: c.text }}>Reporte de Gastos</h3>
                   <div style={{ display: "flex", gap: 12 }}>
                     <button onClick={() => setTipoGraficoGastos("bar")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoGastos === "bar" ? 1 : 0.3, padding: 0 }}>
                       <BarChart2 size={20} color={c.text} />
@@ -1114,11 +1112,11 @@ export default function App() {
                 <div style={{ display: "flex", gap: 8 }}>
                   {[{ id: "todos", label: "Total" }, { id: "ingreso", label: "Ingresos" }, { id: "gasto", label: "Gastos" }].map(opt => (
                     <button key={opt.id} onClick={() => setFiltroHistTipo(opt.id)} style={{
-                      padding: "8px 16px", borderRadius: 20,
-                      border: `1px solid ${filtroHistTipo === opt.id ? "#FF803C" : c.border}`,
-                      background: filtroHistTipo === opt.id ? "#FF803C" : c.card,
-                      color: filtroHistTipo === opt.id ? "#000" : c.muted,
-                      fontSize: 14, fontWeight: filtroHistTipo === opt.id ? 700 : 600, cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s"
+                      padding: "10px 24px", borderRadius: 24,
+                      border: `1px solid ${filtroHistTipo === opt.id ? (isDark ? "#FFF" : "#000") : c.border}`,
+                      background: filtroHistTipo === opt.id ? (isDark ? "#FFF" : "#000") : c.card,
+                      color: filtroHistTipo === opt.id ? (isDark ? "#000" : "#FFF") : c.muted,
+                      fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s"
                     }}>
                       {opt.label}
                     </button>
@@ -1209,7 +1207,7 @@ export default function App() {
               
               <div style={{...s.card, marginBottom: 24}}>
                 <div style={{ ...s.label, textAlign: "center", marginBottom: 4 }}>Definir meta de ahorro (S/)</div>
-                <input style={{ ...s.input, marginBottom: 24, fontSize: 20, textAlign: "center", color: "#FF803C", fontWeight: 500 }} type={isEditingMeta ? "number" : "text"} placeholder="Ej: 100000" value={isEditingMeta ? metaAhorro : (metaAhorro ? formatMoney(metaAhorro) : "")} onFocus={() => setIsEditingMeta(true)} onBlur={() => setIsEditingMeta(false)} onChange={e => setMetaAhorro(e.target.value)} />
+                <input style={{ ...s.input, marginBottom: 24, fontSize: 20, textAlign: "center", color: "#FF803C", fontWeight: 600 }} type={isEditingMeta ? "number" : "text"} placeholder="Ej: 100000" value={isEditingMeta ? metaAhorro : (metaAhorro ? formatMoney(metaAhorro) : "")} onFocus={() => setIsEditingMeta(true)} onBlur={() => setIsEditingMeta(false)} onChange={e => setMetaAhorro(e.target.value)} />
                 
                 <div style={{ ...s.label, textAlign: "center", marginBottom: 4 }}>Período de ahorro</div>
                 <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
@@ -1222,7 +1220,7 @@ export default function App() {
                 </div>
                 
                 <div style={{ ...s.label, textAlign: "center", marginBottom: 4 }}>Ingreso mensual (S/)</div>
-                <input style={{ ...s.input, marginBottom: 24, fontSize: 20, textAlign: "center", color: c.green, fontWeight: 500 }} type={isEditingIngreso ? "number" : "text"} placeholder="Ej: 5000" value={isEditingIngreso ? ingresoMensual : (ingresoMensual ? formatMoney(ingresoMensual) : "")} onFocus={() => setIsEditingIngreso(true)} onBlur={() => setIsEditingIngreso(false)} onChange={e => setIngresoMensual(e.target.value)} />
+                <input style={{ ...s.input, marginBottom: 24, fontSize: 20, textAlign: "center", color: c.green, fontWeight: 600 }} type={isEditingIngreso ? "number" : "text"} placeholder="Ej: 5000" value={isEditingIngreso ? ingresoMensual : (ingresoMensual ? formatMoney(ingresoMensual) : "")} onFocus={() => setIsEditingIngreso(true)} onBlur={() => setIsEditingIngreso(false)} onChange={e => setIngresoMensual(e.target.value)} />
                 <button style={s.btnPrimary} onClick={guardarConfig} disabled={saving}>{saving ? "Guardando..." : "Guardar configuración"}</button>
               </div>
 
