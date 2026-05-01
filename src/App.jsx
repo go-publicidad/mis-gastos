@@ -40,27 +40,32 @@ const getFechaLocal = (isoStr) => {
 
 const formatMoney = (n) => `${CURRENCY} ${Number(n || 0).toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+// --- SISTEMA BLINDADO CONTRA ERRORES DE TEXTO ---
 const getIcono = (label) => {
-  if (!label) return "📌";
-  const arr = label.trim().split(" ");
+  if (!label || !label.trim()) return "📌";
+  const text = label.trim();
+  const arr = text.split(" ");
   if (arr.length > 1 && !/[a-zA-Z0-9]/.test(arr[0])) {
     return arr[0];
   }
-  return Array.from(label.trim())[0].toUpperCase();
+  const firstChar = Array.from(text)[0];
+  return firstChar ? firstChar.toUpperCase() : "📌";
 };
 
 const getTexto = (label) => {
-  if (!label) return "";
-  const arr = label.trim().split(" ");
+  if (!label || !label.trim()) return "Sin nombre";
+  const text = label.trim();
+  const arr = text.split(" ");
   if (arr.length > 1 && !/[a-zA-Z0-9]/.test(arr[0])) {
     return arr.slice(1).join(" ");
   }
-  const firstChar = Array.from(label.trim())[0];
-  if (!/[a-zA-Z0-9]/.test(firstChar)) {
-      return Array.from(label.trim()).slice(1).join("").trim() || label.trim();
+  const firstChar = Array.from(text)[0];
+  if (firstChar && !/[a-zA-Z0-9]/.test(firstChar)) {
+      return Array.from(text).slice(1).join("").trim() || text;
   }
-  return label.trim();
+  return text;
 };
+// ------------------------------------------------
 
 const formatCatName = (label) => {
   const clean = getTexto(label);
@@ -110,6 +115,38 @@ const formatGroupDate = (dateStr) => {
   if (dateStr === todayIso) return `Hoy, ${day} de ${meses[d.getMonth()]}`;
   if (dateStr === ayerIso) return `Ayer, ${day} de ${meses[d.getMonth()]}`;
   return `${day} de ${meses[d.getMonth()]}, ${d.getFullYear()}`;
+};
+
+const getUIFechaHora = (isoStr) => {
+  if (!isoStr) return "";
+  const validIsoStr = isoStr.includes('Z') || isoStr.includes('+') ? isoStr : `${isoStr}Z`;
+  const dt = new Date(validIsoStr);
+  const limaDate = new Date(dt.getTime() - 18000000);
+
+  let h = limaDate.getUTCHours();
+  let m = limaDate.getUTCMinutes();
+  const ampm = h >= 12 ? 'p.m.' : 'a.m.';
+  h = h % 12;
+  h = h ? h : 12; 
+  m = m < 10 ? '0' + m : m;
+  const strTime = `${h}:${m} ${ampm}`;
+
+  const isoDate = limaDate.toISOString().split("T")[0];
+  const todayIso = hoy();
+  const ayerDate = new Date(Date.now() - 18000000 - 86400000);
+  const ayerIso = ayerDate.toISOString().split("T")[0];
+
+  if (isoDate === todayIso) {
+    return `Hoy ${strTime}`;
+  } else if (isoDate === ayerIso) {
+    return `Ayer ${strTime}`;
+  } else {
+    const meses = ["Ene.", "Feb.", "Mar.", "Abr.", "May.", "Jun.", "Jul.", "Ago.", "Sep.", "Oct.", "Nov.", "Dic."];
+    const day = limaDate.getUTCDate();
+    const month = meses[limaDate.getUTCMonth()];
+    const year = limaDate.getUTCFullYear();
+    return `${day} ${month} ${year} - ${strTime}`;
+  }
 };
 
 const getDisplayDesc = (g, categorias) => {
@@ -1584,7 +1621,7 @@ export default function App() {
             <input style={{ ...s.input, marginBottom: 20, textAlign: "center", fontWeight: 500 }} type="email" placeholder="correo@ejemplo.com" value={emailDestino} onChange={e => setEmailDestino(e.target.value)} />
             <div style={{ display: "flex", gap: 12, borderTop: `1px solid ${c.border}`, paddingTop: 16 }}>
               <button style={{ flex: 1, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: c.text, fontSize: 16, cursor: "pointer", padding: "10px 0", fontFamily: "inherit", fontWeight: 600 }} onClick={() => setShowEmailModal(false)}>Cancelar</button>
-              <button style={{ flex: 1, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#4D96FF", fontSize: 16, cursor: "pointer", padding: "10px 0", fontWeight: 600, fontFamily: "inherit" }} onClick={() => { showToast("Enviado con éxito", c.green); setShowEmailModal(false); setEmailDestino(""); }}>Enviar</button>
+              <button style={{ flex: 1, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#4D96FF", fontSize: 16, cursor: "pointer", padding: "10px 0", fontWeight: 700, fontFamily: "inherit" }} onClick={() => { showToast("Enviado con éxito", c.green); setShowEmailModal(false); setEmailDestino(""); }}>Enviar</button>
             </div>
           </div>
         </div>
