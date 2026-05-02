@@ -6,7 +6,7 @@ import {
   Edit2, Trash2, X, Calendar, Mail, CheckCircle2, ChevronRight,
   UserCircle, Lock, Trophy, Palette, Download, Headphones, LogOut, AlertTriangle,
   BarChart2, Plane, Laptop, ShieldCheck, TrendingUp, Plus, PlusCircle, ArrowLeft, Clock,
-  ChevronUp, Minus, ChevronDown, Circle, MoreVertical, TrendingDown
+  ChevronUp, Minus, ChevronDown, Circle, MoreVertical, TrendingDown, Bell
 } from "lucide-react";
 
 const SUPABASE_URL = "https://jboazxmcmvvcscqeerbz.supabase.co";
@@ -299,6 +299,7 @@ export default function App() {
   const [vtFechaHasta, setVtFechaHasta] = useState("");
   
   const [showMenu, setShowMenu] = useState(false);
+  const [showNovedades, setShowNovedades] = useState(false); // NUEVO ESTADO NOVEDADES
   const [showApariencia, setShowApariencia] = useState(false);
   const [profileScreen, setProfileScreen] = useState(null);
   
@@ -334,7 +335,7 @@ export default function App() {
   const categorias = [...safeBase, ...safeExtra];
   const isDark = theme === "dark";
 
-  const isModalOpen = showAddModal || !!editando || showCrearMeta || !!metaSeleccionada || showAporteModal || catForm.visible;
+  const isModalOpen = showAddModal || !!editando || showCrearMeta || !!metaSeleccionada || showAporteModal || catForm.visible || showNovedades;
 
   const c = {
     bg: isDark ? "#0A0A0A" : "#F4F5F7",
@@ -562,7 +563,6 @@ export default function App() {
     showToast("Categoría eliminada", c.muted);
   };
 
-
   const procesarNuevaMeta = async () => {
     if (!metaForm.nombre.trim()) return showToast("⚠️ Ingresa el nombre de la meta", c.red);
     if (!metaForm.montoObjetivo || parseFloat(metaForm.montoObjetivo) <= 0) return showToast("⚠️ Ingresa un monto objetivo válido", c.red);
@@ -754,8 +754,6 @@ export default function App() {
 
   const s = {
     app: { minHeight: "100vh", fontFamily: "'Montserrat', sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: "calc(110px + env(safe-area-inset-bottom, 0px))", width: "100%", userSelect: "none", WebkitUserSelect: "none" },
-    
-    // SECTION SE ACTUALIZA CON PADDING TOP PARA EVITAR QUE EL HEADER FIJO LO TAPE
     section:    { padding: "calc(76px + env(safe-area-inset-top, 0px)) 20px 20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "stretch" },
     card:       { width: "100%", background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: "16px", marginBottom: 24, overflow: "hidden", boxSizing: "border-box", boxShadow: c.shadow },
     
@@ -933,7 +931,7 @@ export default function App() {
         </>
       ) : (
         <>
-          {/* HEADER PRINCIPAL FIJO */}
+          {/* HEADER PRINCIPAL FIJO GLOBAL */}
           {(() => {
             let headTitle;
             if (tab === "metas") headTitle = "Mis Metas de Ahorro";
@@ -957,9 +955,14 @@ export default function App() {
                     </button>
                     <h1 style={{ fontSize: 20, fontWeight: 600, color: c.text, margin: 0, fontFamily: "'Montserrat', sans-serif", lineHeight: 1.1 }}>{headTitle}</h1>
                   </div>
-                  <button onClick={() => window.location.reload()} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", padding: 0, color: c.text }}>
-                    <RefreshCw size={22} />
-                  </button>
+                  
+                  {/* NUEVA CAMPANITA DE NOVEDADES */}
+                  <div style={{ position: "relative" }}>
+                      <button onClick={() => setShowNovedades(true)} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", padding: 0, color: c.green, display: "flex" }}>
+                        <Bell size={24} />
+                      </button>
+                      <div style={{ position: "absolute", top: -2, right: -2, width: 8, height: 8, background: c.red, borderRadius: "50%", border: `2px solid ${c.bg}` }}></div>
+                  </div>
                 </div>
               </div>
             );
@@ -975,7 +978,7 @@ export default function App() {
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
             >
-              {/* INDICADOR PULL TO REFRESH (Aparece abajo del header) */}
+              {/* INDICADOR PULL TO REFRESH */}
               <div style={{
                 height: isRefreshing ? 60 : pullDistance,
                 overflow: "hidden",
@@ -1086,7 +1089,6 @@ export default function App() {
                       })}
                    </div>
 
-                   {/* INDICADORES DEL SLIDER */}
                    {listaMetas.length > 1 && (
                      <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 4, marginBottom: 20 }}>
                        {listaMetas.map((_, idx) => (
@@ -1525,11 +1527,10 @@ export default function App() {
             </div>
           )}
 
-          {/* PESTAÑA HISTORIAL CON NUEVO FILTRADO (FASE 3) */}
+          {/* PESTAÑA HISTORIAL CON NUEVO FILTRADO */}
           {tab === "historial" && (
             <div style={s.section}>
               
-              {/* TABS DE MODO EN HISTORIAL */}
               <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
                 <button
                   onClick={() => setFiltroHistModo("general")}
@@ -1960,6 +1961,60 @@ export default function App() {
         </div>
       )}
 
+      {/* NUEVA PANTALLA: NOVEDADES (LA CAMPANITA) */}
+      {showNovedades && (
+        <div className="hide-scroll" style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'novedades' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+          
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 24, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
+            <button onClick={() => cerrarPantalla('novedades', () => setShowNovedades(false))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Novedades</h2>
+          </div>
+          
+          {/* Banner */}
+          <div style={{ background: isDark ? "rgba(255, 128, 60, 0.15)" : "#FFF5EB", borderRadius: 16, padding: "24px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32, border: `1px solid ${isDark ? "rgba(255, 128, 60, 0.3)" : "transparent"}` }}>
+             <div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: c.text, marginBottom: 8, lineHeight: 1.2 }}>¡Descubre<br/><span style={{color: "#FF803C"}}>novedades!</span></div>
+                <div style={{ fontSize: 14, color: "#FF803C", fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>Para ti <ChevronRight size={16}/></div>
+             </div>
+             <div style={{ fontSize: 64 }}>🚀</div>
+          </div>
+
+          {/* Lo nuevo del App */}
+          <div style={{ fontSize: 16, fontWeight: 700, color: c.text, marginBottom: 16 }}>Lo nuevo del App</div>
+          <div className="hide-scroll" style={{ display: "flex", gap: 16, overflowX: "auto", paddingBottom: 16, marginBottom: 24, scrollSnapType: "x mandatory" }}>
+              
+              <div style={{ minWidth: 160, scrollSnapAlign: "start", background: isDark ? "rgba(16, 185, 129, 0.15)" : "#ECFDF5", borderRadius: 16, padding: 16, display: "flex", flexDirection: "column", gap: 12, border: isDark ? "1px solid rgba(16, 185, 129, 0.3)" : "none" }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: isDark ? c.text : "#065F46" }}>Gestión de metas individuales</div>
+                  <div style={{ fontSize: 32, alignSelf: "flex-end", marginTop: "auto" }}>🎯</div>
+              </div>
+
+              <div style={{ minWidth: 160, scrollSnapAlign: "start", background: isDark ? "rgba(77, 150, 255, 0.15)" : "#EFF6FF", borderRadius: 16, padding: 16, display: "flex", flexDirection: "column", gap: 12, border: isDark ? "1px solid rgba(77, 150, 255, 0.3)" : "none" }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: isDark ? c.text : "#1E3A8A" }}>Nuevo historial separado</div>
+                  <div style={{ fontSize: 32, alignSelf: "flex-end", marginTop: "auto" }}>📋</div>
+              </div>
+
+              <div style={{ minWidth: 160, scrollSnapAlign: "start", background: isDark ? "rgba(168, 85, 247, 0.15)" : "#F5F3FF", borderRadius: 16, padding: 16, display: "flex", flexDirection: "column", gap: 12, border: isDark ? "1px solid rgba(168, 85, 247, 0.3)" : "none" }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: isDark ? c.text : "#4C1D95" }}>Pull-to-refresh en Inicio</div>
+                  <div style={{ fontSize: 32, alignSelf: "flex-end", marginTop: "auto" }}>👇</div>
+              </div>
+              
+          </div>
+
+          {/* Consejos para tu app */}
+          <div style={{ fontSize: 16, fontWeight: 700, color: c.text, marginBottom: 16 }}>Consejos para tu app</div>
+          <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 16, scrollSnapType: "x mandatory" }} className="hide-scroll">
+              <div style={{ minWidth: 200, scrollSnapAlign: "start", background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: 16, display: "flex", alignItems: "center", gap: 16 }}>
+                  <div style={{ fontSize: 28 }}>📊</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: c.text, lineHeight: 1.4 }}>¡Exporta tus datos en Excel o PDF!</div>
+              </div>
+              <div style={{ minWidth: 200, scrollSnapAlign: "start", background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: 16, display: "flex", alignItems: "center", gap: 16 }}>
+                  <div style={{ fontSize: 28 }}>🎨</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: c.text, lineHeight: 1.4 }}>¡Personaliza tus propias categorías!</div>
+              </div>
+          </div>
+        </div>
+      )}
+
       {/* MENU PRINCIPAL */}
       {showMenu && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 9999, padding: "env(safe-area-inset-top, 20px) 0 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: isClosing === 'menu' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
@@ -2069,6 +2124,7 @@ export default function App() {
             <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Configuración de categorías</h2>
           </div>
           
+          {/* CATEGORÍAS DE INGRESOS */}
           <div style={{ marginBottom: 32 }}>
             <div style={{ ...s.label, fontSize: 16, color: c.green, marginBottom: 12 }}>Categorías para Ingresos</div>
             
@@ -2095,6 +2151,7 @@ export default function App() {
             </button>
           </div>
 
+          {/* CATEGORÍAS DE GASTOS */}
           <div style={{ marginBottom: 32 }}>
             <div style={{ ...s.label, fontSize: 16, color: c.red, marginBottom: 12 }}>Categorías para Gastos</div>
             
