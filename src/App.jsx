@@ -655,7 +655,7 @@ export default function App() {
     
     errorCard:  { background: isDark ? "#1A0A0A" : "#FEF2F2", border: `1px solid ${c.red}`, borderRadius: 12, padding: "16px", margin: "20px", color: c.red, fontSize: 14, fontWeight: 400 },
     
-    filterRow:  { display: "flex", gap: 6, marginBottom: 24, flexWrap: "nowrap", overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" },
+    filterRow:  { display: "flex", gap: 6, flexWrap: "nowrap", overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" },
     filterBtn: (a) => ({ whiteSpace: "nowrap", flexShrink: 0, padding: "8px 16px", borderRadius: 20, border: `1px solid ${a ? "#FF803C" : c.border}`, background: a ? "#FF803C" : c.card, color: a ? "#FFF" : c.muted, fontSize: 13, fontWeight: a ? 600 : 500, cursor: "pointer", fontFamily: "inherit" }),
     
     navBar: {
@@ -678,7 +678,6 @@ export default function App() {
       boxShadow: "0 4px 12px rgba(255, 128, 60, 0.4)", zIndex: 105, padding: 0
     },
 
-    // AQUI OSCURECEMOS EL FONDO DEL MODAL Y AUMENTAMOS EL DESENFOQUE
     overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 99999, padding: "0", backdropFilter: "blur(10px)" },
     modal: { background: c.card, borderTop: `1px solid ${c.border}`, borderLeft: `1px solid ${c.border}`, borderRight: `1px solid ${c.border}`, borderRadius: "24px 24px 0 0", padding: "24px 24px calc(24px + env(safe-area-inset-bottom, 0px))", width: "100%", maxWidth: 480, boxSizing: "border-box", boxShadow: "0 -10px 40px rgba(0,0,0,0.3)" }
   };
@@ -700,7 +699,6 @@ export default function App() {
 
   return (
     <div style={s.app}>
-      {/* BLOQUEO DEL SCROLL DEL FONDO AL ABRIR LA VENTANA */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
         * { box-sizing: border-box; } 
@@ -1006,11 +1004,13 @@ export default function App() {
                 {catsIngresos.length === 0 ? (
                   <div style={{ textAlign: "center", color: c.muted, padding: "20px 0", fontSize: 14 }}>Aún no hay registros en esta vista</div>
                 ) : tipoGraficoIngresos === "donut" ? (
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 28 }}>
-                    <div style={{ width: 130, height: 130, borderRadius: "50%", background: `conic-gradient(${conicIngresos})`, position: "relative", flexShrink: 0 }}>
-                       <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 70, height: 70, background: c.card, borderRadius: "50%" }}></div>
+                  <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
+                    <div style={{ width: "50%", display: "flex", justifyContent: "center" }}>
+                      <div style={{ width: 130, height: 130, borderRadius: "50%", background: `conic-gradient(${conicIngresos})`, position: "relative", flexShrink: 0 }}>
+                         <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 70, height: 70, background: c.card, borderRadius: "50%" }}></div>
+                      </div>
                     </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div style={{ width: "50%", display: "flex", flexDirection: "column", gap: 10, paddingLeft: 10, boxSizing: "border-box" }}>
                        {catsIngresos.slice(0, 5).map(cat => (
                          <div key={cat.id} style={{ display: "flex", alignItems: "center" }}>
                            <div style={{ width: 10, height: 10, borderRadius: "50%", background: cat.color, marginRight: 8, flexShrink: 0 }}></div>
@@ -1073,17 +1073,17 @@ export default function App() {
                 {catsGastos.length === 0 ? (
                   <div style={{ textAlign: "center", color: c.muted, padding: "20px 0", fontSize: 14 }}>Aún no hay registros en esta vista</div>
                 ) : tipoGraficoGastos === "donut" ? (
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 28 }}>
-                    <div style={{ width: 130, height: 130, borderRadius: "50%", background: `conic-gradient(${conicGastos})`, position: "relative", flexShrink: 0 }}>
-                       <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 70, height: 70, background: c.card, borderRadius: "50%" }}></div>
+                  <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
+                    <div style={{ width: "50%", display: "flex", justifyContent: "center" }}>
+                      <div style={{ width: 130, height: 130, borderRadius: "50%", background: `conic-gradient(${conicGastos})`, position: "relative", flexShrink: 0 }}>
+                         <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 70, height: 70, background: c.card, borderRadius: "50%" }}></div>
+                      </div>
                     </div>
-                    <div style={{ flex: 1 }}>
+                    <div style={{ width: "50%", display: "flex", flexDirection: "column", gap: 10, paddingLeft: 10, boxSizing: "border-box" }}>
                        {catsGastos.slice(0, 5).map(cat => (
-                         <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                             <div style={{ width: 10, height: 10, borderRadius: "50%", background: cat.color }}></div>
-                             <span style={{ display: "inline-block", fontSize: 13, fontWeight: 500, color: c.text, width: 85, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{formatCatName(cat.label)}</span>
-                           </div>
+                         <div key={cat.id} style={{ display: "flex", alignItems: "center" }}>
+                           <div style={{ width: 10, height: 10, borderRadius: "50%", background: cat.color, marginRight: 8, flexShrink: 0 }}></div>
+                           <span style={{ display: "inline-block", fontSize: 13, fontWeight: 500, color: c.text, width: 85, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{formatCatName(cat.label)}</span>
                            <span style={{ display: "inline-block", fontSize: 13, fontWeight: 500, color: c.muted, width: 35, textAlign: "right" }}>{Math.round((cat.total / totGastosDonut) * 100)}%</span>
                          </div>
                        ))}
@@ -1145,9 +1145,25 @@ export default function App() {
                 </button>
               </div>
 
-              <div className="hide-scroll" style={{ ...s.filterRow, marginBottom: 24 }}>
-                <button style={s.filterBtn(filtroHistCat === "todas")} onClick={() => setFiltroHistCat("todas")}>Todas</button>
-                {categorias.map(c => <button key={c.id} style={s.filterBtn(filtroHistCat === c.id)} onClick={() => setFiltroHistCat(c.id)}>{c.label}</button>)}
+              <div className="hide-scroll" style={{ ...s.filterRow, marginBottom: 24, minHeight: 36, alignItems: "center" }}>
+                {filtroHistCat === "todas" ? (
+                  <>
+                    <button style={s.filterBtn(true)} onClick={() => setFiltroHistCat("todas")}>Todas</button>
+                    {categorias.map(c => <button key={c.id} style={s.filterBtn(false)} onClick={() => setFiltroHistCat(c.id)}>{c.label}</button>)}
+                  </>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <button 
+                      onClick={() => setFiltroHistCat("todas")} 
+                      style={{ width: 32, height: 32, borderRadius: '50%', background: isDark ? '#333' : '#F3F4F6', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+                    >
+                      <X size={16} color={c.text} />
+                    </button>
+                    <div style={{ padding: "8px 16px", borderRadius: 20, border: `1px solid #E9D5FF`, background: "#F3E8FF", color: "#7E22CE", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center" }}>
+                      {categorias.find(c => c.id === filtroHistCat)?.label}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {showFiltrosMenu && (
@@ -1697,7 +1713,7 @@ export default function App() {
               <select style={{ ...s.select, flex: 1, marginBottom: 0 }} value={editForm.categoria} onChange={e => setEditForm(f => ({ ...f, categoria: e.target.value }))}>
                 {categorias.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
               </select>
-              <input style={{ ...s.input, flex: 1, marginBottom: 0, fontSize: 15, fontWeight: 500 }} type="text" placeholder="Descripción" value={editForm.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} />
+              <input style={{ ...s.input, flex: 1, marginBottom: 0, fontSize: 15, fontWeight: 500 }} type="text" placeholder="Descripción" value={editForm.descripcion} onChange={e => setEditForm(f => ({ ...f, descripcion: e.target.value }))} />
             </div>
             <button style={{...s.btnPrimary, padding: "16px"}} onClick={guardarEdicion} disabled={saving}>{saving ? "Guardando..." : "Guardar Cambios"}</button>
           </div>
