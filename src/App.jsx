@@ -266,6 +266,11 @@ export default function App() {
   const [toast, setToast] = useState(null);
   const [error, setError] = useState(null);
 
+  // NUEVOS ESTADOS DE PULL TO REFRESH
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [startY, setStartY] = useState(0);
+
   const [editando, setEditando] = useState(null);   
   const [editForm, setEditForm] = useState({});
 
@@ -298,7 +303,6 @@ export default function App() {
   const [showApariencia, setShowApariencia] = useState(false);
   const [profileScreen, setProfileScreen] = useState(null);
   
-  // NUEVOS ESTADOS DE EXPORTACIÓN
   const [exportFechaDesde, setExportFechaDesde] = useState("");
   const [exportFechaHasta, setExportFechaHasta] = useState("");
   const [exportEmail, setExportEmail] = useState("");
@@ -363,6 +367,33 @@ export default function App() {
     setTimeout(() => { action(); setIsClosing(""); setShowMetaMenu(false); }, 280);
   };
 
+  // FUNCION SEPARADA PARA CARGAR DATOS
+  const loadData = async () => {
+    try {
+      const { data: movimientos, error: err1 } = await supabase.from("gastos").select("*").order("created_at", { ascending: false });
+      if (err1) throw err1;
+      setGastos((movimientos || []).map(m => ({ ...m, fecha: getFechaLocal(m.created_at) })));
+
+      const { data: cfg, error: err2 } = await supabase.from("config").select("*");
+      if (err2) throw err2;
+      if (cfg) {
+        const getVal = (k) => cfg.find(item => item.key === k)?.value;
+        if (getVal("metaAhorro")) setMetaAhorro(getVal("metaAhorro"));
+        if (getVal("fechaInicio")) setFechaInicioPlan(getVal("fechaInicio"));
+        if (getVal("fechaFin")) setFechaFinPlan(getVal("fechaFin"));
+        if (getVal("ingresoMensual")) setIngresoMensual(getVal("ingresoMensual"));
+        if (getVal("themePref")) setTheme(getVal("themePref"));
+        if (getVal("useBoldPref")) setUseBold(getVal("useBoldPref") === "true");
+        if (getVal("userName")) setUserName(getVal("userName"));
+        if (getVal("categoriasCustom")) { try { const p = JSON.parse(getVal("categoriasCustom")); if(Array.isArray(p)) setCategoriasExtra(p); } catch(_) {} }
+        if (getVal("categoriasBase")) { try { const p = JSON.parse(getVal("categoriasBase")); if(Array.isArray(p)) setCategoriasBase(p); } catch(_) {} }
+        if (getVal("listaMetas")) { try { const p = JSON.parse(getVal("listaMetas")); if(Array.isArray(p)) setListaMetas(p); } catch(_) {} }
+      }
+      setError(null);
+    } catch (e) { setError("No se pudo conectar. Verifica tu configuración."); }
+    setLoaded(true);
+  };
+
   useEffect(() => {
     let viewportMeta = document.querySelector("meta[name=viewport]");
     if (!viewportMeta) {
@@ -372,34 +403,42 @@ export default function App() {
     }
     viewportMeta.setAttribute("content", "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0");
 
-    (async () => {
-      try {
-        const { data: movimientos, error: err1 } = await supabase.from("gastos").select("*").order("created_at", { ascending: false });
-        if (err1) throw err1;
-        setGastos((movimientos || []).map(m => ({ ...m, fecha: getFechaLocal(m.created_at) })));
-
-        const { data: cfg, error: err2 } = await supabase.from("config").select("*");
-        if (err2) throw err2;
-        if (cfg) {
-          const getVal = (k) => cfg.find(item => item.key === k)?.value;
-          if (getVal("metaAhorro")) setMetaAhorro(getVal("metaAhorro"));
-          if (getVal("fechaInicio")) setFechaInicioPlan(getVal("fechaInicio"));
-          if (getVal("fechaFin")) setFechaFinPlan(getVal("fechaFin"));
-          if (getVal("ingresoMensual")) setIngresoMensual(getVal("ingresoMensual"));
-          if (getVal("themePref")) setTheme(getVal("themePref"));
-          if (getVal("useBoldPref")) setUseBold(getVal("useBoldPref") === "true");
-          if (getVal("userName")) setUserName(getVal("userName"));
-          if (getVal("categoriasCustom")) { try { const p = JSON.parse(getVal("categoriasCustom")); if(Array.isArray(p)) setCategoriasExtra(p); } catch(_) {} }
-          if (getVal("categoriasBase")) { try { const p = JSON.parse(getVal("categoriasBase")); if(Array.isArray(p)) setCategoriasBase(p); } catch(_) {} }
-          if (getVal("listaMetas")) { try { const p = JSON.parse(getVal("listaMetas")); if(Array.isArray(p)) setListaMetas(p); } catch(_) {} }
-        }
-        setError(null);
-      } catch (e) { setError("No se pudo conectar. Verifica tu configuración."); }
-      setLoaded(true);
-    })();
+    loadData();
   }, []);
 
   useEffect(() => { window.scrollTo(0, 0); }, [tab]);
+
+  // LOGICA PARA PULL TO REFRESH EN INICIO
+  const handleTouchStart = (e) => {
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    if (scrollTop <= 0) {
+      setStartY(e.touches[0].clientY);
+    } else {
+      setStartY(0);
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (!startY) return;
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - startY;
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    
+    // Solo si esta arrastrando hacia abajo y esta en la parte más alta de la pantalla
+    if (diff > 0 && scrollTop <= 0) {
+      setPullDistance(Math.min(diff * 0.4, 80)); // Limitamos hasta 80px maximo visualmente
+    }
+  };
+
+  const handleTouchEnd = async () => {
+    if (pullDistance > 50) { // Si jaló más de 50px se activa
+      setIsRefreshing(true);
+      await loadData();
+      setIsRefreshing(false);
+    }
+    setPullDistance(0);
+    setStartY(0);
+  };
 
   const handleScroll = (e) => {
     const scrollLeft = e.target.scrollLeft;
@@ -552,7 +591,6 @@ export default function App() {
       };
       nuevasMetas = [nuevaMeta, ...listaMetas];
 
-      // REGISTRO AUTOMÁTICO DE APORTE INICIAL SI ES MAYOR A 0
       if (aporteInicialVal > 0) {
         const nuevoAporte = { fecha: hoy(), monto: aporteInicialVal, descripcion: `Aporte inicial a ${nuevaMeta.nombre}`, categoria: "meta_aporte", tipo: "aporte" };
         const { data: dataAporte, error: errAporte } = await supabase.from("gastos").insert([nuevoAporte]).select();
@@ -928,8 +966,38 @@ export default function App() {
 
           {error && <div style={s.errorCard}><AlertTriangle size={16} style={{ verticalAlign: "middle", marginRight: 8 }} /> {error}</div>}
 
+          {/* INICIO CON EL NUEVO PULL TO REFRESH */}
           {tab === "hoy" && (
-            <div style={s.section}>
+            <div 
+              style={s.section}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
+              {/* INDICADOR PULL TO REFRESH */}
+              <div style={{
+                height: isRefreshing ? 60 : pullDistance,
+                overflow: "hidden",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "flex-end", 
+                paddingBottom: (isRefreshing || pullDistance > 0) ? 16 : 0,
+                transition: pullDistance === 0 || isRefreshing ? "height 0.3s ease" : "none",
+                width: "100%",
+                color: "#10B981"
+              }}>
+                <RefreshCw 
+                  size={24} 
+                  style={{ 
+                    animation: isRefreshing ? "spin 1s linear infinite" : "none", 
+                    transform: isRefreshing ? "none" : `rotate(${pullDistance * 3}deg)` 
+                  }} 
+                />
+                <span style={{ fontSize: 12, fontWeight: 600, marginTop: 4, opacity: Math.min(pullDistance / 50, 1), color: c.muted }}>
+                  {isRefreshing ? "Actualizando..." : "Suelta para actualizar"}
+                </span>
+              </div>
               
               {listaMetas.length === 0 ? (
                  <div style={{ ...s.sliderCard, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", marginBottom: 24, textAlign: "center" }}>
@@ -1913,10 +1981,7 @@ export default function App() {
             <div style={{ borderTop: `1px solid ${c.border}`, borderBottom: `1px solid ${c.border}` }}>
               <MenuItem bgColor={c.card} icon={<Settings size={20} color="#FF803C" />} text="Configuración de categorías" color={c.text} border={c.border} onClick={() => setProfileScreen("categorias")} />
               <MenuItem bgColor={c.card} icon={<Palette size={20} color="#FF803C" />} text="Apariencia (Tema Claro/Oscuro)" color={c.text} border={c.border} onClick={() => { setShowApariencia(true); setProfileScreen(null); }} />
-              
-              {/* OPCION ACTUALIZADA: NUEVA PANTALLA DE EXPORTAR REPORTES */}
               <MenuItem bgColor={c.card} icon={<Download size={20} color="#FF803C" />} text="Exportar Reportes" color={c.text} border={c.border} onClick={() => setProfileScreen("exportar")} />
-              
               <MenuItem bgColor={c.card} icon={<Headphones size={20} color="#FF803C" />} text="Centro de ayuda" color={c.text} border={"transparent"} onClick={() => setProfileScreen("ayuda")} />
             </div>
           </div>
