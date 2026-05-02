@@ -5,7 +5,8 @@ import {
   ArrowDownToLine, ArrowUpFromLine, PiggyBank, Target, 
   Edit2, Trash2, X, Calendar, Mail, CheckCircle2, ChevronRight,
   UserCircle, Lock, Trophy, Palette, Download, Headphones, LogOut, AlertTriangle,
-  BarChart2, Plane, Laptop, ShieldCheck, TrendingUp, Plus, PlusCircle, ArrowLeft, Clock
+  BarChart2, Plane, Laptop, ShieldCheck, TrendingUp, Plus, PlusCircle, ArrowLeft, Clock,
+  ChevronUp, Minus, ChevronDown, Circle
 } from "lucide-react";
 
 const SUPABASE_URL = "https://jboazxmcmvvcscqeerbz.supabase.co";
@@ -32,6 +33,7 @@ const GASTOS_DEFAULT = [
 ];
 
 const COLORES_CUSTOM = ["#FF6B6B","#FF803C","#6BCB77","#4D96FF","#C77DFF","#FF9F1C","#2EC4B6","#E71D36","#F72585","#B5E48C"];
+const METAS_ICONS = ["💻", "✈️", "🏠", "🚗", "🛍️", "🎓", "📱"];
 
 const getLimaTime = () => new Date(Date.now() - 18000000);
 const hoy = () => getLimaTime().toISOString().split("T")[0];
@@ -319,6 +321,12 @@ export default function App() {
   
   const [showAddModal, setShowAddModal] = useState(false);
 
+  // NUEVO: ESTADOS PARA CREAR META
+  const [showCrearMeta, setShowCrearMeta] = useState(false);
+  const [metaForm, setMetaForm] = useState({
+    nombre: "", montoObjetivo: "", aporteInicial: "", fechaLimite: "", prioridad: "alta", tipo: "libre", icono: "💻"
+  });
+
   const [theme, setTheme] = useState("dark");
   const [isAutoTheme, setIsAutoTheme] = useState(false);
   const [useBold, setUseBold] = useState(false);
@@ -548,6 +556,21 @@ export default function App() {
     showToast("Categoría eliminada", c.muted);
   };
 
+  const procesarNuevaMeta = () => {
+    if (!metaForm.nombre.trim()) return showToast("Ingresa el nombre de la meta", c.red);
+    if (!metaForm.montoObjetivo || parseFloat(metaForm.montoObjetivo) <= 0) return showToast("Ingresa un monto objetivo", c.red);
+    if (!metaForm.fechaLimite) return showToast("Selecciona una fecha límite", c.red);
+    if (!metaForm.prioridad) return showToast("Selecciona una prioridad", c.red);
+    if (!metaForm.tipo) return showToast("Selecciona un tipo de meta", c.red);
+    if (!metaForm.icono) return showToast("Selecciona un ícono", c.red);
+
+    showToast("Meta guardada con éxito ✓", c.green);
+    cerrarPantalla('crearMeta', () => {
+      setShowCrearMeta(false);
+      setMetaForm({ nombre: "", montoObjetivo: "", aporteInicial: "", fechaLimite: "", prioridad: "alta", tipo: "libre", icono: "💻" });
+    });
+  };
+
   const metaTotalNum = parseFloat(metaAhorro) || 0;
   const ingMensual = parseFloat(ingresoMensual) || 0;
   const diasTotalPlan = Math.max(1, diffDias(fechaInicioPlan, fechaFinPlan) + 1);
@@ -646,7 +669,7 @@ export default function App() {
     metaCard:   { width: "100%", background: "linear-gradient(135deg,#1A1A1A,#050505)", borderRadius: 16, padding: "20px", marginBottom: 24, boxSizing: "border-box", color: "#FFF", boxShadow: isDark ? "none" : "0 8px 24px rgba(0,0,0,0.15)" },
     
     metaLabel:  { fontSize: 16, color: "#FFF", marginBottom: 12 }, 
-    label:      { fontSize: 16, fontWeight: 600, color: c.text, marginBottom: 12 },
+    label:      { fontSize: 14, fontWeight: 700, color: c.text, marginBottom: 8 },
     
     bigNum:     { fontSize: 28, fontWeight: 600, color: "#FFF", lineHeight: 1 },
     smallNum:   { fontSize: 20, fontWeight: 500, color: c.text },
@@ -771,7 +794,7 @@ export default function App() {
             </div>
           )}
           <div style={s.section}>
-            <div style={{ ...s.label, textAlign: "center" }}>{gastosVerTodos.length} movimientos</div>
+            <div style={{ ...s.label, textAlign: "center", marginBottom: 12 }}>{gastosVerTodos.length} movimientos</div>
             {gastosVerTodos.length === 0 ? (
               <div style={{ ...s.card, textAlign: "center", color: c.muted, padding: "32px", fontWeight: 500 }}>No se encontraron movimientos</div>
             ) : (
@@ -822,7 +845,7 @@ export default function App() {
                       <ArrowLeft size={28} />
                     </button>
                     <h1 style={{ fontSize: 20, fontWeight: 700, color: c.text, margin: 0, fontFamily: "'Montserrat', sans-serif" }}>Mis Metas de Ahorro</h1>
-                    <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", padding: 0, color: "#FF803C", display: "flex" }}>
+                    <button onClick={() => setShowCrearMeta(true)} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", padding: 0, color: "#FF803C", display: "flex" }}>
                       <Plus size={28} strokeWidth={2.5} />
                     </button>
                   </div>
@@ -1356,7 +1379,7 @@ export default function App() {
                 </div>
               </div>
 
-              <button style={{ ...s.btnPrimary, background: "#059669", boxShadow: "0 4px 12px rgba(5, 150, 105, 0.3)", display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 8 }}>
+              <button onClick={() => setShowCrearMeta(true)} style={{ ...s.btnPrimary, background: "#059669", boxShadow: "0 4px 12px rgba(5, 150, 105, 0.3)", display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 8 }}>
                 <Plus size={20} /> Crear nueva meta
               </button>
             </div>
@@ -1386,6 +1409,89 @@ export default function App() {
             ))}
           </div>
         </>
+      )}
+
+      {/* NUEVA PANTALLA: CREAR META */}
+      {showCrearMeta && (
+        <div className="hide-scroll" style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'crearMeta' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
+            <button onClick={() => cerrarPantalla('crearMeta', () => setShowCrearMeta(false))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Crear nueva meta</h2>
+          </div>
+          
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Nombre de la meta</div>
+            <input style={{ ...s.input }} placeholder="Ej: Nueva Laptop, Viaje a Europa" value={metaForm.nombre} onChange={e => setMetaForm({ ...metaForm, nombre: e.target.value })} />
+          </div>
+          
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Monto objetivo</div>
+            <input style={{ ...s.input }} type="number" placeholder="S/ 0.00" value={metaForm.montoObjetivo} onChange={e => setMetaForm({ ...metaForm, montoObjetivo: e.target.value })} />
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Aporte inicial <span style={{ color: c.muted, fontWeight: "normal" }}>(opcional)</span></div>
+            <input style={{ ...s.input }} type="number" placeholder="S/ 0.00" value={metaForm.aporteInicial} onChange={e => setMetaForm({ ...metaForm, aporteInicial: e.target.value })} />
+          </div>
+
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Fecha límite</div>
+            <div style={{ position: "relative" }}>
+              {!metaForm.fechaLimite && <span style={{ position: "absolute", top: "50%", left: 14, transform: "translateY(-50%)", color: c.muted, pointerEvents: "none", fontSize: 15 }}>Selecciona una fecha</span>}
+              <input type="date" value={metaForm.fechaLimite} onChange={e => setMetaForm({ ...metaForm, fechaLimite: e.target.value })} style={{ ...s.input, color: metaForm.fechaLimite ? c.text : "transparent" }} />
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Prioridad</div>
+            <div style={{ display: "flex", gap: 12 }}>
+              <button onClick={() => setMetaForm({ ...metaForm, prioridad: 'alta' })} style={{ flex: 1, padding: "12px", borderRadius: 8, border: metaForm.prioridad === 'alta' ? "1px solid #EF4444" : `1px solid ${c.border}`, background: metaForm.prioridad === 'alta' ? (isDark ? "rgba(239,68,68,0.15)" : "#FEF2F2") : c.card, color: metaForm.prioridad === 'alta' ? "#EF4444" : c.text, fontWeight: 600, display: "flex", justifyContent: "center", alignItems: "center", gap: 6, cursor: "pointer", transition: "0.2s" }}>
+                <ChevronUp size={16} /> Alta
+              </button>
+              <button onClick={() => setMetaForm({ ...metaForm, prioridad: 'media' })} style={{ flex: 1, padding: "12px", borderRadius: 8, border: metaForm.prioridad === 'media' ? "1px solid #F59E0B" : `1px solid ${c.border}`, background: metaForm.prioridad === 'media' ? (isDark ? "rgba(245,158,11,0.15)" : "#FFFBEB") : c.card, color: metaForm.prioridad === 'media' ? "#F59E0B" : c.text, fontWeight: 600, display: "flex", justifyContent: "center", alignItems: "center", gap: 6, cursor: "pointer", transition: "0.2s" }}>
+                <Minus size={16} /> Media
+              </button>
+              <button onClick={() => setMetaForm({ ...metaForm, prioridad: 'baja' })} style={{ flex: 1, padding: "12px", borderRadius: 8, border: metaForm.prioridad === 'baja' ? "1px solid #10B981" : `1px solid ${c.border}`, background: metaForm.prioridad === 'baja' ? (isDark ? "rgba(16,185,129,0.15)" : "#ECFDF5") : c.card, color: metaForm.prioridad === 'baja' ? "#10B981" : c.text, fontWeight: 600, display: "flex", justifyContent: "center", alignItems: "center", gap: 6, cursor: "pointer", transition: "0.2s" }}>
+                <ChevronDown size={16} /> Baja
+              </button>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Tipo de meta</div>
+            <div style={{ background: c.card, borderRadius: 12, border: `1px solid ${c.border}`, overflow: "hidden" }}>
+              <div onClick={() => setMetaForm({ ...metaForm, tipo: 'libre' })} style={{ padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, cursor: "pointer", background: metaForm.tipo === 'libre' ? (isDark ? "rgba(16,185,129,0.05)" : "#F0FDF4") : "transparent" }}>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 4 }}>Ahorro libre</div>
+                  <div style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}>Tú decides cuánto ahorrar</div>
+                </div>
+                {metaForm.tipo === 'libre' ? <CheckCircle2 size={24} color="#10B981" /> : <Circle size={24} color={c.muted} />}
+              </div>
+              <div onClick={() => setMetaForm({ ...metaForm, tipo: 'obligatorio' })} style={{ padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", background: metaForm.tipo === 'obligatorio' ? (isDark ? "rgba(16,185,129,0.05)" : "#F0FDF4") : "transparent" }}>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 4 }}>Ahorro obligatorio</div>
+                  <div style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}>Aportes fijos programados</div>
+                </div>
+                {metaForm.tipo === 'obligatorio' ? <CheckCircle2 size={24} color="#10B981" /> : <Circle size={24} color={c.muted} />}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 40 }}>
+            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Imagen / ícono</div>
+            <div className="hide-scroll" style={{ display: "flex", gap: 16, overflowX: "auto", paddingBottom: 4 }}>
+              {METAS_ICONS.map(ico => (
+                <div key={ico} onClick={() => setMetaForm({ ...metaForm, icono: ico })} style={{ width: 56, height: 56, borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, flexShrink: 0, border: metaForm.icono === ico ? `2px solid #10B981` : "2px solid transparent", cursor: "pointer", transition: "0.2s" }}>
+                  {ico}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <button onClick={procesarNuevaMeta} style={{ ...s.btnPrimary, background: "#059669", boxShadow: "0 4px 12px rgba(5, 150, 105, 0.3)", padding: 16, fontSize: 16 }}>
+            Guardar meta
+          </button>
+        </div>
       )}
 
       {/* MODALES DE MENU, APARIENCIA, ETC... SE MANTIENEN INTACTOS */}
