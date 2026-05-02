@@ -407,7 +407,6 @@ export default function App() {
 
   useEffect(() => { window.scrollTo(0, 0); }, [tab]);
 
-  // LOGICA PARA PULL TO REFRESH EN INICIO - MEJORADO PARA NATIVO
   const handleTouchStart = (e) => {
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
     if (scrollTop <= 0) {
@@ -431,9 +430,9 @@ export default function App() {
   const handleTouchEnd = async () => {
     if (pullDistance > 50) {
       setIsRefreshing(true);
-      setPullDistance(60); // Mantener el espacio mientras recarga
+      setPullDistance(60); 
       
-      // Minimo 800ms de feedback visual para que el usuario sepa que funciono
+      // Mínimo 800ms de animación de carga visual
       const delay = new Promise(resolve => setTimeout(resolve, 800));
       await Promise.all([loadData(), delay]);
       
@@ -841,7 +840,7 @@ export default function App() {
           transition: background 0.3s ease, color 0.3s ease;
           user-select: none;
           -webkit-user-select: none;
-          overscroll-behavior-y: none; /* BLOQUEA EL PULL-TO-REFRESH NATIVO DE CHROME/SAFARI */
+          overscroll-behavior-y: none;
         }
         body * { font-weight: ${useBold ? '700' : 'inherit'}; }
         #root { background: ${c.bg}; min-height: 100vh; width: 100%; max-width: 100%; overflow-x: hidden; overflow-y: ${isModalOpen ? 'hidden' : 'auto'}; }
@@ -998,13 +997,16 @@ export default function App() {
               transform: "translateX(-50%)",
               width: "100%",
               maxWidth: 480,
-              height: 80,
+              height: 60,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
               zIndex: 10,
-              color: "#10B981"
+              color: "#10B981",
+              opacity: (isRefreshing || pullDistance > 0) ? 1 : 0,
+              visibility: (isRefreshing || pullDistance > 0) ? "visible" : "hidden",
+              pointerEvents: "none"
             }}>
               <Loader2 
                 size={24} 
@@ -1024,7 +1026,6 @@ export default function App() {
             <div 
               style={{
                 ...s.section,
-                background: c.bg, // Oculta el spinner de atrás cuando está en posición 0
                 minHeight: "100vh",
                 position: "relative",
                 zIndex: 20,
