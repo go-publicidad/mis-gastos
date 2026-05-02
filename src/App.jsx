@@ -328,7 +328,6 @@ export default function App() {
   const [showApariencia, setShowApariencia] = useState(false);
   const [profileScreen, setProfileScreen] = useState(null);
   
-  // NUEVO ESTADO PARA LAS PESTAÑAS DE LOGROS
   const [filtroLogros, setFiltroLogros] = useState("desbloqueados");
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -809,10 +808,11 @@ export default function App() {
       paddingTop: 0, paddingBottom: `calc(20px + env(safe-area-inset-bottom, 0px))`, 
       boxShadow: isDark ? "0 -2px 10px rgba(0,0,0,0.4)" : "0 -2px 10px rgba(0,0,0,0.06)" 
     },
+    // SE REDUJO EL PADDING TOP Y EL GAP PARA ACERCAR Y SUBIR TEXTO/ICONO
     navBtn: (a) => ({
-      flex: 1, paddingTop: 16, paddingBottom: 8, backgroundColor: "transparent", WebkitAppearance: "none", border: "none",
+      flex: 1, paddingTop: 10, paddingBottom: 8, backgroundColor: "transparent", WebkitAppearance: "none", border: "none",
       color: a ? "#FF803C" : c.muted, fontSize: 12, fontWeight: 400, cursor: "pointer",
-      display: "flex", flexDirection: "column", alignItems: "center", gap: 4, fontFamily: "inherit",
+      display: "flex", flexDirection: "column", alignItems: "center", gap: 2, fontFamily: "inherit",
       position: "relative"
     }),
     fabCircle: {
@@ -1276,6 +1276,7 @@ export default function App() {
             </div>
           )}
 
+          {/* PESTAÑA HISTORIAL */}
           {tab === "historial" && (
             <div style={s.section}>
               
