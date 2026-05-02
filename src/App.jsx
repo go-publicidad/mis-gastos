@@ -251,7 +251,6 @@ const exportarPDF = (gastos, categorias) => {
   win.document.close();
 };
 
-// COMPONENTE DE MENU ACTUALIZADO PARA BLOQUES BLANCOS Y FLECHAS NARANJAS
 const MenuItem = ({ icon, text, color, bgColor, border, showArrow = true, onClick }) => (
   <button onClick={onClick} style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, backgroundColor: bgColor || "transparent", WebkitAppearance: "none", border: "none", padding: "16px 20px", cursor: "pointer", color: color, fontSize: 14, fontWeight: 600, borderBottom: `1px solid ${border}`, textAlign: "left", fontFamily: "inherit", transition: "background-color 0.2s" }}>
     <span style={{ display: "flex", alignItems: "center", color: color }}>{icon}</span>
@@ -329,6 +328,9 @@ export default function App() {
   const [showApariencia, setShowApariencia] = useState(false);
   const [profileScreen, setProfileScreen] = useState(null);
   
+  // NUEVO ESTADO PARA LAS PESTAÑAS DE LOGROS
+  const [filtroLogros, setFiltroLogros] = useState("desbloqueados");
+
   const [showAddModal, setShowAddModal] = useState(false);
 
   const [showCrearMeta, setShowCrearMeta] = useState(false);
@@ -951,18 +953,9 @@ export default function App() {
       ) : (
         <>
           {(() => {
-            if (tab === "metas") {
-              return (
-                <div style={{ padding: "12px 20px 16px", background: c.bg, position: "sticky", top: 0, zIndex: 90 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <h1 style={{ fontSize: 20, fontWeight: 700, color: c.text, margin: 0, fontFamily: "'Montserrat', sans-serif" }}>Metas</h1>
-                  </div>
-                </div>
-              );
-            }
-
             let headTitle;
-            if (tab === "hoy") { 
+            if (tab === "metas") headTitle = "Mis Metas de Ahorro";
+            else if (tab === "hoy") { 
               headTitle = (
                 <>
                   <span style={{ fontWeight: 500 }}>¡Hola</span>
@@ -1398,7 +1391,7 @@ export default function App() {
 
           {/* PESTAÑA METAS DINÁMICA */}
           {tab === "metas" && (
-            <div style={{ padding: "0 20px 20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", paddingBottom: 150 }}>
+            <div style={{ padding: "0 20px 20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", paddingBottom: 140 }}>
               <div style={{ fontSize: 14, color: c.muted, marginBottom: 20, fontWeight: 500 }}>Tus objetivos financieros</div>
 
               {listaMetas.length === 0 ? (
@@ -1466,7 +1459,7 @@ export default function App() {
 
           {/* BOTON FLOTANTE DE CREAR META SOLO VISIBLE EN LA PESTAÑA METAS */}
           {tab === "metas" && (
-            <div style={{ position: "fixed", bottom: "calc(110px + env(safe-area-inset-bottom, 0px))", left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, padding: "20px 20px", background: isDark ? "linear-gradient(to top, #0A0A0A 80%, rgba(10,10,10,0))" : "linear-gradient(to top, #F4F5F7 80%, rgba(244,245,247,0))", zIndex: 80, boxSizing: "border-box", pointerEvents: "none" }}>
+            <div style={{ position: "fixed", bottom: "calc(104px + env(safe-area-inset-bottom, 0px))", left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, padding: "20px 20px", background: isDark ? "linear-gradient(to top, #0A0A0A 80%, rgba(10,10,10,0))" : "linear-gradient(to top, #F4F5F7 80%, rgba(244,245,247,0))", zIndex: 80, boxSizing: "border-box", pointerEvents: "none" }}>
               <button onClick={() => {
                 setIsEditingMetaObj(false);
                 setMetaForm({ id: "", nombre: "", montoObjetivo: "", aporteInicial: "", fechaLimite: "", prioridad: "alta", tipo: "libre", icono: "💻" });
@@ -1996,40 +1989,119 @@ export default function App() {
         </div>
       )}
 
-      {showMenu && profileScreen === "logros" && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'logros' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: 24, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
-            <button onClick={() => cerrarPantalla('logros', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
-            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Mis logros</h2>
-          </div>
-          
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            <div style={{ ...s.card, textAlign: "center", padding: "24px 12px", border: `2px solid #FF803C` }}>
-              <div style={{ fontSize: 44, marginBottom: 16 }}>🌟</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: c.text, marginBottom: 6 }}>Primer Paso</div>
-              <div style={{ fontSize: 12, color: c.muted, lineHeight: 1.4, fontWeight: 500 }}>Registraste tu primer movimiento.</div>
+      {/* NUEVA PANTALLA: MIS LOGROS / INSIGNIAS */}
+      {showMenu && profileScreen === "logros" && (() => {
+        
+        // Lógica Dinámica para "Primer paso"
+        const hasMetas = listaMetas.length > 0;
+        let fechaPrimerPaso = "Pendiente";
+        
+        if (hasMetas) {
+          const oldestMeta = listaMetas[listaMetas.length - 1]; // Tomamos la primera que se creó (la más antigua en el array)
+          if (oldestMeta.id.startsWith("meta_")) {
+              const ts = parseInt(oldestMeta.id.replace("meta_", ""));
+              const d = new Date(ts);
+              fechaPrimerPaso = `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth()+1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+          } else {
+              fechaPrimerPaso = "12/04/2025"; // Por si es una de las metas "quemadas" de ejemplo iniciales
+          }
+        }
+
+        const achievements = [
+          {
+             id: 1, title: "Primer paso", desc: "Registra tu primera meta", 
+             unlocked: hasMetas, date: hasMetas ? `Obtenido el ${fechaPrimerPaso}` : "", 
+             icon: "🔰", bg: isDark ? "rgba(16,185,129,0.15)" : "#D1FAE5"
+          },
+          {
+             id: 2, title: "Ahorrador constante", desc: "Ahorra 7 días seguidos", 
+             unlocked: true, date: "Obtenido el 20/04/2025", 
+             icon: "🪙", bg: isDark ? "rgba(59,130,246,0.15)" : "#DBEAFE"
+          },
+          {
+             id: 3, title: "Meta en marcha", desc: "Completa el 50% de una meta", 
+             unlocked: true, date: "Obtenido el 25/04/2025", 
+             icon: "🚀", bg: isDark ? "rgba(168,85,247,0.15)" : "#F3E8FF"
+          },
+          {
+             id: 4, title: "Gran ahorrador", desc: "Completa el 100% de una meta", 
+             unlocked: false, progress: 62, 
+             icon: <Lock size={20} color={c.muted} />, bg: isDark ? "#333" : "#F3F4F6"
+          },
+          {
+             id: 5, title: "Experto financiero", desc: "Usa la app por 30 días seguidos", 
+             unlocked: false, progress: 20, 
+             icon: <Lock size={20} color={c.muted} />, bg: isDark ? "#333" : "#F3F4F6"
+          }
+        ];
+
+        const filteredAchievements = achievements.filter(a => {
+            if (filtroLogros === "desbloqueados") return a.unlocked;
+            if (filtroLogros === "bloqueados") return !a.unlocked;
+            return true; // "todos"
+        });
+
+        return (
+          <div className="hide-scroll" style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'logros' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+            
+            <div style={{ display: "flex", alignItems: "center", marginBottom: 24, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
+              <button onClick={() => cerrarPantalla('logros', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+              <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Mis logros / Insignias</h2>
             </div>
             
-            <div style={{ ...s.card, textAlign: "center", padding: "24px 12px", border: `2px solid #FF803C` }}>
-              <div style={{ fontSize: 44, marginBottom: 16 }}>🔥</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: c.text, marginBottom: 6 }}>Constante</div>
-              <div style={{ fontSize: 12, color: c.muted, lineHeight: 1.4, fontWeight: 500 }}>Usaste la app por 3 días seguidos.</div>
+            <div style={{ background: isDark ? "#1E120A" : "#FFF5EB", borderRadius: 16, padding: "20px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+              <div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: c.text, marginBottom: 4 }}>¡Vas increíble!</div>
+                <div style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}>Sigue así para desbloquear<br/>más logros 🤞</div>
+              </div>
+              <div style={{ fontSize: 48 }}>🏆</div>
             </div>
 
-            <div style={{ ...s.card, textAlign: "center", padding: "24px 12px", opacity: 0.4, border: `1px solid ${c.border}` }}>
-              <div style={{ fontSize: 44, marginBottom: 16, filter: "grayscale(100%)" }}>🎯</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: c.text, marginBottom: 6 }}>Meta Alcanzada</div>
-              <div style={{ fontSize: 12, color: c.muted, lineHeight: 1.4, fontWeight: 500 }}>Llegaste al 100% de tu ahorro.</div>
+            <div className="hide-scroll" style={{ display: "flex", gap: 12, marginBottom: 24, overflowX: "auto" }}>
+              {['Todos', 'Desbloqueados', 'Bloqueados'].map(t => {
+                  const val = t.toLowerCase();
+                  const act = filtroLogros === val;
+                  return (
+                      <button key={val} onClick={() => setFiltroLogros(val)} 
+                          style={{ padding: "8px 16px", borderRadius: 20, fontSize: 14, fontWeight: act ? 700 : 600,
+                                  background: "transparent", border: act ? `1px solid #FF803C` : `1px solid transparent`,
+                                  color: act ? "#FF803C" : c.muted, cursor: "pointer", fontFamily: "inherit", transition: "0.2s" }}>
+                          {t}
+                      </button>
+                  )
+              })}
             </div>
 
-            <div style={{ ...s.card, textAlign: "center", padding: "24px 12px", opacity: 0.4, border: `1px solid ${c.border}` }}>
-              <div style={{ fontSize: 44, marginBottom: 16, filter: "grayscale(100%)" }}>🐷</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: c.text, marginBottom: 6 }}>Súper Ahorrador</div>
-              <div style={{ fontSize: 12, color: c.muted, lineHeight: 1.4, fontWeight: 500 }}>Ahorraste más del 50% en un mes.</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {filteredAchievements.map(ach => (
+                <div key={ach.id} style={{ ...s.card, padding: 16, display: "flex", alignItems: "center", gap: 16, marginBottom: 0, opacity: ach.unlocked ? 1 : 0.6 }}>
+                    <div style={{ width: 48, height: 48, borderRadius: "50%", background: ach.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0 }}>
+                      {ach.icon}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 4 }}>{ach.title}</div>
+                      <div style={{ fontSize: 13, color: c.muted, fontWeight: 500, marginBottom: 2 }}>{ach.desc}</div>
+                      
+                      {ach.unlocked && <div style={{ fontSize: 12, color: c.muted, fontWeight: 400 }}>{ach.date}</div>}
+                      
+                      {!ach.unlocked && (
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
+                            <div style={{ background: isDark ? "#333" : "#E5E7EB", borderRadius: 4, height: 6, flex: 1, overflow: "hidden" }}>
+                                <div style={{ background: "#9CA3AF", height: "100%", width: `${ach.progress}%`, borderRadius: 4 }}></div>
+                            </div>
+                          </div>
+                      )}
+                    </div>
+                    <div>
+                      {ach.unlocked ? <CheckCircle2 size={24} color="#10B981" /> : <span style={{ fontSize: 13, fontWeight: 700, color: c.muted }}>{ach.progress}%</span>}
+                    </div>
+                </div>
+              ))}
             </div>
+
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {showMenu && profileScreen === "ayuda" && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'ayuda' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
