@@ -249,7 +249,7 @@ export default function App() {
   const [categoriasExtra, setCategoriasExtra] = useState(GASTOS_DEFAULT);  
   
   const [listaMetas, setListaMetas] = useState(METAS_INICIALES);
-  const [activeSlide, setActiveSlide] = useState(0); // NUEVO: ESTADO PARA LOS PUNTITOS DEL SLIDER
+  const [activeSlide, setActiveSlide] = useState(0); 
   
   const [tab, setTab] = useState("hoy");
   const [form, setForm] = useState({ monto: "", descripcion: "", categoria: "comida", tipo: "gasto" });
@@ -271,6 +271,9 @@ export default function App() {
 
   const [catForm, setCatForm] = useState({ visible: false, id: null, tipo: 'ingreso', nombre: '', icono: '📌', color: COLORES_CUSTOM[0] });
 
+  // NUEVOS ESTADOS DE HISTORIAL
+  const [filtroHistModo, setFiltroHistModo] = useState("general");
+  const [filtroHistMeta, setFiltroHistMeta] = useState("todas");
   const [filtroHistTipo, setFiltroHistTipo] = useState("todos");
   const [filtroHistCat, setFiltroHistCat] = useState("todas");
   const [filtroHistFechaDesde, setFiltroHistFechaDesde] = useState("");
@@ -397,7 +400,6 @@ export default function App() {
 
   useEffect(() => { window.scrollTo(0, 0); }, [tab]);
 
-  // FUNCIÓN PARA ACTUALIZAR LOS PUNTITOS AL DESLIZAR
   const handleScroll = (e) => {
     const scrollLeft = e.target.scrollLeft;
     const width = e.target.offsetWidth;
@@ -673,12 +675,27 @@ export default function App() {
   const cMaxI = maxIngreso * 1.2;
   const cMaxG = maxGasto * 1.2;
 
-  const gastosFiltradosHist = gastos.filter(g => 
-    (filtroHistTipo === "todos" || (filtroHistTipo === "ingreso" && g.tipo === "ingreso") || (filtroHistTipo === "gasto" && g.tipo === "gasto")) &&
-    (filtroHistCat === "todas" || g.categoria === filtroHistCat) && 
-    (!filtroHistFechaDesde || g.fecha >= filtroHistFechaDesde) && 
-    (!filtroHistFechaHasta || g.fecha <= filtroHistFechaHasta)
-  );
+  // NUEVA LÓGICA DE FILTRADO PARA HISTORIAL (FASE 3)
+  const gastosFiltradosHist = gastos.filter(g => {
+    const pasaFiltroFecha = (!filtroHistFechaDesde || g.fecha >= filtroHistFechaDesde) && 
+                            (!filtroHistFechaHasta || g.fecha <= filtroHistFechaHasta);
+    if (!pasaFiltroFecha) return false;
+
+    if (filtroHistModo === "general") {
+      if (g.tipo === "aporte") return false; // Ocultamos los aportes en flujo general
+      const pasaTipo = filtroHistTipo === "todos" || g.tipo === filtroHistTipo;
+      const pasaCat = filtroHistCat === "todas" || g.categoria === filtroHistCat;
+      return pasaTipo && pasaCat;
+    } else {
+      // Modo Mis Metas
+      if (g.tipo !== "aporte") return false; // Solo mostramos aportes
+      if (filtroHistMeta !== "todas") {
+        const metaObj = listaMetas.find(m => m.id === filtroHistMeta);
+        if (metaObj && !g.descripcion.includes(metaObj.nombre)) return false;
+      }
+      return true;
+    }
+  });
 
   const groupedHistorial = gastosFiltradosHist.reduce((acc, g) => {
     if (!acc[g.fecha]) acc[g.fecha] = [];
@@ -694,7 +711,6 @@ export default function App() {
     section:    { padding: "20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "stretch" },
     card:       { width: "100%", background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: "16px", marginBottom: 24, overflow: "hidden", boxSizing: "border-box", boxShadow: c.shadow },
     
-    // ELIMINADA LA SOMBRA DEL SLIDERCARD
     sliderContainer: { display: "flex", overflowX: "auto", scrollSnapType: "x mandatory", gap: 16, paddingBottom: 8, marginTop: 4, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" },
     slideItem: { minWidth: "100%", scrollSnapAlign: "start", flexShrink: 0 },
     sliderCard: { width: "100%", background: "#111", borderRadius: 20, padding: "20px", boxSizing: "border-box", color: "#FFF", boxShadow: "none", position: "relative" },
@@ -1096,7 +1112,6 @@ export default function App() {
           {tab === "resumen" && (
             <div style={s.section}>
               
-              {/* TABS DE FASE 3: FLUJO GENERAL VS METAS */}
               <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
                 <button
                   onClick={() => setFiltroReporteTipo("general")}
@@ -1112,7 +1127,6 @@ export default function App() {
                 </button>
               </div>
 
-              {/* VISTA 1: FLUJO GENERAL */}
               {filtroReporteTipo === "general" && (
                 <>
                   <div className="hide-scroll" style={{ display: "flex", gap: 8, marginBottom: 24, overflowX: "auto", paddingBottom: 4 }}>
@@ -1434,56 +1448,96 @@ export default function App() {
             </div>
           )}
 
-          {/* PESTAÑA HISTORIAL */}
+          {/* PESTAÑA HISTORIAL CON NUEVO FILTRADO (FASE 3) */}
           {tab === "historial" && (
             <div style={s.section}>
               
-              {/* === AQUÍ IRÁ EL NUEVO MENÚ DE HISTORIAL QUE TE PROPONGO === */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                <div style={{ display: "flex", gap: 8 }}>
-                  {[{ id: "todos", label: "Total" }, { id: "ingreso", label: "Ingresos" }, { id: "gasto", label: "Gastos" }].map(opt => (
-                    <button key={opt.id} onClick={() => setFiltroHistTipo(opt.id)} style={{
-                      padding: "10px 24px", borderRadius: 24,
-                      border: `1px solid ${filtroHistTipo === opt.id ? (isDark ? "#FFF" : "#000") : c.border}`,
-                      background: filtroHistTipo === opt.id ? (isDark ? "#FFF" : "#000") : c.card,
-                      color: filtroHistTipo === opt.id ? (isDark ? "#000" : "#FFF") : c.muted,
-                      fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s"
-                    }}>
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-                
-                <button onClick={() => setShowFiltrosMenu(!showFiltrosMenu)} style={{
-                  padding: "8px 16px", borderRadius: 24, border: `1px solid ${showFiltrosMenu ? (isDark ? "#FFF" : "#000") : c.border}`,
-                  background: showFiltrosMenu ? (isDark ? "#FFF" : "#000") : c.card, display: "flex", alignItems: "center", gap: 6,
-                  cursor: "pointer", flexShrink: 0, transition: "all 0.2s"
-                }}>
-                  <Calendar size={16} color={showFiltrosMenu ? (isDark ? "#000" : "#FFF") : c.text} />
-                  <span style={{ fontSize: 14, fontWeight: 600, color: showFiltrosMenu ? (isDark ? "#000" : "#FFF") : c.text }}>Fechas</span>
+              {/* TABS DE MODO EN HISTORIAL */}
+              <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
+                <button
+                  onClick={() => setFiltroHistModo("general")}
+                  style={{ ...s.filterBtn(filtroHistModo === "general"), flex: 1, padding: "12px 10px", fontSize: 14 }}
+                >
+                  📊 Flujo General
+                </button>
+                <button
+                  onClick={() => setFiltroHistModo("metas")}
+                  style={{ ...s.filterBtn(filtroHistModo === "metas"), flex: 1, padding: "12px 10px", fontSize: 14 }}
+                >
+                  🎯 Mis Metas
                 </button>
               </div>
 
-              <div className="hide-scroll" style={{ ...s.filterRow, marginBottom: 24, minHeight: 36, alignItems: "center" }}>
-                {filtroHistCat === "todas" ? (
+              {filtroHistModo === "general" ? (
                   <>
-                    <button style={s.filterBtn(true)} onClick={() => setFiltroHistCat("todas")}>Todas</button>
-                    {categorias.map(c => <button key={c.id} style={s.filterBtn(false)} onClick={() => setFiltroHistCat(c.id)}>{c.label}</button>)}
-                  </>
-                ) : (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <button 
-                      onClick={() => setFiltroHistCat("todas")} 
-                      style={{ width: 32, height: 32, borderRadius: '50%', background: isDark ? '#333' : '#F3F4F6', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
-                    >
-                      <X size={16} color={c.text} />
-                    </button>
-                    <div style={{ padding: "8px 16px", borderRadius: 20, border: `1px solid #E9D5FF`, background: "#F3E8FF", color: "#7E22CE", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center" }}>
-                      {categorias.find(c => c.id === filtroHistCat)?.label}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        {[{ id: "todos", label: "Total" }, { id: "ingreso", label: "Ingresos" }, { id: "gasto", label: "Gastos" }].map(opt => (
+                          <button key={opt.id} onClick={() => setFiltroHistTipo(opt.id)} style={{
+                            padding: "10px 24px", borderRadius: 24,
+                            border: `1px solid ${filtroHistTipo === opt.id ? (isDark ? "#FFF" : "#000") : c.border}`,
+                            background: filtroHistTipo === opt.id ? (isDark ? "#FFF" : "#000") : c.card,
+                            color: filtroHistTipo === opt.id ? (isDark ? "#000" : "#FFF") : c.muted,
+                            fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s"
+                          }}>
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                      
+                      <button onClick={() => setShowFiltrosMenu(!showFiltrosMenu)} style={{
+                        padding: "8px 16px", borderRadius: 24, border: `1px solid ${showFiltrosMenu ? (isDark ? "#FFF" : "#000") : c.border}`,
+                        background: showFiltrosMenu ? (isDark ? "#FFF" : "#000") : c.card, display: "flex", alignItems: "center", gap: 6,
+                        cursor: "pointer", flexShrink: 0, transition: "all 0.2s"
+                      }}>
+                        <Calendar size={16} color={showFiltrosMenu ? (isDark ? "#000" : "#FFF") : c.text} />
+                        <span style={{ fontSize: 14, fontWeight: 600, color: showFiltrosMenu ? (isDark ? "#000" : "#FFF") : c.text }}>Fechas</span>
+                      </button>
                     </div>
+
+                    <div className="hide-scroll" style={{ ...s.filterRow, marginBottom: 24, minHeight: 36, alignItems: "center" }}>
+                      {filtroHistCat === "todas" ? (
+                        <>
+                          <button style={s.filterBtn(true)} onClick={() => setFiltroHistCat("todas")}>Todas</button>
+                          {categorias.map(c => <button key={c.id} style={s.filterBtn(false)} onClick={() => setFiltroHistCat(c.id)}>{c.label}</button>)}
+                        </>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <button 
+                            onClick={() => setFiltroHistCat("todas")} 
+                            style={{ width: 32, height: 32, borderRadius: '50%', background: isDark ? '#333' : '#F3F4F6', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+                          >
+                            <X size={16} color={c.text} />
+                          </button>
+                          <div style={{ padding: "8px 16px", borderRadius: 20, border: `1px solid #E9D5FF`, background: "#F3E8FF", color: "#7E22CE", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center" }}>
+                            {categorias.find(c => c.id === filtroHistCat)?.label}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </>
+              ) : (
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+                     <div style={{ position: "relative", flex: 1, marginRight: 16 }}>
+                         <select 
+                             style={{ ...s.select, paddingRight: 40, fontSize: 15, fontWeight: 600 }} 
+                             value={filtroHistMeta} 
+                             onChange={(e) => setFiltroHistMeta(e.target.value)}
+                         >
+                             <option value="todas">🎯 Todas las metas</option>
+                             {listaMetas.map(m => <option key={m.id} value={m.id}>{m.icono} {m.nombre}</option>)}
+                         </select>
+                         <ChevronDown size={20} color={c.muted} style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
+                     </div>
+                     <button onClick={() => setShowFiltrosMenu(!showFiltrosMenu)} style={{
+                        padding: "8px 16px", borderRadius: 24, border: `1px solid ${showFiltrosMenu ? (isDark ? "#FFF" : "#000") : c.border}`, minHeight: 48,
+                        background: showFiltrosMenu ? (isDark ? "#FFF" : "#000") : c.card, display: "flex", alignItems: "center", gap: 6,
+                        cursor: "pointer", flexShrink: 0, transition: "all 0.2s"
+                      }}>
+                        <Calendar size={16} color={showFiltrosMenu ? (isDark ? "#000" : "#FFF") : c.text} />
+                      </button>
                   </div>
-                )}
-              </div>
+              )}
 
               {showFiltrosMenu && (
                 <div style={{...s.card, marginBottom: 24, animation: "slideUp 0.3s ease-out"}}>
@@ -1520,6 +1574,7 @@ export default function App() {
                        {groupedHistorial[dateKey].map((g, i, arr) => {
                          const isAporte = g.tipo === "aporte";
                          const cat = isAporte ? null : categorias.find(c => c.id === g.categoria);
+                         const metaTarget = isAporte ? listaMetas.find(m => g.descripcion.includes(m.nombre)) : null;
                          const descAdicional = (!isAporte && g.descripcion && cat && g.descripcion !== getTexto(cat.label)) ? g.descripcion : "";
                          const isLast = i === arr.length - 1;
                          
@@ -1527,7 +1582,7 @@ export default function App() {
                            <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: isLast ? "none" : `1px solid ${c.border}` }}>
                              <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12 }}>
                                <div style={{ width: 40, height: 40, borderRadius: 12, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, color: cat ? "inherit" : c.muted, fontWeight: cat ? "normal" : 600 }}>
-                                 {isAporte ? "🎯" : (cat ? getIcono(cat.label) : (g.descripcion || "?").charAt(0).toUpperCase())}
+                                 {isAporte ? (metaTarget ? metaTarget.icono : "🎯") : (cat ? getIcono(cat.label) : (g.descripcion || "?").charAt(0).toUpperCase())}
                                </div>
                                <div style={{ minWidth: 0 }}>
                                  <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2, textDecoration: (!cat && !isAporte) ? "line-through" : "none" }}>
@@ -1816,6 +1871,21 @@ export default function App() {
             </div>
           </div>
 
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Prioridad</div>
+            <div style={{ display: "flex", gap: 12 }}>
+              <button onClick={() => setMetaForm({ ...metaForm, prioridad: 'alta' })} style={{ flex: 1, padding: "12px", borderRadius: 8, border: metaForm.prioridad === 'alta' ? "1px solid #EF4444" : `1px solid ${c.border}`, background: metaForm.prioridad === 'alta' ? (isDark ? "rgba(239,68,68,0.15)" : "#FEF2F2") : c.card, color: metaForm.prioridad === 'alta' ? "#EF4444" : c.text, fontWeight: 600, display: "flex", justifyContent: "center", alignItems: "center", gap: 6, cursor: "pointer", transition: "0.2s" }}>
+                <ChevronUp size={16} /> Alta
+              </button>
+              <button onClick={() => setMetaForm({ ...metaForm, prioridad: 'media' })} style={{ flex: 1, padding: "12px", borderRadius: 8, border: metaForm.prioridad === 'media' ? "1px solid #F59E0B" : `1px solid ${c.border}`, background: metaForm.prioridad === 'media' ? (isDark ? "rgba(245,158,11,0.15)" : "#FFFBEB") : c.card, color: metaForm.prioridad === 'media' ? "#F59E0B" : c.text, fontWeight: 600, display: "flex", justifyContent: "center", alignItems: "center", gap: 6, cursor: "pointer", transition: "0.2s" }}>
+                <Minus size={16} /> Media
+              </button>
+              <button onClick={() => setMetaForm({ ...metaForm, prioridad: 'baja' })} style={{ flex: 1, padding: "12px", borderRadius: 8, border: metaForm.prioridad === 'baja' ? "1px solid #10B981" : `1px solid ${c.border}`, background: metaForm.prioridad === 'baja' ? (isDark ? "rgba(16,185,129,0.15)" : "#ECFDF5") : c.card, color: metaForm.prioridad === 'baja' ? "#10B981" : c.text, fontWeight: 600, display: "flex", justifyContent: "center", alignItems: "center", gap: 6, cursor: "pointer", transition: "0.2s" }}>
+                <ChevronDown size={16} /> Baja
+              </button>
+            </div>
+          </div>
+
           <div style={{ marginBottom: 40 }}>
             <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Imagen / ícono</div>
             <div className="hide-scroll" style={{ display: "flex", gap: 16, overflowX: "auto", paddingBottom: 4 }}>
@@ -1880,6 +1950,7 @@ export default function App() {
             <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Configuración de categorías</h2>
           </div>
           
+          {/* CATEGORÍAS DE INGRESOS */}
           <div style={{ marginBottom: 32 }}>
             <div style={{ ...s.label, fontSize: 16, color: c.green, marginBottom: 12 }}>Categorías para Ingresos</div>
             
@@ -1906,6 +1977,7 @@ export default function App() {
             </button>
           </div>
 
+          {/* CATEGORÍAS DE GASTOS */}
           <div style={{ marginBottom: 32 }}>
             <div style={{ ...s.label, fontSize: 16, color: c.red, marginBottom: 12 }}>Categorías para Gastos</div>
             
@@ -1931,6 +2003,7 @@ export default function App() {
                <Plus size={18} /> Crear categoría
             </button>
           </div>
+
         </div>
       )}
 
