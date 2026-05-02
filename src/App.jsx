@@ -695,9 +695,28 @@ export default function App() {
   const totalIngresosR = ingresosResumen.reduce((a, g) => a + g.monto, 0);
   const ahorroR = totalIngresosR - totalGastadoR;
 
-  const calcCats = (arr) => categorias.map(cat => ({
-    ...cat, total: arr.filter(g => g.categoria === cat.id).reduce((a, g) => a + g.monto, 0),
-  })).filter(c => c.total > 0).sort((a, b) => b.total - a.total);
+  // NUEVO: LOGICA PARA CATEGORIAS ELIMINADAS EN REPORTES
+  const calcCats = (arr) => {
+    const agrupado = {};
+    arr.forEach(g => {
+      // Si la categoría existe, usamos su ID real. Si no, usamos la descripcion para no juntar papas con camotes.
+      const catExiste = categorias.find(c => c.id === g.categoria);
+      const groupKey = catExiste ? g.categoria : `eliminado_${g.descripcion}`;
+      
+      if (!agrupado[groupKey]) {
+        agrupado[groupKey] = {
+          id: groupKey,
+          label: catExiste ? catExiste.label : g.descripcion,
+          color: catExiste ? catExiste.color : (isDark ? "rgba(255,255,255,0.15)" : "rgba(160,174,192,0.4)"), // Gris con transparencia
+          isDeleted: !catExiste,
+          total: 0
+        };
+      }
+      agrupado[groupKey].total += g.monto;
+    });
+    
+    return Object.values(agrupado).sort((a, b) => b.total - a.total);
+  };
 
   const catsIngresos = calcCats(ingresosResumen);
   const catsGastos = calcCats(gastosResumen);
@@ -1047,10 +1066,10 @@ export default function App() {
                             {cat ? getIcono(cat.label) : (g.descripcion || "?").charAt(0).toUpperCase()}
                           </div>
                           <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text }}>
+                            <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text, textDecoration: cat ? "none" : "line-through" }}>
                               {cat ? getTexto(cat.label) : g.descripcion}
-                              {cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400 }}>{descAdicional}</span>}
-                              {!cat && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400 }}>(Eliminado)</span>}
+                              {cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400, textDecoration: "none" }}>{descAdicional}</span>}
+                              {!cat && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400, textDecoration: "none" }}>(Eliminado)</span>}
                             </div>
                             <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ahorros"}</div>
                           </div>
@@ -1145,7 +1164,9 @@ export default function App() {
                        {catsIngresos.slice(0, 5).map(cat => (
                          <div key={cat.id} style={{ display: "flex", alignItems: "center" }}>
                            <div style={{ width: 10, height: 10, borderRadius: "50%", background: cat.color, marginRight: 8, flexShrink: 0 }}></div>
-                           <span style={{ display: "inline-block", fontSize: 13, fontWeight: 500, color: c.text, width: 85, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{formatCatName(cat.label)}</span>
+                           <span style={{ display: "inline-block", fontSize: 13, fontWeight: 500, color: cat.isDeleted ? c.muted : c.text, textDecoration: cat.isDeleted ? "line-through" : "none", width: 85, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                             {formatCatName(cat.label)}
+                           </span>
                            <span style={{ display: "inline-block", fontSize: 13, fontWeight: 500, color: c.muted, width: 35, textAlign: "right" }}>{Math.round((cat.total / totIngresosDonut) * 100)}%</span>
                          </div>
                        ))}
@@ -1168,7 +1189,7 @@ export default function App() {
                     </div>
                     <div style={{ display: "flex", paddingLeft: 38, gap: 8, marginTop: 8 }}>
                       {catsIngresos.slice(0, 6).map((cat) => (
-                        <div key={cat.id} style={{ flex: 1, textAlign: "center", fontSize: 10, fontWeight: 500, color: c.muted }}>
+                        <div key={cat.id} style={{ flex: 1, textAlign: "center", fontSize: 10, fontWeight: 500, color: cat.isDeleted ? c.muted : c.text, textDecoration: cat.isDeleted ? "line-through" : "none" }}>
                           {formatCatName(cat.label)}
                         </div>
                       ))}
@@ -1214,7 +1235,9 @@ export default function App() {
                        {catsGastos.slice(0, 5).map(cat => (
                          <div key={cat.id} style={{ display: "flex", alignItems: "center" }}>
                            <div style={{ width: 10, height: 10, borderRadius: "50%", background: cat.color, marginRight: 8, flexShrink: 0 }}></div>
-                           <span style={{ display: "inline-block", fontSize: 13, fontWeight: 500, color: c.text, width: 85, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{formatCatName(cat.label)}</span>
+                           <span style={{ display: "inline-block", fontSize: 13, fontWeight: 500, color: cat.isDeleted ? c.muted : c.text, textDecoration: cat.isDeleted ? "line-through" : "none", width: 85, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                             {formatCatName(cat.label)}
+                           </span>
                            <span style={{ display: "inline-block", fontSize: 13, fontWeight: 500, color: c.muted, width: 35, textAlign: "right" }}>{Math.round((cat.total / totGastosDonut) * 100)}%</span>
                          </div>
                        ))}
@@ -1237,7 +1260,7 @@ export default function App() {
                     </div>
                     <div style={{ display: "flex", paddingLeft: 38, gap: 8, marginTop: 8 }}>
                       {catsGastos.slice(0, 6).map((cat) => (
-                        <div key={cat.id} style={{ flex: 1, textAlign: "center", fontSize: 10, fontWeight: 500, color: c.muted }}>
+                        <div key={cat.id} style={{ flex: 1, textAlign: "center", fontSize: 10, fontWeight: 500, color: cat.isDeleted ? c.muted : c.text, textDecoration: cat.isDeleted ? "line-through" : "none" }}>
                           {formatCatName(cat.label)}
                         </div>
                       ))}
@@ -1309,7 +1332,7 @@ export default function App() {
                       <input type="date" value={filtroHistFechaHasta} onChange={e => setFiltroFechaResumenHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroHistFechaHasta ? c.text : "transparent" }} />
                     </div>
                   </div>
-                  {(filtroHistFechaDesde || filtroHistFechaHasta) && <button style={{ width: "100%", fontSize: 14, fontWeight: 700, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 16, fontFamily: "inherit" }} onClick={() => { setFiltroHistFechaDesde(""); setFiltroHistFechaHasta(""); }}>
+                  {(filtroHistFechaDesde || filtroHistFechaHasta) && <button style={{ width: "100%", fontSize: 14, fontWeight: 700, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 16, fontFamily: "inherit" }} onClick={() => { setFiltroHistFechaDesde(""); setFiltroFechaResumenHasta(""); }}>
                     <X size={14} style={{ marginRight: 4, verticalAlign: "middle" }} /> Limpiar fechas
                   </button>}
                 </div>
