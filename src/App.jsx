@@ -6,7 +6,7 @@ import {
   Edit2, Trash2, X, Calendar, Mail, CheckCircle2, ChevronRight,
   UserCircle, Lock, Trophy, Palette, Download, Headphones, LogOut, AlertTriangle,
   BarChart2, Plane, Laptop, ShieldCheck, TrendingUp, Plus, PlusCircle, ArrowLeft, Clock,
-  ChevronUp, Minus, ChevronDown, Circle, MoreVertical
+  ChevronUp, Minus, ChevronDown, Circle, MoreVertical, TrendingDown
 } from "lucide-react";
 
 const SUPABASE_URL = "https://jboazxmcmvvcscqeerbz.supabase.co";
@@ -32,11 +32,7 @@ const GASTOS_DEFAULT = [
   { id: "otros",           label: "📦 Otros",              color: "#8A9BA8" },
 ];
 
-const METAS_INICIALES = [
-  { id: "m1", nombre: "Nueva Laptop", montoObjetivo: 4000, aporteInicial: 2850, fechaLimite: "2025-12-25", prioridad: "alta", tipo: "libre", icono: "💻" },
-  { id: "m2", nombre: "Viaje a Cusco", montoObjetivo: 2500, aporteInicial: 1200, fechaLimite: "2025-04-15", prioridad: "media", tipo: "libre", icono: "✈️" },
-  { id: "m3", nombre: "Fondo de Emergencia", montoObjetivo: 10000, aporteInicial: 3200, fechaLimite: "", prioridad: "baja", tipo: "libre", icono: "🏠" }
-];
+const METAS_INICIALES = []; // Iniciamos vacio para simular el caso de crear la primera
 
 const COLORES_CUSTOM = ["#FF6B6B","#FF803C","#6BCB77","#4D96FF","#C77DFF","#FF9F1C","#2EC4B6","#E71D36","#F72585","#B5E48C"];
 const PASTEL_COLORS = ["#A7F3D0", "#BFDBFE", "#FED7AA", "#E9D5FF", "#FECACA", "#FDE047"];
@@ -59,9 +55,7 @@ const getIcono = (label) => {
   if (!label || !label.trim()) return "📌";
   const text = label.trim();
   const arr = text.split(" ");
-  if (arr.length > 1 && !/[a-zA-Z0-9]/.test(arr[0])) {
-    return arr[0];
-  }
+  if (arr.length > 1 && !/[a-zA-Z0-9]/.test(arr[0])) { return arr[0]; }
   const firstChar = Array.from(text)[0];
   return firstChar ? firstChar.toUpperCase() : "📌";
 };
@@ -70,13 +64,9 @@ const getTexto = (label) => {
   if (!label || !label.trim()) return "Sin nombre";
   const text = label.trim();
   const arr = text.split(" ");
-  if (arr.length > 1 && !/[a-zA-Z0-9]/.test(arr[0])) {
-    return arr.slice(1).join(" ");
-  }
+  if (arr.length > 1 && !/[a-zA-Z0-9]/.test(arr[0])) { return arr.slice(1).join(" "); }
   const firstChar = Array.from(text)[0];
-  if (firstChar && !/[a-zA-Z0-9]/.test(firstChar)) {
-      return Array.from(text).slice(1).join("").trim() || text;
-  }
+  if (firstChar && !/[a-zA-Z0-9]/.test(firstChar)) { return Array.from(text).slice(1).join("").trim() || text; }
   return text;
 };
 
@@ -87,8 +77,9 @@ const formatCatName = (label) => {
 
 const formatFecha = (fechaStr) => {
   if (!fechaStr) return "";
+  const mesesAbv = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
   const [y, m, d] = fechaStr.split("-");
-  return `${d}/${m}/${y}`;
+  return `${parseInt(d)} ${mesesAbv[parseInt(m)-1]} ${y}`;
 };
 
 const formatDateTime = (isoStr) => {
@@ -135,7 +126,6 @@ const getUIFechaHora = (isoStr) => {
   const validIsoStr = isoStr.includes('Z') || isoStr.includes('+') ? isoStr : `${isoStr}Z`;
   const dt = new Date(validIsoStr);
   const limaDate = new Date(dt.getTime() - 18000000);
-
   let h = limaDate.getUTCHours();
   let m = limaDate.getUTCMinutes();
   const ampm = h >= 12 ? 'p.m.' : 'a.m.';
@@ -149,17 +139,10 @@ const getUIFechaHora = (isoStr) => {
   const ayerDate = new Date(Date.now() - 18000000 - 86400000);
   const ayerIso = ayerDate.toISOString().split("T")[0];
 
-  if (isoDate === todayIso) {
-    return `Hoy ${strTime}`;
-  } else if (isoDate === ayerIso) {
-    return `Ayer ${strTime}`;
-  } else {
-    const meses = ["Ene.", "Feb.", "Mar.", "Abr.", "May.", "Jun.", "Jul.", "Ago.", "Sep.", "Oct.", "Nov.", "Dic."];
-    const day = limaDate.getUTCDate();
-    const month = meses[limaDate.getUTCMonth()];
-    const year = limaDate.getUTCFullYear();
-    return `${day} ${month} ${year} - ${strTime}`;
-  }
+  if (isoDate === todayIso) return `Hoy ${strTime}`;
+  if (isoDate === ayerIso) return `Ayer ${strTime}`;
+  const meses = ["Ene.", "Feb.", "Mar.", "Abr.", "May.", "Jun.", "Jul.", "Ago.", "Sep.", "Oct.", "Nov.", "Dic."];
+  return `${limaDate.getUTCDate()} ${meses[limaDate.getUTCMonth()]} ${limaDate.getUTCFullYear()} - ${strTime}`;
 };
 
 const diffDias = (d1Str, d2Str) => {
@@ -167,88 +150,6 @@ const diffDias = (d1Str, d2Str) => {
   const [y1, m1, day1] = d1Str.split("-");
   const [y2, m2, day2] = d2Str.split("-");
   return Math.round((Date.UTC(y2, m2 - 1, day2) - Date.UTC(y1, m1 - 1, day1)) / 86400000);
-};
-
-const exportarCSV = (gastos, categorias) => {
-  const header = "Fecha,Hora,Tipo,Categoría,Descripción,Monto\n";
-  const rows = gastos.map(g => {
-    const { fecha, hora } = formatDateTime(g.created_at);
-    const catLabel = categorias.find(c => c.id === g.categoria)?.label || "(Eliminado)";
-    const desc = (g.descripcion || "").replace(/,/g, ";");
-    return `${fecha},${hora},${g.tipo},${catLabel},${desc},${g.monto}`;
-  }).join("\n");
-  const blob = new Blob(["\uFEFF" + header + rows], { type: "text/csv;charset=utf-8;" });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement("a");
-  a.href     = url;
-  a.download = `ahorro-meta-${hoy()}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-};
-
-const exportarPDF = (gastos, categorias) => {
-  const filas = gastos.map(g => {
-    const { fecha, hora } = formatDateTime(g.created_at);
-    const cat  = categorias.find(c => c.id === g.categoria);
-    const catLabel = cat?.label || "(Eliminado)";
-    const color = g.tipo === "gasto" ? "#c0392b" : "#27ae60";
-    const signo = g.tipo === "gasto" ? "-" : "+";
-    return `<tr>
-      <td style="font-weight:500;">${fecha}<br/><small style="color:#888">${hora}</small></td>
-      <td style="font-weight:600;color:${cat?.color || "#888"}">${catLabel}</td>
-      <td style="color:#1a1a1a;">${g.descripcion || ""}</td>
-      <td style="color:${color};font-weight:bold;text-align:right">${signo} S/ ${Number(g.monto).toFixed(2)}</td>
-    </tr>`;
-  }).join("");
-
-  const win = window.open("", "_blank");
-  win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"/>
-    <title>Historial Ahorro Meta</title>
-    <style>
-      @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
-      body{font-family:'Montserrat',sans-serif;padding:30px 20px;font-size:13px;background-color:#F4F5F7;color:#1a1a1a;margin:0;}
-      h2{color:#FF803C;margin-top:0;font-size:24px;font-weight:700;}
-      .header-meta {color:#6B7280;margin-bottom:24px;font-size:14px;font-weight:500;}
-      .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-      .btn-print { margin:0; padding:12px 24px; background:#FF803C; color:#000; font-weight:700; border:none; border-radius:12px; cursor:pointer; font-family:inherit; font-size:14px; box-shadow:0 4px 12px rgba(255, 128, 60, 0.2); }
-      .btn-close { background: #1a1a1a; color: #FFF; border: none; border-radius: 12px; width: 44px; height: 44px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2); font-weight: bold; }
-      .btn-close:hover { background: #000; }
-      .card-history {
-        width:100%;
-        max-width:800px;
-        margin:0 auto;
-        background:#FFFFFF;
-        border:1px solid #E5E7EB;
-        border-radius:24px;
-        padding:32px;
-        box-shadow:0 8px 24px rgba(0,0,0,0.06);
-        box-sizing:border-box;
-      }
-      table{width:100%;border-collapse:collapse;margin-top:12px;border-radius:12px;overflow:hidden;}
-      th{background:#F9FAFB;color:#6B7280;padding:14px 16px;text-align:left;font-weight:600;border-bottom:1px solid #E5E7EB;text-transform:uppercase;font-size:11px;letter-spacing:1px;}
-      td{padding:14px 16px;border-bottom:1px solid #E5E7EB;}
-      tr:last-child td{border-bottom:none;}
-      tr:nth-child(even){background:#F9FAFB;}
-      @media print{
-        .top-bar {display:none;}
-        body{background:#FFFFFF;padding:0;}
-        .card-history{border:none;box-shadow:none;padding:0;}
-      }
-    </style></head><body>
-    <div style="max-width:800px;margin:0 auto;">
-      <div class="top-bar">
-        <button onclick="window.print()" class="btn-print">🖨️ Imprimir / Guardar PDF</button>
-        <button onclick="window.close()" class="btn-close">✕</button>
-      </div>
-      <div class="card-history">
-        <h2>Ahorro Meta — Historial de movimientos</h2>
-        <p class="header-meta">Exportado el ${formatFecha(hoy())} · Total registros: ${gastos.length}</p>
-        <table><thead><tr><th>Fecha / Hora</th><th>Categoría</th><th>Descripción</th><th>Monto</th></tr></thead>
-        <tbody>${filas}</tbody></table>
-      </div>
-    </div>
-    </body></html>`);
-  win.document.close();
 };
 
 const MenuItem = ({ icon, text, color, bgColor, border, showArrow = true, onClick }) => (
@@ -332,6 +233,11 @@ export default function App() {
 
   const [showAddModal, setShowAddModal] = useState(false);
 
+  // NUEVOS ESTADOS PARA APORTES A METAS
+  const [showAporteModal, setShowAporteModal] = useState(false);
+  const [aporteMonto, setAporteMonto] = useState("");
+  const [aporteMetaId, setAporteMetaId] = useState(null);
+
   const [showCrearMeta, setShowCrearMeta] = useState(false);
   const [isEditingMetaObj, setIsEditingMetaObj] = useState(false);
   const [metaForm, setMetaForm] = useState({
@@ -352,7 +258,7 @@ export default function App() {
   const categorias = [...safeBase, ...safeExtra];
   const isDark = theme === "dark";
 
-  const isModalOpen = showAddModal || !!editando || showEmailModal || showCrearMeta || !!metaSeleccionada;
+  const isModalOpen = showAddModal || !!editando || showEmailModal || showCrearMeta || !!metaSeleccionada || showAporteModal;
 
   const c = {
     bg: isDark ? "#0A0A0A" : "#F4F5F7",
@@ -372,15 +278,7 @@ export default function App() {
     iconTextPurple: isDark ? "#D8B4FE" : "#A855F7"
   };
 
-  const menuGroupHeader = {
-    fontSize: 13,
-    color: c.muted,
-    textTransform: "uppercase",
-    letterSpacing: "1px",
-    fontWeight: 700,
-    padding: "16px 20px 8px",
-    margin: 0
-  };
+  const menuGroupHeader = { fontSize: 13, color: c.muted, textTransform: "uppercase", letterSpacing: "1px", fontWeight: 700, padding: "16px 20px 8px", margin: 0 };
 
   const showToast = (msg, color = "#FF803C") => {
     setToast({ msg, color });
@@ -389,11 +287,7 @@ export default function App() {
 
   const cerrarPantalla = (screenName, action) => {
     setIsClosing(screenName);
-    setTimeout(() => {
-      action();
-      setIsClosing("");
-      setShowMetaMenu(false);
-    }, 280);
+    setTimeout(() => { action(); setIsClosing(""); setShowMetaMenu(false); }, 280);
   };
 
   useEffect(() => {
@@ -415,7 +309,6 @@ export default function App() {
         if (err2) throw err2;
         if (cfg) {
           const getVal = (k) => cfg.find(item => item.key === k)?.value;
-          
           if (getVal("metaAhorro")) setMetaAhorro(getVal("metaAhorro"));
           if (getVal("fechaInicio")) setFechaInicioPlan(getVal("fechaInicio"));
           if (getVal("fechaFin")) setFechaFinPlan(getVal("fechaFin"));
@@ -423,37 +316,17 @@ export default function App() {
           if (getVal("themePref")) setTheme(getVal("themePref"));
           if (getVal("useBoldPref")) setUseBold(getVal("useBoldPref") === "true");
           if (getVal("userName")) setUserName(getVal("userName"));
-
-          if (getVal("categoriasCustom")) {
-            try { 
-              const p = JSON.parse(getVal("categoriasCustom")); 
-              if(Array.isArray(p)) setCategoriasExtra(p);
-            } catch(_) {}
-          }
-          if (getVal("categoriasBase")) {
-            try { 
-              const p = JSON.parse(getVal("categoriasBase")); 
-              if(Array.isArray(p)) setCategoriasBase(p);
-            } catch(_) {}
-          }
-          if (getVal("listaMetas")) {
-            try { 
-              const p = JSON.parse(getVal("listaMetas")); 
-              if(Array.isArray(p) && p.length > 0) setListaMetas(p);
-            } catch(_) {}
-          }
+          if (getVal("categoriasCustom")) { try { const p = JSON.parse(getVal("categoriasCustom")); if(Array.isArray(p)) setCategoriasExtra(p); } catch(_) {} }
+          if (getVal("categoriasBase")) { try { const p = JSON.parse(getVal("categoriasBase")); if(Array.isArray(p)) setCategoriasBase(p); } catch(_) {} }
+          if (getVal("listaMetas")) { try { const p = JSON.parse(getVal("listaMetas")); if(Array.isArray(p)) setListaMetas(p); } catch(_) {} }
         }
         setError(null);
-      } catch (e) {
-        setError("No se pudo conectar. Verifica tu configuración.");
-      }
+      } catch (e) { setError("No se pudo conectar. Verifica tu configuración."); }
       setLoaded(true);
     })();
   }, []);
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [tab]);
+  useEffect(() => { window.scrollTo(0, 0); }, [tab]);
 
   const agregarMovimiento = async () => {
     const monto = parseFloat(form.monto);
@@ -521,72 +394,6 @@ export default function App() {
     cerrarPantalla('datos', () => setProfileScreen(null));
   };
 
-  const agregarCategoriaBase = async () => {
-    const label = nuevaCatBaseLabel.trim();
-    if (!label) { showToast("Escribe un nombre", c.red); return; }
-    const id = "base_" + Date.now();
-    const nueva = { id, label, color: nuevaCatBaseColor };
-    const updated = [...safeBase, nueva];
-    setCategoriasBase(updated);
-    await supabase.from("config").upsert([{ key: "categoriasBase", value: JSON.stringify(updated) }], { onConflict: "key" });
-    setNuevaCatBaseLabel("");
-    setShowNuevaCatBase(false);
-    showToast(`Categoría "${label}" creada ✓`);
-  };
-
-  const agregarCategoria = async () => {
-    const label = nuevaCatLabel.trim();
-    if (!label) { showToast("Escribe un nombre", c.red); return; }
-    const id = "custom_" + Date.now();
-    const nueva = { id, label, color: nuevaCatColor };
-    const updated = [...safeExtra, nueva];
-    setCategoriasExtra(updated);
-    await supabase.from("config").upsert([{ key: "categoriasCustom", value: JSON.stringify(updated) }], { onConflict: "key" });
-    setNuevaCatLabel("");
-    setShowNuevaCat(false);
-    showToast(`Categoría "${label}" creada ✓`);
-  };
-
-  const eliminarCategoria = async (id) => {
-    if (!window.confirm("¿Seguro que deseas eliminar esta categoría?")) return;
-    const updated = safeExtra.filter(cat => cat.id !== id);
-    setCategoriasExtra(updated);
-    await supabase.from("config").upsert([{ key: "categoriasCustom", value: JSON.stringify(updated) }], { onConflict: "key" });
-    showToast("Categoría eliminada", c.muted);
-  };
-
-  const abrirEdicionCat = (cat) => { setEditandoCat(cat.id); setEditCatLabel(cat.label); setEditCatColor(cat.color); };
-
-  const guardarEdicionCat = async () => {
-    const label = editCatLabel.trim();
-    if (!label) { showToast("Escribe un nombre", c.red); return; }
-    const updated = safeExtra.map(cat => cat.id === editandoCat ? { ...cat, label, color: editCatColor } : cat);
-    setCategoriasExtra(updated);
-    await supabase.from("config").upsert([{ key: "categoriasCustom", value: JSON.stringify(updated) }], { onConflict: "key" });
-    setEditandoCat(null);
-    showToast("Categoría actualizada ✓");
-  };
-
-  const abrirEdicionCatBase = (cat) => { setEditandoCatBase(cat.id); setEditCatBaseLabel(cat.label); setEditCatBaseColor(cat.color); };
-
-  const guardarEdicionCatBase = async () => {
-    const label = editCatBaseLabel.trim();
-    if (!label) { showToast("Escribe un nombre", c.red); return; }
-    const updated = safeBase.map(cat => cat.id === editandoCatBase ? { ...cat, label, color: editCatBaseColor } : cat);
-    setCategoriasBase(updated);
-    await supabase.from("config").upsert([{ key: "categoriasBase", value: JSON.stringify(updated) }], { onConflict: "key" });
-    setEditandoCatBase(null);
-    showToast("Categoría base actualizada ✓");
-  };
-
-  const eliminarCategoriaBase = async (id) => {
-    if (!window.confirm("¿Seguro que deseas eliminar esta categoría base?")) return;
-    const updated = safeBase.filter(cat => cat.id !== id);
-    setCategoriasBase(updated);
-    await supabase.from("config").upsert([{ key: "categoriasBase", value: JSON.stringify(updated) }], { onConflict: "key" });
-    showToast("Categoría eliminada", c.muted);
-  };
-
   const procesarNuevaMeta = async () => {
     if (!metaForm.nombre.trim()) return showToast("⚠️ Ingresa el nombre de la meta", c.red);
     if (!metaForm.montoObjetivo || parseFloat(metaForm.montoObjetivo) <= 0) return showToast("⚠️ Ingresa un monto objetivo válido", c.red);
@@ -596,23 +403,15 @@ export default function App() {
 
     if (isEditingMetaObj) {
       nuevasMetas = listaMetas.map(m => m.id === metaForm.id ? { 
-        ...metaForm, 
-        montoObjetivo: parseFloat(metaForm.montoObjetivo), 
-        aporteInicial: metaForm.aporteInicial ? parseFloat(metaForm.aporteInicial) : 0 
+        ...metaForm, montoObjetivo: parseFloat(metaForm.montoObjetivo), aporteInicial: metaForm.aporteInicial ? parseFloat(metaForm.aporteInicial) : 0 
       } : m);
-      
       setMetaSeleccionada(prev => ({ ...prev, ...metaForm, montoObjetivo: parseFloat(metaForm.montoObjetivo), aporteInicial: metaForm.aporteInicial ? parseFloat(metaForm.aporteInicial) : 0 }));
       showToast("Meta actualizada con éxito ✓", c.green);
     } else {
       const nuevaMeta = {
-        id: "meta_" + Date.now(),
-        nombre: metaForm.nombre.trim(),
-        montoObjetivo: parseFloat(metaForm.montoObjetivo),
-        aporteInicial: metaForm.aporteInicial ? parseFloat(metaForm.aporteInicial) : 0,
-        fechaLimite: metaForm.fechaLimite,
-        prioridad: metaForm.prioridad,
-        tipo: metaForm.tipo,
-        icono: metaForm.icono
+        id: "meta_" + Date.now(), nombre: metaForm.nombre.trim(), montoObjetivo: parseFloat(metaForm.montoObjetivo),
+        aporteInicial: metaForm.aporteInicial ? parseFloat(metaForm.aporteInicial) : 0, fechaLimite: metaForm.fechaLimite,
+        prioridad: metaForm.prioridad, tipo: metaForm.tipo, icono: metaForm.icono
       };
       nuevasMetas = [nuevaMeta, ...listaMetas];
       showToast("Meta guardada con éxito ✓", c.green);
@@ -624,79 +423,80 @@ export default function App() {
     setSaving(false);
 
     cerrarPantalla('crearMeta', () => {
-      setShowCrearMeta(false);
-      setIsEditingMetaObj(false);
+      setShowCrearMeta(false); setIsEditingMetaObj(false);
       setMetaForm({ id: "", nombre: "", montoObjetivo: "", aporteInicial: "", fechaLimite: "", prioridad: "alta", tipo: "libre", icono: "💻" });
     });
   };
 
   const eliminarMeta = async (id) => {
     if (!window.confirm("¿Estás seguro que deseas eliminar esta meta? Todo el progreso se perderá.")) return;
-
     const nuevasMetas = listaMetas.filter(m => m.id !== id);
     setListaMetas(nuevasMetas);
-
     setSaving(true);
     await supabase.from("config").upsert([{ key: "listaMetas", value: JSON.stringify(nuevasMetas) }], { onConflict: "key" });
     setSaving(false);
-
     showToast("Meta eliminada con éxito", c.muted);
     setShowMetaMenu(false);
     cerrarPantalla('detalleMeta', () => setMetaSeleccionada(null));
   };
 
   const abrirEdicionMeta = () => {
-    setMetaForm({
-      id: metaSeleccionada.id,
-      nombre: metaSeleccionada.nombre,
-      montoObjetivo: metaSeleccionada.montoObjetivo,
-      aporteInicial: metaSeleccionada.aporteInicial,
-      fechaLimite: metaSeleccionada.fechaLimite,
-      prioridad: metaSeleccionada.prioridad,
-      tipo: metaSeleccionada.tipo,
-      icono: metaSeleccionada.icono
-    });
+    setMetaForm({ ...metaSeleccionada });
     setIsEditingMetaObj(true);
     setShowCrearMeta(true);
   };
+
+  // LOGICA DE APORTAR A UNA META
+  const procesarAporte = async () => {
+    const monto = parseFloat(aporteMonto);
+    if (!monto || monto <= 0) return showToast("Ingresa un monto válido", c.red);
+    setSaving(true);
+
+    const metaDestino = listaMetas.find(m => m.id === aporteMetaId);
+    
+    // 1. Guardar en Movimientos (Tipo especial: aporte)
+    const nuevo = { fecha: hoy(), monto, descripcion: `Aporte a ${metaDestino.nombre}`, categoria: "meta_aporte", tipo: "aporte" };
+    const { data, error: err } = await supabase.from("gastos").insert([nuevo]).select();
+    
+    if (err) { showToast("Error al guardar", c.red); setSaving(false); return; }
+    
+    setGastos(prev => [{ ...data[0], fecha: getFechaLocal(data[0].created_at) }, ...prev]);
+
+    // 2. Actualizar la Meta en listaMetas sumándole el aporte
+    const nuevasMetas = listaMetas.map(m => m.id === aporteMetaId ? { ...m, aporteInicial: m.aporteInicial + monto } : m);
+    setListaMetas(nuevasMetas);
+    await supabase.from("config").upsert([{ key: "listaMetas", value: JSON.stringify(nuevasMetas) }], { onConflict: "key" });
+
+    showToast(`¡S/ ${monto} aportados a tu meta! 🎉`, c.green);
+    setSaving(false);
+    setShowAporteModal(false);
+    setAporteMonto("");
+    setAporteMetaId(null);
+  };
+
 
   const metaTotalNum = parseFloat(metaAhorro) || 0;
   const ingMensual = parseFloat(ingresoMensual) || 0;
   const diasTotalPlan = Math.max(1, diffDias(fechaInicioPlan, fechaFinPlan) + 1);
   const diasTranscurridosPlan = Math.max(0, Math.min(diasTotalPlan, diffDias(fechaInicioPlan, hoy()) + 1));
-  const diasRestantesPlan = Math.max(0, diasTotalPlan - diasTranscurridosPlan);
+  const presupuestoDiario = (ingMensual / 30) - (metaTotalNum / diasTotalPlan);
   const fechaHoy = hoy();
   
   const movimientosHoy = gastos.filter(g => g.fecha === fechaHoy);
 
+  // FILTRAMOS LOS 'aportes' PARA QUE NO INFLEN LOS GASTOS NI INGRESOS GLOBALES DEL "RESUMEN DE HOY"
   const totalGastadoHoy = movimientosHoy.filter(g => g.tipo === "gasto").reduce((a, g) => a + g.monto, 0);
   const totalIngresosHoy = movimientosHoy.filter(g => g.tipo === "ingreso").reduce((a, g) => a + g.monto, 0);
 
   const totalGastado = gastos.filter(g => g.tipo === "gasto").reduce((a, g) => a + g.monto, 0);
   const totalIngresos = gastos.filter(g => g.tipo === "ingreso").reduce((a, g) => a + g.monto, 0);
   const ahorroAcumulado = totalIngresos - totalGastado;
-  const progreso = metaTotalNum > 0 ? Math.max(0, Math.min(100, (ahorroAcumulado / metaTotalNum) * 100)) : 0;
-  const ingDiario = ingMensual / 30;
-  const ahorroMetaDiario = metaTotalNum / diasTotalPlan;
-  const presupuestoDiario = ingDiario - ahorroMetaDiario;
   
-  let proyeccionTexto = "—";
-  const ahorroDiarioProm = diasTranscurridosPlan > 0 ? ahorroAcumulado / diasTranscurridosPlan : 0;
-  if (ahorroDiarioProm > 0 && metaTotalNum > 0) {
-    const diasNecesarios = Math.ceil((metaTotalNum - ahorroAcumulado) / ahorroDiarioProm);
-    const mesesProyeccion = Math.floor(diasNecesarios / 30);
-    const diasExtra = diasNecesarios % 30;
-    if (ahorroAcumulado >= metaTotalNum) proyeccionTexto = "¡Meta alcanzada! 🎉";
-    else if (mesesProyeccion === 0) proyeccionTexto = `en ${diasExtra} día${diasExtra !== 1 ? "s" : ""}`;
-    else if (diasExtra === 0) proyeccionTexto = `en ${mesesProyeccion} mes${mesesProyeccion !== 1 ? "es" : ""}`;
-    else proyeccionTexto = `en ${mesesProyeccion} mes${mesesProyeccion !== 1 ? "es" : ""} y ${diasExtra} día${diasExtra !== 1 ? "s" : ""}`;
-  } else if (ahorroDiarioProm <= 0 && diasTranscurridosPlan > 1) proyeccionTexto = "Sin ahorro neto aún";
-
   const getFiltradosResumen = () => {
-    if (filtroResumen === "hoy") return gastos.filter(g => g.fecha === hoy());
-    if (filtroResumen === "mes") return gastos.filter(g => g.fecha.startsWith(hoy().slice(0, 7)));
-    if (filtroResumen === "rango") return gastos.filter(g => (!filtroFechaResumenDesde || g.fecha >= filtroFechaResumenDesde) && (!filtroFechaResumenHasta || g.fecha <= filtroFechaResumenHasta));
-    return gastos;
+    if (filtroResumen === "hoy") return gastos.filter(g => g.fecha === hoy() && g.tipo !== "aporte");
+    if (filtroResumen === "mes") return gastos.filter(g => g.fecha.startsWith(hoy().slice(0, 7)) && g.tipo !== "aporte");
+    if (filtroResumen === "rango") return gastos.filter(g => (!filtroFechaResumenDesde || g.fecha >= filtroFechaResumenDesde) && (!filtroFechaResumenHasta || g.fecha <= filtroFechaResumenHasta) && g.tipo !== "aporte");
+    return gastos.filter(g => g.tipo !== "aporte");
   };
   
   const gastosFiltradosResumen = getFiltradosResumen();
@@ -712,19 +512,15 @@ export default function App() {
     arr.forEach(g => {
       const catExiste = categorias.find(c => c.id === g.categoria);
       const groupKey = catExiste ? g.categoria : `eliminado_${g.descripcion}`;
-      
       if (!agrupado[groupKey]) {
         agrupado[groupKey] = {
-          id: groupKey,
-          label: catExiste ? catExiste.label : g.descripcion,
+          id: groupKey, label: catExiste ? catExiste.label : g.descripcion,
           color: catExiste ? catExiste.color : (isDark ? "rgba(255,255,255,0.15)" : "rgba(160,174,192,0.4)"),
-          isDeleted: !catExiste,
-          total: 0
+          isDeleted: !catExiste, total: 0
         };
       }
       agrupado[groupKey].total += g.monto;
     });
-    
     return Object.values(agrupado).sort((a, b) => b.total - a.total);
   };
 
@@ -753,7 +549,7 @@ export default function App() {
   const cMaxG = maxGasto * 1.2;
 
   const gastosFiltradosHist = gastos.filter(g => 
-    (filtroHistTipo === "todos" || g.tipo === filtroHistTipo) &&
+    (filtroHistTipo === "todos" || (filtroHistTipo === "ingreso" && g.tipo === "ingreso") || (filtroHistTipo === "gasto" && g.tipo === "gasto")) &&
     (filtroHistCat === "todas" || g.categoria === filtroHistCat) && 
     (!filtroHistFechaDesde || g.fecha >= filtroHistFechaDesde) && 
     (!filtroHistFechaHasta || g.fecha <= filtroHistFechaHasta)
@@ -772,19 +568,15 @@ export default function App() {
     app: { minHeight: "100vh", fontFamily: "'Montserrat', sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: "calc(110px + env(safe-area-inset-bottom, 0px))", width: "100%", userSelect: "none", WebkitUserSelect: "none" },
     section:    { padding: "20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "stretch" },
     card:       { width: "100%", background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: "16px", marginBottom: 24, overflow: "hidden", boxSizing: "border-box", boxShadow: c.shadow },
-    metaCard:   { width: "100%", background: "linear-gradient(135deg,#1A1A1A,#050505)", borderRadius: 16, padding: "20px", marginBottom: 24, boxSizing: "border-box", color: "#FFF", boxShadow: isDark ? "none" : "0 8px 24px rgba(0,0,0,0.15)" },
     
-    metaLabel:  { fontSize: 16, color: "#FFF", marginBottom: 12 }, 
+    // NUEVOS ESTILOS PARA EL SLIDER DE METAS EN INICIO
+    sliderContainer: { display: "flex", overflowX: "auto", scrollSnapType: "x mandatory", gap: 16, paddingBottom: 16, marginTop: 4, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" },
+    slideItem: { minWidth: "100%", scrollSnapAlign: "start", flexShrink: 0 },
+    sliderCard: { width: "100%", background: "#111", borderRadius: 20, padding: "20px", boxSizing: "border-box", color: "#FFF", boxShadow: "0 10px 30px rgba(0,0,0,0.15)", position: "relative" },
+
     label:      { fontSize: 14, fontWeight: 700, color: c.text, marginBottom: 8 },
-    
-    bigNum:     { fontSize: 28, fontWeight: 600, color: "#FFF", lineHeight: 1 },
-    smallNum:   { fontSize: 20, fontWeight: 500, color: c.text },
-    redNum:     { fontSize: 20, fontWeight: 600, color: c.red },
     greenNum:   { fontSize: 20, fontWeight: 600, color: c.green },
-    
-    progressBg: { background: "#333", borderRadius: 4, height: 8, margin: "8px 0 16px", overflow: "hidden" },
-    progressFill: (p) => ({ height: "100%", width: `${p}%`, background: p >= 100 ? c.green : p >= 50 ? "#FF803C" : c.red, borderRadius: 4, transition: "width 0.6s ease" }),
-    
+    redNum:     { fontSize: 20, fontWeight: 600, color: c.red },
     grid2:      { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 24, width: "100%" },
     
     input: { width: "100%", background: c.input, border: `1px solid ${c.border}`, borderRadius: 10, color: c.text, padding: "12px 14px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", fontWeight: 500, WebkitAppearance: "none", minHeight: 48, userSelect: "auto", WebkitUserSelect: "auto" },
@@ -808,7 +600,6 @@ export default function App() {
       paddingTop: 0, paddingBottom: `calc(20px + env(safe-area-inset-bottom, 0px))`, 
       boxShadow: isDark ? "0 -2px 10px rgba(0,0,0,0.4)" : "0 -2px 10px rgba(0,0,0,0.06)" 
     },
-    // SE REDUJO EL PADDING TOP Y EL GAP PARA ACERCAR Y SUBIR TEXTO/ICONO
     navBtn: (a) => ({
       flex: 1, paddingTop: 10, paddingBottom: 8, backgroundColor: "transparent", WebkitAppearance: "none", border: "none",
       color: a ? "#FF803C" : c.muted, fontSize: 12, fontWeight: 400, cursor: "pointer",
@@ -829,9 +620,7 @@ export default function App() {
   };
 
   const IconBadge = ({ emoji, bg, color }) => (
-    <div style={{ width: 32, height: 32, borderRadius: "50%", background: bg, color: color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
-      {emoji}
-    </div>
+    <div style={{ width: 32, height: 32, borderRadius: "50%", background: bg, color: color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>{emoji}</div>
   );
 
   const userInitials = userName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'PF';
@@ -916,32 +705,36 @@ export default function App() {
               <div style={{ ...s.card, textAlign: "center", color: c.muted, padding: "32px", fontWeight: 500 }}>No se encontraron movimientos</div>
             ) : (
               gastosVerTodos.map(g => {
-                const cat = categorias.find(c => c.id === g.categoria);
-                const descAdicional = g.descripcion && cat && g.descripcion !== getTexto(cat.label) ? g.descripcion : "";
+                const isAporte = g.tipo === "aporte";
+                const cat = isAporte ? null : categorias.find(c => c.id === g.categoria);
+                const descAdicional = (!isAporte && g.descripcion && cat && g.descripcion !== getTexto(cat.label)) ? g.descripcion : "";
+                
                 return (
                   <div key={g.id} style={{ ...s.card, padding: "12px 16px", marginBottom: 8 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12 }}>
                         <div style={{ width: 40, height: 40, borderRadius: 12, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, color: cat ? "inherit" : c.muted, fontWeight: cat ? "normal" : 600 }}>
-                          {cat ? getIcono(cat.label) : (g.descripcion || "?").charAt(0).toUpperCase()}
+                          {isAporte ? "🎯" : (cat ? getIcono(cat.label) : (g.descripcion || "?").charAt(0).toUpperCase())}
                         </div>
                         <div style={{ minWidth: 0 }}>
                           <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2, color: c.text }}>
-                            {cat ? getTexto(cat.label) : g.descripcion}
+                            {isAporte ? g.descripcion : (cat ? getTexto(cat.label) : g.descripcion)}
                             {cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400 }}>{descAdicional}</span>}
-                            {!cat && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400 }}>(Eliminado)</span>}
+                            {!cat && !isAporte && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400 }}>(Eliminado)</span>}
                           </div>
-                          <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ingresos"}</div>
+                          <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {isAporte ? "Aportes" : (g.tipo === "gasto" ? "Gastos" : "Ingresos")}</div>
                         </div>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                         <span style={{ fontSize: 16, fontWeight: 500, color: g.tipo === "gasto" ? c.text : c.green, marginRight: 4 }}>
                           {g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}
                         </span>
-                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                          <button style={{...s.editBtn, padding: 2}} onClick={() => abrirEdicion(g)}><Edit2 size={16} /></button>
-                          <button style={{...s.deleteBtn, padding: 2}} onClick={() => eliminar(g.id)}><Trash2 size={16} /></button>
-                        </div>
+                        {!isAporte && (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                            <button style={{...s.editBtn, padding: 2}} onClick={() => abrirEdicion(g)}><Edit2 size={16} /></button>
+                            <button style={{...s.deleteBtn, padding: 2}} onClick={() => eliminar(g.id)}><Trash2 size={16} /></button>
+                            </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -985,35 +778,99 @@ export default function App() {
 
           {error && <div style={s.errorCard}><AlertTriangle size={16} style={{ verticalAlign: "middle", marginRight: 8 }} /> {error}</div>}
 
+          {/* INICIO CON EL NUEVO SLIDER DE METAS */}
           {tab === "hoy" && (
             <div style={s.section}>
-              <div style={s.metaCard}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 16 }}>
-                  <div>
-                    <div style={{ fontSize: 18, fontWeight: 400, color: "#FFF", marginBottom: 6 }}>Tu progreso</div>
-                    <div style={{ ...s.bigNum, color: "#FFF" }}>{formatMoney(Math.max(0, ahorroAcumulado))}</div>
-                  </div>
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: 13, color: "#AAA", fontWeight: 500, marginBottom: 6 }}>Falta ahorrar</div>
-                    <div style={{ fontSize: 18, fontWeight: 600, color: "#FF803C" }}>{formatMoney(Math.max(0, metaTotalNum - ahorroAcumulado))}</div>
-                  </div>
-                </div>
+              
+              {listaMetas.length === 0 ? (
+                 <div style={{ ...s.sliderCard, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", marginBottom: 24, textAlign: "center" }}>
+                    <div style={{ fontSize: 48, marginBottom: 16 }}>🎯</div>
+                    <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Aún no tienes metas</div>
+                    <div style={{ fontSize: 14, color: "#AAA", marginBottom: 24, lineHeight: 1.4 }}>Crea tu primera meta y empieza a ahorrar para lo que siempre quisiste.</div>
+                    <button onClick={() => {
+                        setIsEditingMetaObj(false);
+                        setMetaForm({ id: "", nombre: "", montoObjetivo: "", aporteInicial: "", fechaLimite: "", prioridad: "alta", tipo: "libre", icono: "💻" });
+                        setShowCrearMeta(true);
+                    }} style={{ background: c.green, color: "#FFF", padding: "14px 24px", borderRadius: 30, border: "none", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
+                        + Crea tu primera meta
+                    </button>
+                 </div>
+              ) : (
+                 <div className="hide-scroll" style={s.sliderContainer}>
+                    {listaMetas.map((meta, i) => {
+                       const obj = parseFloat(meta.montoObjetivo) || 1;
+                       const ahorrado = parseFloat(meta.aporteInicial) || 0;
+                       const faltan = Math.max(0, obj - ahorrado);
+                       const pct = Math.min(100, Math.round((ahorrado / obj) * 100));
+                       
+                       let fechaStr = "Sin límite";
+                       let diasRestantes = 0;
+                       if (meta.fechaLimite) {
+                           fechaStr = formatFecha(meta.fechaLimite);
+                           diasRestantes = diffDias(hoy(), meta.fechaLimite);
+                       }
 
-                <div style={{ ...s.progressBg }}>
-                  <div style={s.progressFill(progreso)} />
-                </div>
+                       return (
+                           <div key={meta.id} style={s.slideItem}>
+                               <div style={s.sliderCard}>
+                                  
+                                  {i === 0 && (
+                                     <div style={{ position: "absolute", top: 16, left: 20, background: "rgba(168,85,247,0.2)", color: "#D8B4FE", padding: "4px 10px", borderRadius: 12, fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
+                                        ★ Meta principal
+                                     </div>
+                                  )}
 
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#AAA", fontWeight: 500, marginBottom: 8 }}>
-                  <span>{progreso.toFixed(1)}% <span style={{opacity: 0.5, margin: "0 6px"}}>|</span> Día {diasTranscurridosPlan} de {diasTotalPlan}</span>
-                  <span>de {formatMoney(metaTotalNum)}</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#AAA", fontWeight: 500 }}>
-                  <span>A este ritmo llegarás</span>
-                  <span style={{ color: c.green, fontWeight: 700 }}>{proyeccionTexto}</span>
-                </div>
-              </div>
+                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: i === 0 ? 28 : 0, marginBottom: 16 }}>
+                                      <div>
+                                          <div style={{ fontSize: 20, fontWeight: 700, color: "#FFF", marginBottom: 4, display: "flex", alignItems: "center", gap: 8 }}>
+                                              {meta.nombre} <span style={{ fontSize: 24 }}>{meta.icono}</span>
+                                          </div>
+                                          <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                                              <span style={{ fontSize: 20, fontWeight: 700, color: "#FFF" }}>S/ {formatMoney(ahorrado).replace("S/ ", "")}</span>
+                                              <span style={{ fontSize: 14, color: "#999", fontWeight: 500 }}>de S/ {formatMoney(obj).replace("S/ ", "")}</span>
+                                          </div>
+                                      </div>
 
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                                      <div style={{ width: 64, height: 64, borderRadius: "50%", background: `conic-gradient(#10B981 ${pct}%, #333 0)`, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                         <div style={{ position: "absolute", inset: 5, background: "#111", borderRadius: "50%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                                            <span style={{ fontSize: 16, fontWeight: 700, color: "#FFF" }}>{pct}%</span>
+                                         </div>
+                                      </div>
+                                  </div>
+
+                                  <div style={{ background: "#333", borderRadius: 4, height: 6, marginBottom: 20, overflow: "hidden" }}>
+                                      <div style={{ height: "100%", width: `${pct}%`, background: "#10B981", borderRadius: 4 }}></div>
+                                  </div>
+
+                                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 24 }}>
+                                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                                          <span style={{ fontSize: 12, color: "#999", display: "flex", alignItems: "center", gap: 4 }}><TrendingDown size={14} color="#10B981" /> Te faltan</span>
+                                          <span style={{ fontSize: 14, fontWeight: 600, color: "#FFF", paddingLeft: 18 }}>S/ {formatMoney(faltan).replace("S/ ", "")}</span>
+                                      </div>
+                                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                                          <span style={{ fontSize: 12, color: "#999", display: "flex", alignItems: "center", gap: 4 }}><Calendar size={14} color="#10B981" /> Fecha límite</span>
+                                          <span style={{ fontSize: 14, fontWeight: 600, color: "#FFF", paddingLeft: 18 }}>{fechaStr}</span>
+                                      </div>
+                                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                                          <span style={{ fontSize: 12, color: "#999", display: "flex", alignItems: "center", gap: 4 }}><Clock size={14} color="#F59E0B" /> Llegarás en</span>
+                                          <span style={{ fontSize: 14, fontWeight: 600, color: "#FFF", paddingLeft: 18 }}>{diasRestantes > 0 ? `${diasRestantes} días` : "—"}</span>
+                                      </div>
+                                  </div>
+
+                                  <button onClick={() => {
+                                      setAporteMetaId(meta.id);
+                                      setShowAporteModal(true);
+                                  }} style={{ width: "100%", background: "#10B981", color: "#FFF", padding: "14px", borderRadius: 12, border: "none", fontSize: 15, fontWeight: 700, cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: 8, boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)" }}>
+                                      <PlusCircle size={18} /> Aportar a esta meta
+                                  </button>
+                               </div>
+                           </div>
+                       )
+                    })}
+                 </div>
+              )}
+
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, marginTop: 8 }}>
                 <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>Resumen de hoy</h3>
               </div>
 
@@ -1047,7 +904,7 @@ export default function App() {
                     <IconBadge emoji={<Target size={18} />} bg={c.iconBgPurple} color={c.iconTextPurple} />
                     <span style={{ fontSize: 13, fontWeight: 500, color: c.muted }}>Límite / día</span>
                   </div>
-                  <div style={{ fontSize: 20, fontWeight: 600, color: c.text, textAlign: "center", marginTop: 0 }}>{formatMoney(ahorroMetaDiario)}</div>
+                  <div style={{ fontSize: 20, fontWeight: 600, color: c.text, textAlign: "center", marginTop: 0 }}>{formatMoney(presupuestoDiario > 0 ? presupuestoDiario : 0)}</div>
                 </div>
               </div>
 
@@ -1061,27 +918,29 @@ export default function App() {
               {movimientosHoy.length > 0 ? (
                 <div style={{ ...s.card, padding: "0 16px" }}>
                   {movimientosHoy.map((g, i, arr) => {
-                    const cat = categorias.find(c => c.id === g.categoria);
-                    const descAdicional = g.descripcion && cat && g.descripcion !== getTexto(cat.label) ? g.descripcion : "";
+                    const isAporte = g.tipo === "aporte";
+                    const cat = isAporte ? null : categorias.find(c => c.id === g.categoria);
+                    const descAdicional = (!isAporte && g.descripcion && cat && g.descripcion !== getTexto(cat.label)) ? g.descripcion : "";
                     const isLast = i === arr.length - 1;
+                    
                     return (
                       <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: isLast ? "none" : `1px solid ${c.border}` }}>
                         <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 14 }}>
                           <div style={{ width: 44, height: 44, borderRadius: 14, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0, color: cat ? "inherit" : c.muted, fontWeight: cat ? "normal" : 600 }}>
-                            {cat ? getIcono(cat.label) : (g.descripcion || "?").charAt(0).toUpperCase()}
+                            {isAporte ? "🎯" : (cat ? getIcono(cat.label) : (g.descripcion || "?").charAt(0).toUpperCase())}
                           </div>
                           <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text, textDecoration: cat ? "none" : "line-through" }}>
-                              {cat ? getTexto(cat.label) : g.descripcion}
+                            <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text, textDecoration: (!cat && !isAporte) ? "line-through" : "none" }}>
+                              {isAporte ? g.descripcion : (cat ? getTexto(cat.label) : g.descripcion)}
                               {cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400, textDecoration: "none" }}>{descAdicional}</span>}
-                              {!cat && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400, textDecoration: "none" }}>(Eliminado)</span>}
+                              {!cat && !isAporte && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400, textDecoration: "none" }}>(Eliminado)</span>}
                             </div>
-                            <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ahorros"}</div>
+                            <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {isAporte ? "Aportes" : (g.tipo === "gasto" ? "Gastos" : "Ingresos")}</div>
                           </div>
                         </div>
                         <div style={{ textAlign: "right" }}>
-                           <span style={{ fontSize: 16, fontWeight: 500, color: g.tipo === "gasto" ? c.text : c.green }}>
-                            {g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}
+                           <span style={{ fontSize: 16, fontWeight: 500, color: (g.tipo === "gasto" && !isAporte) ? c.text : c.green }}>
+                            {(g.tipo === "gasto" && !isAporte) ? "-" : "+"}{formatMoney(g.monto)}
                           </span>
                         </div>
                       </div>
@@ -1276,7 +1135,6 @@ export default function App() {
             </div>
           )}
 
-          {/* PESTAÑA HISTORIAL */}
           {tab === "historial" && (
             <div style={s.section}>
               
@@ -1359,26 +1217,28 @@ export default function App() {
                      </div>
                      <div style={{ ...s.card, padding: "0 16px", marginBottom: 0 }}>
                        {groupedHistorial[dateKey].map((g, i, arr) => {
-                         const cat = categorias.find(c => c.id === g.categoria);
-                         const descAdicional = g.descripcion && cat && g.descripcion !== getTexto(cat.label) ? g.descripcion : "";
+                         const isAporte = g.tipo === "aporte";
+                         const cat = isAporte ? null : categorias.find(c => c.id === g.categoria);
+                         const descAdicional = (!isAporte && g.descripcion && cat && g.descripcion !== getTexto(cat.label)) ? g.descripcion : "";
                          const isLast = i === arr.length - 1;
+                         
                          return (
                            <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: isLast ? "none" : `1px solid ${c.border}` }}>
                              <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12 }}>
                                <div style={{ width: 40, height: 40, borderRadius: 12, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, color: cat ? "inherit" : c.muted, fontWeight: cat ? "normal" : 600 }}>
-                                 {cat ? getIcono(cat.label) : (g.descripcion || "?").charAt(0).toUpperCase()}
+                                 {isAporte ? "🎯" : (cat ? getIcono(cat.label) : (g.descripcion || "?").charAt(0).toUpperCase())}
                                </div>
                                <div style={{ minWidth: 0 }}>
-                                 <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2 }}>
-                                    {cat ? getTexto(cat.label) : g.descripcion}
-                                    {cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400 }}>{descAdicional}</span>}
-                                    {!cat && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400 }}>(Eliminado)</span>}
+                                 <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2, textDecoration: (!cat && !isAporte) ? "line-through" : "none" }}>
+                                    {isAporte ? g.descripcion : (cat ? getTexto(cat.label) : g.descripcion)}
+                                    {cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400, textDecoration: "none" }}>{descAdicional}</span>}
+                                    {!cat && !isAporte && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400, textDecoration: "none" }}>(Eliminado)</span>}
                                  </div>
                                  <div style={{ fontSize: 12, fontWeight: 500, color: c.muted }}>{getUITime(g.created_at)}</div>
                                </div>
                              </div>
                              <div style={{ textAlign: "right", display: "flex", alignItems: "center", gap: 12 }}>
-                               <span style={{ fontSize: 16, fontWeight: 500, color: g.tipo === "gasto" ? c.text : c.green }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
+                               <span style={{ fontSize: 16, fontWeight: 500, color: (g.tipo === "gasto" && !isAporte) ? c.text : c.green }}>{(g.tipo === "gasto" && !isAporte) ? "-" : "+"}{formatMoney(g.monto)}</span>
                              </div>
                            </div>
                          );
@@ -1495,6 +1355,23 @@ export default function App() {
             ))}
           </div>
         </>
+      )}
+
+      {/* NUEVO MODAL DE APORTE A META */}
+      {showAporteModal && (
+        <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setShowAporteModal(false); }}>
+          <div style={{...s.modal, animation: "slideUp 0.3s ease-out"}}>
+             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                <h3 style={{ margin: 0, fontSize: 18, color: c.text, fontWeight: 700 }}>Aportar a la meta</h3>
+                <button onClick={() => setShowAporteModal(false)} style={{ background: "none", border: "none", color: c.muted, fontSize: 24, cursor: "pointer", padding: 0 }}>×</button>
+             </div>
+             
+             <div style={{ ...s.label, textAlign: "center", marginBottom: 12, color: c.muted }}>¿Cuánto deseas aportar?</div>
+             <input autoFocus style={{ ...s.input, marginBottom: 24, fontSize: 36, textAlign: "center", fontWeight: 700, padding: "20px 10px", height: "auto", color: c.green }} type="number" placeholder="0.00" value={aporteMonto} onChange={e => setAporteMonto(e.target.value)} onKeyDown={e => e.key === "Enter" && procesarAporte()} />
+             
+             <button style={{...s.btnPrimary, padding: "16px", background: c.green, boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)"}} onClick={procesarAporte} disabled={saving}>{saving ? "Procesando..." : "Confirmar Aporte"}</button>
+          </div>
+        </div>
       )}
 
       {/* NUEVA PANTALLA: RESUMEN DE LA META SELECCIONADA */}
@@ -1993,18 +1870,16 @@ export default function App() {
       {/* NUEVA PANTALLA: MIS LOGROS / INSIGNIAS */}
       {showMenu && profileScreen === "logros" && (() => {
         
-        // Lógica Dinámica para "Primer paso"
         const hasMetas = listaMetas.length > 0;
         let fechaPrimerPaso = "Pendiente";
-        
         if (hasMetas) {
-          const oldestMeta = listaMetas[listaMetas.length - 1]; // Tomamos la primera que se creó (la más antigua en el array)
+          const oldestMeta = listaMetas[listaMetas.length - 1]; 
           if (oldestMeta.id.startsWith("meta_")) {
               const ts = parseInt(oldestMeta.id.replace("meta_", ""));
               const d = new Date(ts);
               fechaPrimerPaso = `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth()+1).toString().padStart(2, '0')}/${d.getFullYear()}`;
           } else {
-              fechaPrimerPaso = "12/04/2025"; // Por si es una de las metas "quemadas" de ejemplo iniciales
+              fechaPrimerPaso = "12/04/2025"; 
           }
         }
 
@@ -2039,7 +1914,7 @@ export default function App() {
         const filteredAchievements = achievements.filter(a => {
             if (filtroLogros === "desbloqueados") return a.unlocked;
             if (filtroLogros === "bloqueados") return !a.unlocked;
-            return true; // "todos"
+            return true;
         });
 
         return (
@@ -2129,56 +2004,6 @@ export default function App() {
           <a href="mailto:soporte@ahorrometa.com" style={{ ...s.btnSecondary, display: "block", textAlign: "center", textDecoration: "none", padding: "16px 0", fontSize: 15 }}>
             ✉️ Contactar a soporte
           </a>
-        </div>
-      )}
-
-      {showAddModal && (
-        <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setShowAddModal(false); }}>
-          <div style={{...s.modal, animation: "slideUp 0.3s ease-out"}}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <h3 style={{ margin: 0, fontSize: 18, color: c.text, fontWeight: 700 }}>Registrar Movimiento</h3>
-              <button onClick={() => setShowAddModal(false)} style={{ background: "none", border: "none", color: c.muted, fontSize: 24, cursor: "pointer", padding: 0 }}>×</button>
-            </div>
-            
-            <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
-              <button style={s.tipoBtn(form.tipo === "ingreso", c.green)} onClick={() => setForm(f => ({ ...f, tipo: "ingreso", categoria: safeBase[0]?.id || "" }))}>+ Ingreso</button>
-              <button style={s.tipoBtn(form.tipo === "gasto", c.red)} onClick={() => setForm(f => ({ ...f, tipo: "gasto", categoria: safeExtra[0]?.id || "" }))}>− Gasto</button>
-            </div>
-            
-            <input autoFocus style={{ ...s.input, marginBottom: 16, fontSize: 32, textAlign: "center", fontWeight: 700, padding: "20px 10px", height: "auto" }} type="number" placeholder="0.00" value={form.monto} onChange={e => setForm(f => ({ ...f, monto: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
-            
-            <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
-              <select style={{ ...s.select, flex: 1, marginBottom: 0 }} value={form.categoria} onChange={e => setForm(f => ({ ...f, categoria: e.target.value }))}>
-                {(form.tipo === "ingreso" ? safeBase : safeExtra).map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-              </select>
-              <input style={{ ...s.input, flex: 1, marginBottom: 0, fontSize: 15, fontWeight: 500 }} type="text" placeholder="Descripción" value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
-            </div>
-            
-            <button style={{...s.btnPrimary, padding: "16px"}} onClick={agregarMovimiento} disabled={saving}>{saving ? "Guardando..." : "Guardar Registro"}</button>
-          </div>
-        </div>
-      )}
-
-      {editando && (
-        <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setEditando(null); }}>
-          <div style={{...s.modal, animation: "slideUp 0.3s ease-out"}}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <h3 style={{ margin: 0, fontSize: 18, color: c.text, fontWeight: 700 }}>Editar Movimiento</h3>
-              <button onClick={() => setEditando(null)} style={{ background: "none", border: "none", color: c.muted, fontSize: 24, cursor: "pointer", padding: 0 }}>×</button>
-            </div>
-            <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
-              <button style={s.tipoBtn(editForm.tipo === "ingreso", c.green)} onClick={() => setEditForm(f => ({ ...f, tipo: "ingreso", categoria: safeBase[0]?.id || "" }))}>+ Ingreso</button>
-              <button style={s.tipoBtn(editForm.tipo === "gasto", c.red)} onClick={() => setEditForm(f => ({ ...f, tipo: "gasto", categoria: safeExtra[0]?.id || "" }))}>− Gasto</button>
-            </div>
-            <input style={{ ...s.input, marginBottom: 16, fontSize: 32, textAlign: "center", fontWeight: 700, padding: "20px 10px", height: "auto" }} type="number" placeholder="0.00" value={editForm.monto} onChange={e => setEditForm(f => ({ ...f, monto: e.target.value }))} />
-            <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
-              <select style={{ ...s.select, flex: 1, marginBottom: 0 }} value={editForm.categoria} onChange={e => setEditForm(f => ({ ...f, categoria: e.target.value }))}>
-                {(editForm.tipo === "ingreso" ? safeBase : safeExtra).map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-              </select>
-              <input style={{ ...s.input, flex: 1, marginBottom: 0, fontSize: 15, fontWeight: 500 }} type="text" placeholder="Descripción" value={editForm.descripcion} onChange={e => setEditForm(f => ({ ...f, descripcion: e.target.value }))} />
-            </div>
-            <button style={{...s.btnPrimary, padding: "16px"}} onClick={guardarEdicion} disabled={saving}>{saving ? "Guardando..." : "Guardar Cambios"}</button>
-          </div>
         </div>
       )}
 
