@@ -331,7 +331,6 @@ export default function App() {
   const [showAddModal, setShowAddModal] = useState(false);
 
   const [showCrearMeta, setShowCrearMeta] = useState(false);
-  // NUEVO: ESTADO PARA SABER SI ESTAMOS EDITANDO UNA META
   const [isEditingMetaObj, setIsEditingMetaObj] = useState(false);
   const [metaForm, setMetaForm] = useState({
     id: "", nombre: "", montoObjetivo: "", aporteInicial: "", fechaLimite: "", prioridad: "alta", tipo: "libre", icono: "💻"
@@ -584,18 +583,15 @@ export default function App() {
     let nuevasMetas;
 
     if (isEditingMetaObj) {
-      // SI ESTAMOS EDITANDO, ACTUALIZAMOS LA META EXISTENTE
       nuevasMetas = listaMetas.map(m => m.id === metaForm.id ? { 
         ...metaForm, 
         montoObjetivo: parseFloat(metaForm.montoObjetivo), 
         aporteInicial: metaForm.aporteInicial ? parseFloat(metaForm.aporteInicial) : 0 
       } : m);
       
-      // Actualizar también la vista de detalle si está abierta
       setMetaSeleccionada(prev => ({ ...prev, ...metaForm, montoObjetivo: parseFloat(metaForm.montoObjetivo), aporteInicial: metaForm.aporteInicial ? parseFloat(metaForm.aporteInicial) : 0 }));
       showToast("Meta actualizada con éxito ✓", c.green);
     } else {
-      // SI ES NUEVA, LA CREAMOS
       const nuevaMeta = {
         id: "meta_" + Date.now(),
         nombre: metaForm.nombre.trim(),
@@ -637,7 +633,6 @@ export default function App() {
     cerrarPantalla('detalleMeta', () => setMetaSeleccionada(null));
   };
 
-  // NUEVO: FUNCION PARA ABRIR EL FORMULARIO DE EDICION
   const abrirEdicionMeta = () => {
     setMetaForm({
       id: metaSeleccionada.id,
@@ -929,17 +924,7 @@ export default function App() {
               return (
                 <div style={{ padding: "12px 20px 16px", background: c.bg, position: "sticky", top: 0, zIndex: 90 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <button onClick={() => setTab("hoy")} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", cursor: "pointer", padding: 0, display: "flex" }}>
-                      <ArrowLeft size={28} />
-                    </button>
-                    <h1 style={{ fontSize: 20, fontWeight: 700, color: c.text, margin: 0, fontFamily: "'Montserrat', sans-serif" }}>Mis Metas de Ahorro</h1>
-                    <button onClick={() => {
-                      setIsEditingMetaObj(false);
-                      setMetaForm({ id: "", nombre: "", montoObjetivo: "", aporteInicial: "", fechaLimite: "", prioridad: "alta", tipo: "libre", icono: "💻" });
-                      setShowCrearMeta(true);
-                    }} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", padding: 0, color: "#FF803C", display: "flex" }}>
-                      <Plus size={28} strokeWidth={2.5} />
-                    </button>
+                    <h1 style={{ fontSize: 20, fontWeight: 700, color: c.text, margin: 0, fontFamily: "'Montserrat', sans-serif" }}>Metas</h1>
                   </div>
                 </div>
               );
@@ -1378,7 +1363,7 @@ export default function App() {
 
           {/* PESTAÑA METAS DINÁMICA */}
           {tab === "metas" && (
-            <div style={{ padding: "0 20px 20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", paddingBottom: 100 }}>
+            <div style={{ padding: "0 20px 20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", paddingBottom: 140 }}>
               <div style={{ fontSize: 14, color: c.muted, marginBottom: 20, fontWeight: 500 }}>Tus objetivos financieros</div>
 
               {listaMetas.length === 0 ? (
@@ -1446,12 +1431,12 @@ export default function App() {
 
           {/* BOTON FLOTANTE DE CREAR META SOLO VISIBLE EN LA PESTAÑA METAS */}
           {tab === "metas" && (
-            <div style={{ position: "fixed", bottom: "calc(64px + env(safe-area-inset-bottom, 0px))", left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, padding: "32px 20px 16px", background: isDark ? "linear-gradient(to top, #0A0A0A 70%, rgba(10,10,10,0))" : "linear-gradient(to top, #F4F5F7 70%, rgba(244,245,247,0))", zIndex: 80, boxSizing: "border-box" }}>
+            <div style={{ position: "fixed", bottom: "calc(104px + env(safe-area-inset-bottom, 0px))", left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, padding: "20px 20px", background: isDark ? "linear-gradient(to top, #0A0A0A 80%, rgba(10,10,10,0))" : "linear-gradient(to top, #F4F5F7 80%, rgba(244,245,247,0))", zIndex: 80, boxSizing: "border-box", pointerEvents: "none" }}>
               <button onClick={() => {
                 setIsEditingMetaObj(false);
                 setMetaForm({ id: "", nombre: "", montoObjetivo: "", aporteInicial: "", fechaLimite: "", prioridad: "alta", tipo: "libre", icono: "💻" });
                 setShowCrearMeta(true);
-              }} style={{ width: "100%", padding: 16, background: "#059669", color: "#FFF", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", justifyContent: "center", alignItems: "center", gap: 8, boxShadow: "0 4px 12px rgba(5, 150, 105, 0.3)" }}>
+              }} style={{ pointerEvents: "auto", width: "100%", padding: 16, background: "#059669", color: "#FFF", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", justifyContent: "center", alignItems: "center", gap: 8, boxShadow: "0 4px 12px rgba(5, 150, 105, 0.3)" }}>
                 <Plus size={20} /> Crear nueva meta
               </button>
             </div>
@@ -1584,7 +1569,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Boton Editar Meta Integrado (Ya no fijo abajo) */}
+              {/* Boton Editar Meta Subido */}
               <button 
                 onClick={abrirEdicionMeta}
                 style={{ width: "100%", padding: 16, background: "#059669", color: "#FFF", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(5, 150, 105, 0.2)" }}
