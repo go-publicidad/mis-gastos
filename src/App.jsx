@@ -326,7 +326,6 @@ export default function App() {
   const categorias = [...safeBase, ...safeExtra];
   const isDark = theme === "dark";
 
-  // Identificador dinámico de bloqueo de scroll para ventanas modales (Add, Edit, Email)
   const isModalOpen = showAddModal || !!editando || showEmailModal;
 
   const c = {
@@ -657,7 +656,7 @@ export default function App() {
     errorCard:  { background: isDark ? "#1A0A0A" : "#FEF2F2", border: `1px solid ${c.red}`, borderRadius: 12, padding: "16px", margin: "20px", color: c.red, fontSize: 14, fontWeight: 400 },
     
     filterRow:  { display: "flex", gap: 6, marginBottom: 24, flexWrap: "nowrap", overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" },
-    filterBtn: (a) => ({ whiteSpace: "nowrap", flexShrink: 0, padding: "8px 16px", borderRadius: 20, border: `1px solid ${a ? "#FF803C" : c.border}`, background: a ? "#FF803C" : c.card, color: a ? "#000" : c.muted, fontSize: 13, fontWeight: a ? 600 : 500, cursor: "pointer", fontFamily: "inherit" }),
+    filterBtn: (a) => ({ whiteSpace: "nowrap", flexShrink: 0, padding: "8px 16px", borderRadius: 20, border: `1px solid ${a ? "#FF803C" : c.border}`, background: a ? "#FF803C" : c.card, color: a ? "#FFF" : c.muted, fontSize: 13, fontWeight: a ? 600 : 500, cursor: "pointer", fontFamily: "inherit" }),
     
     navBar: {
       position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480,
@@ -679,7 +678,6 @@ export default function App() {
       boxShadow: "0 4px 12px rgba(255, 128, 60, 0.4)", zIndex: 105, padding: 0
     },
 
-    // AQUI OSCURECEMOS EL FONDO DEL MODAL Y AUMENTAMOS EL DESENFOQUE
     overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 99999, padding: "0", backdropFilter: "blur(10px)" },
     modal: { background: c.card, borderTop: `1px solid ${c.border}`, borderLeft: `1px solid ${c.border}`, borderRight: `1px solid ${c.border}`, borderRadius: "24px 24px 0 0", padding: "24px 24px calc(24px + env(safe-area-inset-bottom, 0px))", width: "100%", maxWidth: 480, boxSizing: "border-box", boxShadow: "0 -10px 40px rgba(0,0,0,0.3)" }
   };
@@ -701,7 +699,6 @@ export default function App() {
 
   return (
     <div style={s.app}>
-      {/* BLOQUEO DEL SCROLL DEL FONDO AL ABRIR LA VENTANA */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
         * { box-sizing: border-box; } 
@@ -1136,22 +1133,21 @@ export default function App() {
                   ))}
                 </div>
                 
+                {/* AQUI EL NUEVO BOTON "FECHAS" */}
                 <button onClick={() => setShowFiltrosMenu(!showFiltrosMenu)} style={{
-                  width: 40, height: 40, borderRadius: 12, border: `1px solid ${c.border}`,
-                  background: c.card, display: "flex", alignItems: "center", justifyContent: "center",
-                  cursor: "pointer", flexShrink: 0
+                  padding: "8px 16px", borderRadius: 24, border: `1px solid ${showFiltrosMenu ? (isDark ? "#FFF" : "#000") : c.border}`,
+                  background: showFiltrosMenu ? (isDark ? "#FFF" : "#000") : c.card, display: "flex", alignItems: "center", gap: 6,
+                  cursor: "pointer", flexShrink: 0, transition: "all 0.2s"
                 }}>
-                  <Settings size={20} color={c.text} />
+                  <Calendar size={16} color={showFiltrosMenu ? (isDark ? "#000" : "#FFF") : c.text} />
+                  <span style={{ fontSize: 14, fontWeight: 600, color: showFiltrosMenu ? (isDark ? "#000" : "#FFF") : c.text }}>Fechas</span>
                 </button>
               </div>
 
               {showFiltrosMenu && (
                 <div style={{...s.card, marginBottom: 24, animation: "slideUp 0.3s ease-out"}}>
-                  <div style={{ display: "flex", gap: 12, marginBottom: 24, width: "100%" }}>
-                    <button style={s.btnSecondary} onClick={() => exportarCSV(gastosFiltradosHist, categorias)}>📊 Excel</button>
-                    <button style={s.btnSecondary} onClick={() => exportarPDF(gastosFiltradosHist, categorias)}>📄 PDF</button>
-                  </div>
-
+                  {/* BOTONES EXCEL Y PDF MOVIDOS DE AQUI */}
+                  
                   <div style={{ ...s.label, textAlign: "center" }}>Filtrar por categoría</div>
                   <div className="hide-scroll" style={{ ...s.filterRow, marginTop: 16 }}>
                     <button style={s.filterBtn(filtroHistCat === "todas")} onClick={() => setFiltroHistCat("todas")}>Todas</button>
@@ -1172,6 +1168,12 @@ export default function App() {
                   </button>}
                 </div>
               )}
+
+              {/* NUEVA UBICACIÓN BOTONES EXCEL Y PDF */}
+              <div style={{ display: "flex", gap: 12, marginBottom: 24, width: "100%" }}>
+                <button style={{...s.btnSecondary, background: c.card, border: `1px solid ${c.border}`}} onClick={() => exportarCSV(gastosFiltradosHist, categorias)}>📊 Descargar Excel</button>
+                <button style={{...s.btnSecondary, background: c.card, border: `1px solid ${c.border}`}} onClick={() => exportarPDF(gastosFiltradosHist, categorias)}>📄 Descargar PDF</button>
+              </div>
 
               {gastosFiltradosHist.length === 0 ? (
                  <div style={{ ...s.card, textAlign: "center", color: c.muted, padding: "40px 20px", fontWeight: 500 }}>Sin movimientos con estos filtros</div> 
@@ -1215,7 +1217,7 @@ export default function App() {
             </div>
           )}
 
-          {/* NUEVA PESTAÑA METAS */}
+          {/* PESTAÑA METAS */}
           {tab === "metas" && (
             <div style={s.section}>
               <div className="hide-scroll" style={{ display: "flex", gap: 8, marginBottom: 24, overflowX: "auto", paddingBottom: 4 }}>
