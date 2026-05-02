@@ -292,6 +292,10 @@ export default function App() {
   const [filtroHistFechaHasta, setFiltroHistFechaHasta] = useState("");
   const [showFiltrosMenu, setShowFiltrosMenu] = useState(false);
 
+  // NUEVOS ESTADOS PARA FASE 3: REPORTES
+  const [filtroReporteTipo, setFiltroReporteTipo] = useState("general");
+  const [reporteMetaId, setReporteMetaId] = useState("");
+
   const [filtroResumen, setFiltroResumen] = useState("mes");
   const [filtroFechaResumenDesde, setFiltroFechaResumenDesde] = useState(hoy());
   const [filtroFechaResumenHasta, setFiltroFechaResumenHasta] = useState(hoy());
@@ -1094,182 +1098,342 @@ export default function App() {
           {tab === "resumen" && (
             <div style={s.section}>
               
-              <div className="hide-scroll" style={{ display: "flex", gap: 8, marginBottom: 24, overflowX: "auto", paddingBottom: 4 }}>
-                {[{ id: "hoy", label: "Hoy" }, { id: "mes", label: "Mes" }, { id: "rango", label: "Personalizado 📅" }].map(f => (
-                  <button key={f.id} style={{
-                    padding: "10px 20px", borderRadius: 24, 
-                    border: `1px solid ${filtroResumen === f.id ? (isDark ? "#FFF" : "#000") : c.border}`,
-                    background: filtroResumen === f.id ? (isDark ? "#FFF" : "#000") : c.card, 
-                    color: filtroResumen === f.id ? (isDark ? "#000" : "#FFF") : c.muted,
-                    fontSize: 14, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit"
-                  }} onClick={() => setFiltroResumen(f.id)}>
-                    {f.label}
-                  </button>
-                ))}
+              {/* TABS DE FASE 3: FLUJO GENERAL VS METAS */}
+              <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
+                <button
+                  onClick={() => setFiltroReporteTipo("general")}
+                  style={{ ...s.filterBtn(filtroReporteTipo === "general"), flex: 1, padding: "12px 10px", fontSize: 14 }}
+                >
+                  📊 Flujo General
+                </button>
+                <button
+                  onClick={() => setFiltroReporteTipo("metas")}
+                  style={{ ...s.filterBtn(filtroReporteTipo === "metas"), flex: 1, padding: "12px 10px", fontSize: 14 }}
+                >
+                  🎯 Mis Metas
+                </button>
               </div>
 
-              {filtroResumen === "rango" && (
-                <div style={{ ...s.card, padding: 16 }}>
-                  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                    <div style={{ flex: 1, position: "relative" }}>
-                      {!filtroFechaResumenDesde && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Del</span>}
-                      <input type="date" value={filtroFechaResumenDesde} onChange={e => setFiltroFechaResumenDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenDesde ? c.text : "transparent" }} />
+              {/* VISTA 1: FLUJO GENERAL */}
+              {filtroReporteTipo === "general" && (
+                <>
+                  <div className="hide-scroll" style={{ display: "flex", gap: 8, marginBottom: 24, overflowX: "auto", paddingBottom: 4 }}>
+                    {[{ id: "hoy", label: "Hoy" }, { id: "mes", label: "Mes" }, { id: "rango", label: "Personalizado 📅" }].map(f => (
+                      <button key={f.id} style={{
+                        padding: "10px 20px", borderRadius: 24, 
+                        border: `1px solid ${filtroResumen === f.id ? (isDark ? "#FFF" : "#000") : c.border}`,
+                        background: filtroResumen === f.id ? (isDark ? "#FFF" : "#000") : c.card, 
+                        color: filtroResumen === f.id ? (isDark ? "#000" : "#FFF") : c.muted,
+                        fontSize: 14, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit"
+                      }} onClick={() => setFiltroResumen(f.id)}>
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {filtroResumen === "rango" && (
+                    <div style={{ ...s.card, padding: 16 }}>
+                      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                        <div style={{ flex: 1, position: "relative" }}>
+                          {!filtroFechaResumenDesde && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Del</span>}
+                          <input type="date" value={filtroFechaResumenDesde} onChange={e => setFiltroFechaResumenDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenDesde ? c.text : "transparent" }} />
+                        </div>
+                        <div style={{ flex: 1, position: "relative" }}>
+                          {!filtroFechaResumenHasta && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Al</span>}
+                          <input type="date" value={filtroFechaResumenHasta} onChange={e => setFiltroFechaResumenHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenHasta ? c.text : "transparent" }} />
+                        </div>
+                      </div>
+                      {(filtroFechaResumenDesde || filtroFechaResumenHasta) && (
+                        <button style={{ width: "100%", fontSize: 14, fontWeight: 700, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 16, fontFamily: "inherit" }} onClick={() => { setFiltroFechaResumenDesde(""); setFiltroFechaResumenHasta(""); }}>
+                          <X size={14} style={{ marginRight: 4, verticalAlign: "middle" }} /> Limpiar fechas
+                        </button>
+                      )}
                     </div>
-                    <div style={{ flex: 1, position: "relative" }}>
-                      {!filtroFechaResumenHasta && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Al</span>}
-                      <input type="date" value={filtroFechaResumenHasta} onChange={e => setFiltroFechaResumenHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenHasta ? c.text : "transparent" }} />
+                  )}
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
+                    <div style={{ background: isDark ? "rgba(16, 185, 129, 0.1)" : "#F0FDF4", borderRadius: 16, padding: 16, border: isDark ? "1px solid rgba(16, 185, 129, 0.2)" : "none" }}>
+                      <div style={{ fontSize: 13, color: c.muted, marginBottom: 6, fontWeight: 500 }}>Total ingresos</div>
+                      <div style={{ fontSize: 20, fontWeight: 600, color: c.text }}>{formatMoney(totalIngresosR)}</div>
+                    </div>
+                    <div style={{ background: isDark ? "rgba(239, 68, 68, 0.1)" : "#FEF2F2", borderRadius: 16, padding: 16, border: isDark ? "1px solid rgba(239, 68, 68, 0.2)" : "none" }}>
+                      <div style={{ fontSize: 13, color: c.muted, marginBottom: 6, fontWeight: 500 }}>Total gastos</div>
+                      <div style={{ fontSize: 20, fontWeight: 600, color: c.red }}>{formatMoney(totalGastadoR)}</div>
                     </div>
                   </div>
-                  {(filtroFechaResumenDesde || filtroFechaResumenHasta) && (
-                    <button style={{ width: "100%", fontSize: 14, fontWeight: 700, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 16, fontFamily: "inherit" }} onClick={() => { setFiltroFechaResumenDesde(""); setFiltroFechaResumenHasta(""); }}>
-                      <X size={14} style={{ marginRight: 4, verticalAlign: "middle" }} /> Limpiar fechas
-                    </button>
-                  )}
-                </div>
+
+                  {/* GRÁFICO 1: INGRESOS */}
+                  <div style={{ ...s.card, padding: "20px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, paddingBottom: 12, marginBottom: 20 }}>
+                      <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: c.text }}>Reporte de Ingresos</h3>
+                      <div style={{ display: "flex", gap: 12 }}>
+                        <button onClick={() => setTipoGraficoIngresos("bar")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoIngresos === "bar" ? 1 : 0.3, padding: 0 }}>
+                          <BarChart2 size={20} color={c.text} />
+                        </button>
+                        <button onClick={() => setTipoGraficoIngresos("donut")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoIngresos === "donut" ? 1 : 0.3, padding: 0 }}>
+                          <PieChart size={20} color={c.text} />
+                        </button>
+                      </div>
+                    </div>
+                    
+                    {catsIngresos.length === 0 ? (
+                      <div style={{ textAlign: "center", color: c.muted, padding: "20px 0", fontSize: 14 }}>Aún no hay registros en esta vista</div>
+                    ) : tipoGraficoIngresos === "donut" ? (
+                      <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
+                        <div style={{ width: "50%", display: "flex", justifyContent: "center" }}>
+                          <div style={{ width: 130, height: 130, borderRadius: "50%", background: `conic-gradient(${conicIngresos})`, position: "relative", flexShrink: 0 }}>
+                            <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 70, height: 70, background: c.card, borderRadius: "50%" }}></div>
+                          </div>
+                        </div>
+                        <div style={{ width: "50%", display: "flex", flexDirection: "column", gap: 10, paddingLeft: 10, boxSizing: "border-box" }}>
+                          {catsIngresos.slice(0, 5).map(cat => (
+                            <div key={cat.id} style={{ display: "flex", alignItems: "center" }}>
+                              <div style={{ width: 10, height: 10, borderRadius: "50%", background: cat.color, marginRight: 8, flexShrink: 0 }}></div>
+                              <span style={{ display: "inline-block", fontSize: 13, fontWeight: 500, color: cat.isDeleted ? c.muted : c.text, textDecoration: cat.isDeleted ? "line-through" : "none", width: 85, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                {formatCatName(cat.label)}
+                              </span>
+                              <span style={{ display: "inline-block", fontSize: 13, fontWeight: 500, color: c.muted, width: 35, textAlign: "right" }}>{Math.round((cat.total / totIngresosDonut) * 100)}%</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ display: "flex", height: 160, marginTop: 24, gap: 8 }}>
+                          <div style={{ width: 30, display: "flex", flexDirection: "column", justifyContent: "space-between", alignItems: "flex-end", paddingBottom: 0 }}>
+                            {[cMaxI, cMaxI * 0.75, cMaxI * 0.5, cMaxI * 0.25, 0].map((t, i) => <span key={i} style={{ fontSize: 10, color: c.muted, fontWeight: 500, lineHeight: 1 }}>{t > 0 ? Math.round(t) : 0}</span>)}
+                          </div>
+                          <div style={{ flex: 1, display: "flex", gap: 8, borderBottom: `1px solid ${c.border}`, position: "relative" }}>
+                            {catsIngresos.slice(0, 6).map((cat) => (
+                              <div key={cat.id} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: "center", gap: 6 }}>
+                                <span style={{ fontSize: 10, fontWeight: 700, color: c.text, whiteSpace: "nowrap" }}>S/ {cat.total % 1 === 0 ? cat.total : cat.total.toFixed(1)}</span>
+                                <div style={{ width: "100%", maxWidth: 36, height: `${(cat.total / cMaxI) * 100}%`, background: cat.color, borderRadius: "4px 4px 0 0", minHeight: 2 }} />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", paddingLeft: 38, gap: 8, marginTop: 8 }}>
+                          {catsIngresos.slice(0, 6).map((cat) => (
+                            <div key={cat.id} style={{ flex: 1, textAlign: "center", fontSize: 10, fontWeight: 500, color: cat.isDeleted ? c.muted : c.text, textDecoration: cat.isDeleted ? "line-through" : "none" }}>
+                              {formatCatName(cat.label)}
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <div style={{ ...s.card, display: "flex", alignItems: "center", gap: 16, padding: "16px 20px" }}>
+                    <div style={{ width: 32, height: 32, borderRadius: "50%", background: isDark ? "rgba(16, 185, 129, 0.15)" : "#DCFCE7", color: c.green, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <CheckCircle2 size={20} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: c.text }}>Ahorraste {formatMoney(ahorroR)} en este periodo</div>
+                      <div style={{ fontSize: 12, color: c.muted, marginTop: 4, fontWeight: 500 }}>¡Buen trabajo gestionando tu dinero!</div>
+                    </div>
+                  </div>
+
+                  {/* GRÁFICO 2: GASTOS */}
+                  <div style={{ ...s.card, padding: "20px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, paddingBottom: 12, marginBottom: 20 }}>
+                      <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: c.text }}>Reporte de Gastos</h3>
+                      <div style={{ display: "flex", gap: 12 }}>
+                        <button onClick={() => setTipoGraficoGastos("bar")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoGastos === "bar" ? 1 : 0.3, padding: 0 }}>
+                          <BarChart2 size={20} color={c.text} />
+                        </button>
+                        <button onClick={() => setTipoGraficoGastos("donut")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoGastos === "donut" ? 1 : 0.3, padding: 0 }}>
+                          <PieChart size={20} color={c.text} />
+                        </button>
+                      </div>
+                    </div>
+                    
+                    {catsGastos.length === 0 ? (
+                      <div style={{ textAlign: "center", color: c.muted, padding: "20px 0", fontSize: 14 }}>Aún no hay registros en esta vista</div>
+                    ) : tipoGraficoGastos === "donut" ? (
+                      <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
+                        <div style={{ width: "50%", display: "flex", justifyContent: "center" }}>
+                          <div style={{ width: 130, height: 130, borderRadius: "50%", background: `conic-gradient(${conicGastos})`, position: "relative", flexShrink: 0 }}>
+                            <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 70, height: 70, background: c.card, borderRadius: "50%" }}></div>
+                          </div>
+                        </div>
+                        <div style={{ width: "50%", display: "flex", flexDirection: "column", gap: 10, paddingLeft: 10, boxSizing: "border-box" }}>
+                          {catsGastos.slice(0, 5).map(cat => (
+                            <div key={cat.id} style={{ display: "flex", alignItems: "center" }}>
+                              <div style={{ width: 10, height: 10, borderRadius: "50%", background: cat.color, marginRight: 8, flexShrink: 0 }}></div>
+                              <span style={{ display: "inline-block", fontSize: 13, fontWeight: 500, color: cat.isDeleted ? c.muted : c.text, textDecoration: cat.isDeleted ? "line-through" : "none", width: 85, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                {formatCatName(cat.label)}
+                              </span>
+                              <span style={{ display: "inline-block", fontSize: 13, fontWeight: 500, color: c.muted, width: 35, textAlign: "right" }}>{Math.round((cat.total / totGastosDonut) * 100)}%</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ display: "flex", height: 160, marginTop: 24, gap: 8 }}>
+                          <div style={{ width: 30, display: "flex", flexDirection: "column", justifyContent: "space-between", alignItems: "flex-end", paddingBottom: 0 }}>
+                            {[cMaxG, cMaxG * 0.75, cMaxG * 0.5, cMaxG * 0.25, 0].map((t, i) => <span key={i} style={{ fontSize: 10, color: c.muted, fontWeight: 500, lineHeight: 1 }}>{t > 0 ? Math.round(t) : 0}</span>)}
+                          </div>
+                          <div style={{ flex: 1, display: "flex", gap: 8, borderBottom: `1px solid ${c.border}`, position: "relative" }}>
+                            {catsGastos.slice(0, 6).map((cat) => (
+                              <div key={cat.id} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: "center", gap: 6 }}>
+                                <span style={{ fontSize: 10, fontWeight: 700, color: c.text, whiteSpace: "nowrap" }}>S/ {cat.total % 1 === 0 ? cat.total : cat.total.toFixed(1)}</span>
+                                <div style={{ width: "100%", maxWidth: 36, height: `${(cat.total / cMaxG) * 100}%`, background: cat.color, borderRadius: "4px 4px 0 0", minHeight: 2 }} />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", paddingLeft: 38, gap: 8, marginTop: 8 }}>
+                          {catsGastos.slice(0, 6).map((cat) => (
+                            <div key={cat.id} style={{ flex: 1, textAlign: "center", fontSize: 10, fontWeight: 500, color: cat.isDeleted ? c.muted : c.text, textDecoration: cat.isDeleted ? "line-through" : "none" }}>
+                              {formatCatName(cat.label)}
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </>
               )}
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
-                <div style={{ background: isDark ? "rgba(16, 185, 129, 0.1)" : "#F0FDF4", borderRadius: 16, padding: 16, border: isDark ? "1px solid rgba(16, 185, 129, 0.2)" : "none" }}>
-                  <div style={{ fontSize: 13, color: c.muted, marginBottom: 6, fontWeight: 500 }}>Total ingresos</div>
-                  <div style={{ fontSize: 20, fontWeight: 600, color: c.text }}>{formatMoney(totalIngresosR)}</div>
-                </div>
-                <div style={{ background: isDark ? "rgba(239, 68, 68, 0.1)" : "#FEF2F2", borderRadius: 16, padding: 16, border: isDark ? "1px solid rgba(239, 68, 68, 0.2)" : "none" }}>
-                  <div style={{ fontSize: 13, color: c.muted, marginBottom: 6, fontWeight: 500 }}>Total gastos</div>
-                  <div style={{ fontSize: 20, fontWeight: 600, color: c.red }}>{formatMoney(totalGastadoR)}</div>
-                </div>
-              </div>
-
-              {/* GRÁFICO 1: INGRESOS */}
-              <div style={{ ...s.card, padding: "20px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, paddingBottom: 12, marginBottom: 20 }}>
-                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: c.text }}>Reporte de Ingresos</h3>
-                  <div style={{ display: "flex", gap: 12 }}>
-                    <button onClick={() => setTipoGraficoIngresos("bar")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoIngresos === "bar" ? 1 : 0.3, padding: 0 }}>
-                      <BarChart2 size={20} color={c.text} />
-                    </button>
-                    <button onClick={() => setTipoGraficoIngresos("donut")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoIngresos === "donut" ? 1 : 0.3, padding: 0 }}>
-                      <PieChart size={20} color={c.text} />
-                    </button>
-                  </div>
-                </div>
-                
-                {catsIngresos.length === 0 ? (
-                  <div style={{ textAlign: "center", color: c.muted, padding: "20px 0", fontSize: 14 }}>Aún no hay registros en esta vista</div>
-                ) : tipoGraficoIngresos === "donut" ? (
-                  <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
-                    <div style={{ width: "50%", display: "flex", justifyContent: "center" }}>
-                      <div style={{ width: 130, height: 130, borderRadius: "50%", background: `conic-gradient(${conicIngresos})`, position: "relative", flexShrink: 0 }}>
-                         <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 70, height: 70, background: c.card, borderRadius: "50%" }}></div>
-                      </div>
-                    </div>
-                    <div style={{ width: "50%", display: "flex", flexDirection: "column", gap: 10, paddingLeft: 10, boxSizing: "border-box" }}>
-                       {catsIngresos.slice(0, 5).map(cat => (
-                         <div key={cat.id} style={{ display: "flex", alignItems: "center" }}>
-                           <div style={{ width: 10, height: 10, borderRadius: "50%", background: cat.color, marginRight: 8, flexShrink: 0 }}></div>
-                           <span style={{ display: "inline-block", fontSize: 13, fontWeight: 500, color: cat.isDeleted ? c.muted : c.text, textDecoration: cat.isDeleted ? "line-through" : "none", width: 85, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                             {formatCatName(cat.label)}
-                           </span>
-                           <span style={{ display: "inline-block", fontSize: 13, fontWeight: 500, color: c.muted, width: 35, textAlign: "right" }}>{Math.round((cat.total / totIngresosDonut) * 100)}%</span>
+              {/* VISTA 2: METAS INDIVIDUALES (FASE 3) */}
+              {filtroReporteTipo === "metas" && (() => {
+                 if (listaMetas.length === 0) {
+                     return (
+                         <div style={{ ...s.card, textAlign: "center", padding: "40px 20px", color: c.muted, fontWeight: 500 }}>
+                             No tienes metas creadas para analizar. ¡Crea una en la pestaña Metas!
                          </div>
-                       ))}
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div style={{ display: "flex", height: 160, marginTop: 24, gap: 8 }}>
-                      <div style={{ width: 30, display: "flex", flexDirection: "column", justifyContent: "space-between", alignItems: "flex-end", paddingBottom: 0 }}>
-                        {[cMaxI, cMaxI * 0.75, cMaxI * 0.5, cMaxI * 0.25, 0].map((t, i) => <span key={i} style={{ fontSize: 10, color: c.muted, fontWeight: 500, lineHeight: 1 }}>{t > 0 ? Math.round(t) : 0}</span>)}
-                      </div>
-                      <div style={{ flex: 1, display: "flex", gap: 8, borderBottom: `1px solid ${c.border}`, position: "relative" }}>
-                        {catsIngresos.slice(0, 6).map((cat) => (
-                          <div key={cat.id} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: "center", gap: 6 }}>
-                            <span style={{ fontSize: 10, fontWeight: 700, color: c.text, whiteSpace: "nowrap" }}>S/ {cat.total % 1 === 0 ? cat.total : cat.total.toFixed(1)}</span>
-                            <div style={{ width: "100%", maxWidth: 36, height: `${(cat.total / cMaxI) * 100}%`, background: cat.color, borderRadius: "4px 4px 0 0", minHeight: 2 }} />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", paddingLeft: 38, gap: 8, marginTop: 8 }}>
-                      {catsIngresos.slice(0, 6).map((cat) => (
-                        <div key={cat.id} style={{ flex: 1, textAlign: "center", fontSize: 10, fontWeight: 500, color: cat.isDeleted ? c.muted : c.text, textDecoration: cat.isDeleted ? "line-through" : "none" }}>
-                          {formatCatName(cat.label)}
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
+                     );
+                 }
 
-              <div style={{ ...s.card, display: "flex", alignItems: "center", gap: 16, padding: "16px 20px" }}>
-                <div style={{ width: 32, height: 32, borderRadius: "50%", background: isDark ? "rgba(16, 185, 129, 0.15)" : "#DCFCE7", color: c.green, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <CheckCircle2 size={20} />
-                </div>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: c.text }}>Ahorraste {formatMoney(ahorroR)} en este periodo</div>
-                  <div style={{ fontSize: 12, color: c.muted, marginTop: 4, fontWeight: 500 }}>¡Buen trabajo gestionando tu dinero!</div>
-                </div>
-              </div>
+                 const metaSelecId = reporteMetaId || listaMetas[0].id;
+                 const metaSelec = listaMetas.find(m => m.id === metaSelecId) || listaMetas[0];
+                 const aportesDeMeta = gastos.filter(g => g.tipo === "aporte" && g.descripcion.includes(metaSelec.nombre));
+                 
+                 const mayorAporte = aportesDeMeta.length > 0 ? Math.max(...aportesDeMeta.map(a => a.monto)) : 0;
+                 const aportesPorFecha = aportesDeMeta.reduce((acc, g) => {
+                     acc[g.fecha] = (acc[g.fecha] || 0) + g.monto;
+                     return acc;
+                 }, {});
 
-              {/* GRÁFICO 2: GASTOS */}
-              <div style={{ ...s.card, padding: "20px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, paddingBottom: 12, marginBottom: 20 }}>
-                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: c.text }}>Reporte de Gastos</h3>
-                  <div style={{ display: "flex", gap: 12 }}>
-                    <button onClick={() => setTipoGraficoGastos("bar")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoGastos === "bar" ? 1 : 0.3, padding: 0 }}>
-                      <BarChart2 size={20} color={c.text} />
-                    </button>
-                    <button onClick={() => setTipoGraficoGastos("donut")} style={{ background: "none", border: "none", cursor: "pointer", opacity: tipoGraficoGastos === "donut" ? 1 : 0.3, padding: 0 }}>
-                      <PieChart size={20} color={c.text} />
-                    </button>
-                  </div>
-                </div>
-                
-                {catsGastos.length === 0 ? (
-                  <div style={{ textAlign: "center", color: c.muted, padding: "20px 0", fontSize: 14 }}>Aún no hay registros en esta vista</div>
-                ) : tipoGraficoGastos === "donut" ? (
-                  <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
-                    <div style={{ width: "50%", display: "flex", justifyContent: "center" }}>
-                      <div style={{ width: 130, height: 130, borderRadius: "50%", background: `conic-gradient(${conicGastos})`, position: "relative", flexShrink: 0 }}>
-                         <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 70, height: 70, background: c.card, borderRadius: "50%" }}></div>
-                      </div>
-                    </div>
-                    <div style={{ width: "50%", display: "flex", flexDirection: "column", gap: 10, paddingLeft: 10, boxSizing: "border-box" }}>
-                       {catsGastos.slice(0, 5).map(cat => (
-                         <div key={cat.id} style={{ display: "flex", alignItems: "center" }}>
-                           <div style={{ width: 10, height: 10, borderRadius: "50%", background: cat.color, marginRight: 8, flexShrink: 0 }}></div>
-                           <span style={{ display: "inline-block", fontSize: 13, fontWeight: 500, color: cat.isDeleted ? c.muted : c.text, textDecoration: cat.isDeleted ? "line-through" : "none", width: 85, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                             {formatCatName(cat.label)}
-                           </span>
-                           <span style={{ display: "inline-block", fontSize: 13, fontWeight: 500, color: c.muted, width: 35, textAlign: "right" }}>{Math.round((cat.total / totGastosDonut) * 100)}%</span>
-                         </div>
-                       ))}
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div style={{ display: "flex", height: 160, marginTop: 24, gap: 8 }}>
-                      <div style={{ width: 30, display: "flex", flexDirection: "column", justifyContent: "space-between", alignItems: "flex-end", paddingBottom: 0 }}>
-                        {[cMaxG, cMaxG * 0.75, cMaxG * 0.5, cMaxG * 0.25, 0].map((t, i) => <span key={i} style={{ fontSize: 10, color: c.muted, fontWeight: 500, lineHeight: 1 }}>{t > 0 ? Math.round(t) : 0}</span>)}
-                      </div>
-                      <div style={{ flex: 1, display: "flex", gap: 8, borderBottom: `1px solid ${c.border}`, position: "relative" }}>
-                        {catsGastos.slice(0, 6).map((cat) => (
-                          <div key={cat.id} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: "center", gap: 6 }}>
-                            <span style={{ fontSize: 10, fontWeight: 700, color: c.text, whiteSpace: "nowrap" }}>S/ {cat.total % 1 === 0 ? cat.total : cat.total.toFixed(1)}</span>
-                            <div style={{ width: "100%", maxWidth: 36, height: `${(cat.total / cMaxG) * 100}%`, background: cat.color, borderRadius: "4px 4px 0 0", minHeight: 2 }} />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", paddingLeft: 38, gap: 8, marginTop: 8 }}>
-                      {catsGastos.slice(0, 6).map((cat) => (
-                        <div key={cat.id} style={{ flex: 1, textAlign: "center", fontSize: 10, fontWeight: 500, color: cat.isDeleted ? c.muted : c.text, textDecoration: cat.isDeleted ? "line-through" : "none" }}>
-                          {formatCatName(cat.label)}
+                 // Solo mostramos los ultimos 6 días con aportes
+                 const aportesChartData = Object.keys(aportesPorFecha).sort().slice(-6).map(fecha => ({
+                     fecha,
+                     total: aportesPorFecha[fecha]
+                 }));
+
+                 const maxAporteC = aportesChartData.length > 0 ? Math.max(...aportesChartData.map(d => d.total)) : 1;
+                 const cMaxA = maxAporteC * 1.2;
+
+                 return (
+                    <div>
+                        <div style={{ marginBottom: 24 }}>
+                            <div style={{ ...s.label, marginBottom: 8 }}>Selecciona una meta a analizar:</div>
+                            <div style={{ position: "relative" }}>
+                                <select 
+                                    style={{ ...s.select, paddingRight: 40, fontSize: 16, fontWeight: 700, color: "#10B981", borderColor: "#10B981" }} 
+                                    value={metaSelecId} 
+                                    onChange={(e) => setReporteMetaId(e.target.value)}
+                                >
+                                    {listaMetas.map(m => <option key={m.id} value={m.id}>{m.icono} {m.nombre}</option>)}
+                                </select>
+                                <ChevronDown size={20} color="#10B981" style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
+                            </div>
                         </div>
-                      ))}
+
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+                            <div style={{ background: isDark ? "rgba(16, 185, 129, 0.1)" : "#F0FDF4", borderRadius: 16, padding: 16, border: isDark ? "1px solid rgba(16, 185, 129, 0.2)" : "none" }}>
+                                <div style={{ fontSize: 13, color: c.muted, marginBottom: 6, fontWeight: 500 }}>Total Aportado</div>
+                                <div style={{ fontSize: 20, fontWeight: 700, color: c.green }}>{formatMoney(metaSelec.aporteInicial)}</div>
+                            </div>
+                            <div style={{ background: isDark ? "rgba(245, 158, 11, 0.1)" : "#FFFBEB", borderRadius: 16, padding: 16, border: isDark ? "1px solid rgba(245, 158, 11, 0.2)" : "none" }}>
+                                <div style={{ fontSize: 13, color: c.muted, marginBottom: 6, fontWeight: 500 }}>Te falta</div>
+                                <div style={{ fontSize: 20, fontWeight: 700, color: "#F59E0B" }}>{formatMoney(Math.max(0, metaSelec.montoObjetivo - metaSelec.aporteInicial))}</div>
+                            </div>
+                        </div>
+                        
+                        <div style={{ background: isDark ? "rgba(168, 85, 247, 0.1)" : "#F3E8FF", borderRadius: 16, padding: 16, border: isDark ? "1px solid rgba(168, 85, 247, 0.2)" : "none", marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div>
+                                <div style={{ fontSize: 13, color: c.muted, marginBottom: 4, fontWeight: 500 }}>Mayor aporte realizado</div>
+                                <div style={{ fontSize: 22, fontWeight: 700, color: "#A855F7" }}>{formatMoney(mayorAporte)}</div>
+                            </div>
+                            <div style={{ fontSize: 32 }}>💪</div>
+                        </div>
+
+                        {/* GRÁFICO 3: EVOLUCIÓN DE APORTES */}
+                        <div style={{ ...s.card, padding: "20px" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, paddingBottom: 12, marginBottom: 20 }}>
+                                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: c.text }}>Evolución de Aportes</h3>
+                            </div>
+                            
+                            {aportesChartData.length === 0 ? (
+                                <div style={{ textAlign: "center", color: c.muted, padding: "30px 0", fontSize: 14 }}>Aún no has hecho aportes a esta meta.</div>
+                            ) : (
+                                <>
+                                    <div style={{ display: "flex", height: 160, marginTop: 12, gap: 8 }}>
+                                        <div style={{ width: 35, display: "flex", flexDirection: "column", justifyContent: "space-between", alignItems: "flex-end", paddingBottom: 0 }}>
+                                            {[cMaxA, cMaxA * 0.75, cMaxA * 0.5, cMaxA * 0.25, 0].map((t, i) => <span key={i} style={{ fontSize: 10, color: c.muted, fontWeight: 500, lineHeight: 1 }}>{t > 0 ? Math.round(t) : 0}</span>)}
+                                        </div>
+                                        <div style={{ flex: 1, display: "flex", gap: 8, borderBottom: `1px solid ${c.border}`, position: "relative" }}>
+                                            {aportesChartData.map((d, index) => (
+                                                <div key={index} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: "center", gap: 6 }}>
+                                                    <span style={{ fontSize: 10, fontWeight: 700, color: c.text, whiteSpace: "nowrap" }}>S/ {d.total % 1 === 0 ? d.total : d.total.toFixed(1)}</span>
+                                                    <div style={{ width: "100%", maxWidth: 36, height: `${(d.total / cMaxA) * 100}%`, background: "#10B981", borderRadius: "4px 4px 0 0", minHeight: 2 }} />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div style={{ display: "flex", paddingLeft: 43, gap: 8, marginTop: 8 }}>
+                                        {aportesChartData.map((d, index) => {
+                                            const parts = d.fecha.split("-");
+                                            const shortDate = `${parts[2]}/${parts[1]}`;
+                                            return (
+                                                <div key={index} style={{ flex: 1, textAlign: "center", fontSize: 10, fontWeight: 600, color: c.muted }}>
+                                                    {shortDate}
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 0, marginBottom: 12 }}>
+                            <h3 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>Historial de la Meta</h3>
+                        </div>
+
+                        {aportesDeMeta.length > 0 ? (
+                            <div style={{ ...s.card, padding: "0 16px" }}>
+                                {aportesDeMeta.slice(0, 10).map((g, i, arr) => {
+                                    const isLast = i === arr.length - 1;
+                                    return (
+                                        <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: isLast ? "none" : `1px solid ${c.border}` }}>
+                                            <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 14 }}>
+                                                <div style={{ width: 44, height: 44, borderRadius: 14, background: isDark ? "rgba(16,185,129,0.15)" : "#D1FAE5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
+                                                    {metaSelec.icono}
+                                                </div>
+                                                <div style={{ minWidth: 0 }}>
+                                                    <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text }}>
+                                                        Aporte realizado
+                                                    </div>
+                                                    <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)}</div>
+                                                </div>
+                                            </div>
+                                            <div style={{ textAlign: "right" }}>
+                                                <span style={{ fontSize: 16, fontWeight: 600, color: c.green }}>+{formatMoney(g.monto)}</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div style={{ ...s.card, textAlign: "center", color: c.muted, padding: "24px 0", fontWeight: 500 }}>Aún no hay aportes registrados</div>
+                        )}
+
                     </div>
-                  </>
-                )}
-              </div>
+                 );
+              })()}
+
             </div>
           )}
 
