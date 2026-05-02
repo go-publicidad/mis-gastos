@@ -299,7 +299,7 @@ export default function App() {
   const [vtFechaHasta, setVtFechaHasta] = useState("");
   
   const [showMenu, setShowMenu] = useState(false);
-  const [showNovedades, setShowNovedades] = useState(false); // NUEVO ESTADO NOVEDADES
+  const [showNovedades, setShowNovedades] = useState(false);
   const [showApariencia, setShowApariencia] = useState(false);
   const [profileScreen, setProfileScreen] = useState(null);
   
@@ -931,10 +931,10 @@ export default function App() {
         </>
       ) : (
         <>
-          {/* HEADER PRINCIPAL FIJO GLOBAL */}
+          {/* HEADER PRINCIPAL FIJO DINÁMICO */}
           {(() => {
             let headTitle;
-            if (tab === "metas") headTitle = "Mis Metas de Ahorro";
+            if (tab === "metas") headTitle = "Mis Metas";
             else if (tab === "hoy") { 
               headTitle = (
                 <>
@@ -946,23 +946,35 @@ export default function App() {
             else if (tab === "resumen") headTitle = "Reportes";
             else if (tab === "historial") headTitle = "Historial";
 
+            const isHome = tab === "hoy";
+
             return (
-              <div style={{ padding: "calc(12px + env(safe-area-inset-top, 0px)) 20px 12px", background: c.bg, position: "fixed", top: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, zIndex: 110, boxSizing: "border-box" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                    <button onClick={() => setShowMenu(true)} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: c.text, cursor: "pointer", padding: 0, display: "flex" }}>
-                      <Menu size={28} />
-                    </button>
-                    <h1 style={{ fontSize: 20, fontWeight: 600, color: c.text, margin: 0, fontFamily: "'Montserrat', sans-serif", lineHeight: 1.1 }}>{headTitle}</h1>
-                  </div>
-                  
-                  {/* NUEVA CAMPANITA DE NOVEDADES */}
-                  <div style={{ position: "relative" }}>
-                      <button onClick={() => setShowNovedades(true)} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", padding: 0, color: c.green, display: "flex" }}>
-                        <Bell size={24} />
-                      </button>
-                      <div style={{ position: "absolute", top: -2, right: -2, width: 8, height: 8, background: c.red, borderRadius: "50%", border: `2px solid ${c.bg}` }}></div>
-                  </div>
+              <div style={{ 
+                padding: "calc(12px + env(safe-area-inset-top, 0px)) 20px 12px", 
+                background: isHome ? c.bg : c.card, 
+                borderBottom: isHome ? "none" : `1px solid ${c.border}`,
+                position: "fixed", top: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, zIndex: 110, boxSizing: "border-box" 
+              }}>
+                <div style={{ display: "flex", justifyContent: isHome ? "space-between" : "center", alignItems: "center" }}>
+                  {isHome ? (
+                    <>
+                      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                        <button onClick={() => setShowMenu(true)} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: c.text, cursor: "pointer", padding: 0, display: "flex" }}>
+                          <Menu size={28} />
+                        </button>
+                        <h1 style={{ fontSize: 20, fontWeight: 600, color: c.text, margin: 0, fontFamily: "'Montserrat', sans-serif", lineHeight: 1.1 }}>{headTitle}</h1>
+                      </div>
+                      
+                      <div style={{ position: "relative" }}>
+                          <button onClick={() => setShowNovedades(true)} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", padding: 0, color: c.green, display: "flex" }}>
+                            <Bell size={24} />
+                          </button>
+                          <div style={{ position: "absolute", top: -2, right: -2, width: 8, height: 8, background: c.red, borderRadius: "50%", border: `2px solid ${c.bg}` }}></div>
+                      </div>
+                    </>
+                  ) : (
+                    <h1 style={{ fontSize: 18, fontWeight: 700, color: c.text, margin: 0, fontFamily: "'Montserrat', sans-serif", lineHeight: 1.1 }}>{headTitle}</h1>
+                  )}
                 </div>
               </div>
             );
@@ -1089,6 +1101,7 @@ export default function App() {
                       })}
                    </div>
 
+                   {/* INDICADORES DEL SLIDER */}
                    {listaMetas.length > 1 && (
                      <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 4, marginBottom: 20 }}>
                        {listaMetas.map((_, idx) => (
