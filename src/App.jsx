@@ -153,15 +153,6 @@ const getUIFechaHora = (isoStr) => {
   }
 };
 
-const getDisplayDesc = (g, categorias) => {
-  const cat = categorias.find(c => c.id === g.categoria);
-  if (!cat) return g.descripcion;
-  if (g.descripcion === cat.label || g.descripcion === getTexto(cat.label)) {
-    return getTexto(cat.label);
-  }
-  return g.descripcion;
-};
-
 const diffDias = (d1Str, d2Str) => {
   if (!d1Str || !d2Str) return 0;
   const [y1, m1, day1] = d1Str.split("-");
@@ -173,9 +164,9 @@ const exportarCSV = (gastos, categorias) => {
   const header = "Fecha,Hora,Tipo,Categoría,Descripción,Monto\n";
   const rows = gastos.map(g => {
     const { fecha, hora } = formatDateTime(g.created_at);
-    const cat = categorias.find(c => c.id === g.categoria)?.label || g.categoria || "";
+    const catLabel = categorias.find(c => c.id === g.categoria)?.label || "(Eliminado)";
     const desc = (g.descripcion || "").replace(/,/g, ";");
-    return `${fecha},${hora},${g.tipo},${cat},${desc},${g.monto}`;
+    return `${fecha},${hora},${g.tipo},${catLabel},${desc},${g.monto}`;
   }).join("\n");
   const blob = new Blob(["\uFEFF" + header + rows], { type: "text/csv;charset=utf-8;" });
   const url  = URL.createObjectURL(blob);
@@ -190,12 +181,12 @@ const exportarPDF = (gastos, categorias) => {
   const filas = gastos.map(g => {
     const { fecha, hora } = formatDateTime(g.created_at);
     const cat  = categorias.find(c => c.id === g.categoria);
-    const catLabel = cat?.label || g.categoria || "";
+    const catLabel = cat?.label || "(Eliminado)";
     const color = g.tipo === "gasto" ? "#c0392b" : "#27ae60";
     const signo = g.tipo === "gasto" ? "-" : "+";
     return `<tr>
       <td style="font-weight:500;">${fecha}<br/><small style="color:#888">${hora}</small></td>
-      <td style="font-weight:600;color:${cat?.color || "#1a1a1a"}">${catLabel}</td>
+      <td style="font-weight:600;color:${cat?.color || "#888"}">${catLabel}</td>
       <td style="color:#1a1a1a;">${g.descripcion || ""}</td>
       <td style="color:${color};font-weight:bold;text-align:right">${signo} S/ ${Number(g.monto).toFixed(2)}</td>
     </tr>`;
@@ -285,12 +276,10 @@ export default function App() {
   const [editando, setEditando] = useState(null);   
   const [editForm, setEditForm] = useState({});
 
-  // ESTADOS PARA NUEVA CATEGORIA DE INGRESOS (BASE)
   const [showNuevaCatBase, setShowNuevaCatBase] = useState(false);
   const [nuevaCatBaseLabel, setNuevaCatBaseLabel] = useState("");
   const [nuevaCatBaseColor, setNuevaCatBaseColor] = useState(COLORES_CUSTOM[0]);
 
-  // ESTADOS PARA NUEVA CATEGORIA DE GASTOS (EXTRA)
   const [showNuevaCat, setShowNuevaCat] = useState(false);
   const [nuevaCatLabel, setNuevaCatLabel] = useState("");
   const [nuevaCatColor, setNuevaCatColor] = useState(COLORES_CUSTOM[0]);
@@ -493,7 +482,6 @@ export default function App() {
     cerrarPantalla('datos', () => setProfileScreen(null));
   };
 
-  // FUNCION PARA AGREGAR CATEGORIA DE INGRESOS
   const agregarCategoriaBase = async () => {
     const label = nuevaCatBaseLabel.trim();
     if (!label) { showToast("Escribe un nombre", c.red); return; }
@@ -507,7 +495,6 @@ export default function App() {
     showToast(`Categoría "${label}" creada ✓`);
   };
 
-  // FUNCION PARA AGREGAR CATEGORIA DE GASTOS
   const agregarCategoria = async () => {
     const label = nuevaCatLabel.trim();
     if (!label) { showToast("Escribe un nombre", c.red); return; }
@@ -593,7 +580,6 @@ export default function App() {
     else proyeccionTexto = `en ${mesesProyeccion} mes${mesesProyeccion !== 1 ? "es" : ""} y ${diasExtra} día${diasExtra !== 1 ? "s" : ""}`;
   } else if (ahorroDiarioProm <= 0 && diasTranscurridosPlan > 1) proyeccionTexto = "Sin ahorro neto aún";
 
-  // DATOS PARA PESTAÑA REPORTES Y METAS
   const getFiltradosResumen = () => {
     if (filtroResumen === "hoy") return gastos.filter(g => g.fecha === hoy());
     if (filtroResumen === "mes") return gastos.filter(g => g.fecha.startsWith(hoy().slice(0, 7)));
@@ -637,7 +623,6 @@ export default function App() {
   const cMaxI = maxIngreso * 1.2;
   const cMaxG = maxGasto * 1.2;
 
-  // DATOS PARA PESTAÑA HISTORIAL
   const gastosFiltradosHist = gastos.filter(g => 
     (filtroHistTipo === "todos" || g.tipo === filtroHistTipo) &&
     (filtroHistCat === "todas" || g.categoria === filtroHistCat) && 
@@ -797,15 +782,14 @@ export default function App() {
                   <div key={g.id} style={{ ...s.card, padding: "12px 16px", marginBottom: 8 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12 }}>
-                        {cat && (
-                          <div style={{ width: 40, height: 40, borderRadius: 12, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
-                            {getIcono(cat.label)}
-                          </div>
-                        )}
+                        <div style={{ width: 40, height: 40, borderRadius: 12, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, color: cat ? "inherit" : c.muted, fontWeight: cat ? "normal" : 600 }}>
+                          {cat ? getIcono(cat.label) : (g.descripcion || "?").charAt(0).toUpperCase()}
+                        </div>
                         <div style={{ minWidth: 0 }}>
                           <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2, color: c.text }}>
                             {cat ? getTexto(cat.label) : g.descripcion}
-                            {descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400 }}>{descAdicional}</span>}
+                            {cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400 }}>{descAdicional}</span>}
+                            {!cat && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400 }}>(Eliminado)</span>}
                           </div>
                           <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ingresos"}</div>
                         </div>
@@ -944,17 +928,16 @@ export default function App() {
                     return (
                       <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: isLast ? "none" : `1px solid ${c.border}` }}>
                         <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 14 }}>
-                          {cat && (
-                            <div style={{ width: 44, height: 44, borderRadius: 14, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
-                              {getIcono(cat.label)}
-                            </div>
-                          )}
+                          <div style={{ width: 44, height: 44, borderRadius: 14, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0, color: cat ? "inherit" : c.muted, fontWeight: cat ? "normal" : 600 }}>
+                            {cat ? getIcono(cat.label) : (g.descripcion || "?").charAt(0).toUpperCase()}
+                          </div>
                           <div style={{ minWidth: 0 }}>
                             <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text }}>
                               {cat ? getTexto(cat.label) : g.descripcion}
-                              {descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400 }}>{descAdicional}</span>}
+                              {cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400 }}>{descAdicional}</span>}
+                              {!cat && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400 }}>(Eliminado)</span>}
                             </div>
-                            <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ahorros"}</div>
+                            <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ingresos"}</div>
                           </div>
                         </div>
                         <div style={{ textAlign: "right" }}>
@@ -1238,15 +1221,14 @@ export default function App() {
                          return (
                            <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: isLast ? "none" : `1px solid ${c.border}` }}>
                              <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12 }}>
-                               {cat && (
-                                 <div style={{ width: 40, height: 40, borderRadius: 12, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
-                                   {getIcono(cat.label)}
-                                 </div>
-                               )}
+                               <div style={{ width: 40, height: 40, borderRadius: 12, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, color: cat ? "inherit" : c.muted, fontWeight: cat ? "normal" : 600 }}>
+                                 {cat ? getIcono(cat.label) : (g.descripcion || "?").charAt(0).toUpperCase()}
+                               </div>
                                <div style={{ minWidth: 0 }}>
                                  <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2 }}>
                                     {cat ? getTexto(cat.label) : g.descripcion}
-                                    {descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400 }}>{descAdicional}</span>}
+                                    {cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400 }}>{descAdicional}</span>}
+                                    {!cat && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400 }}>(Eliminado)</span>}
                                  </div>
                                  <div style={{ fontSize: 12, fontWeight: 500, color: c.muted }}>{getUITime(g.created_at)}</div>
                                </div>
