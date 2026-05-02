@@ -266,7 +266,6 @@ export default function App() {
   const [toast, setToast] = useState(null);
   const [error, setError] = useState(null);
 
-  // NUEVOS ESTADOS DE PULL TO REFRESH
   const [pullDistance, setPullDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [startY, setStartY] = useState(0);
@@ -367,7 +366,6 @@ export default function App() {
     setTimeout(() => { action(); setIsClosing(""); setShowMetaMenu(false); }, 280);
   };
 
-  // FUNCION SEPARADA PARA CARGAR DATOS
   const loadData = async () => {
     try {
       const { data: movimientos, error: err1 } = await supabase.from("gastos").select("*").order("created_at", { ascending: false });
@@ -408,7 +406,6 @@ export default function App() {
 
   useEffect(() => { window.scrollTo(0, 0); }, [tab]);
 
-  // LOGICA PARA PULL TO REFRESH EN INICIO
   const handleTouchStart = (e) => {
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
     if (scrollTop <= 0) {
@@ -424,14 +421,13 @@ export default function App() {
     const diff = currentY - startY;
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
     
-    // Solo si esta arrastrando hacia abajo y esta en la parte más alta de la pantalla
     if (diff > 0 && scrollTop <= 0) {
-      setPullDistance(Math.min(diff * 0.4, 80)); // Limitamos hasta 80px maximo visualmente
+      setPullDistance(Math.min(diff * 0.4, 80)); 
     }
   };
 
   const handleTouchEnd = async () => {
-    if (pullDistance > 50) { // Si jaló más de 50px se activa
+    if (pullDistance > 50) {
       setIsRefreshing(true);
       await loadData();
       setIsRefreshing(false);
@@ -758,7 +754,9 @@ export default function App() {
 
   const s = {
     app: { minHeight: "100vh", fontFamily: "'Montserrat', sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: "calc(110px + env(safe-area-inset-bottom, 0px))", width: "100%", userSelect: "none", WebkitUserSelect: "none" },
-    section:    { padding: "20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "stretch" },
+    
+    // SECTION SE ACTUALIZA CON PADDING TOP PARA EVITAR QUE EL HEADER FIJO LO TAPE
+    section:    { padding: "calc(76px + env(safe-area-inset-top, 0px)) 20px 20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "stretch" },
     card:       { width: "100%", background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: "16px", marginBottom: 24, overflow: "hidden", boxSizing: "border-box", boxShadow: c.shadow },
     
     sliderContainer: { display: "flex", overflowX: "auto", scrollSnapType: "x mandatory", gap: 16, paddingBottom: 8, marginTop: 4, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" },
@@ -859,7 +857,7 @@ export default function App() {
 
       {viewAll ? (
         <>
-          <div style={{ padding: "12px 20px", borderBottom: `1px solid ${c.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: c.bg, position: "sticky", top: 0, zIndex: 10 }}>
+          <div style={{ padding: "calc(12px + env(safe-area-inset-top, 0px)) 20px 12px", borderBottom: `1px solid ${c.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: c.bg, position: "fixed", top: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, zIndex: 110, boxSizing: "border-box" }}>
             <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 24, cursor: "pointer", padding: 0 }} onClick={() => { setViewAll(false); window.scrollTo(0, 0); }}>←</button>
             <h2 style={{ margin: 0, fontSize: 18, color: c.text, fontWeight: 600 }}>Movimientos</h2>
             <div style={{ display: "flex", gap: 16 }}>
@@ -868,26 +866,28 @@ export default function App() {
               </button>
             </div>
           </div>
-          {showVtFiltro && (
-            <div style={{ padding: "16px 20px", background: c.card, borderBottom: `1px solid ${c.border}` }}>
-              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                <div style={{ flex: 1, position: "relative" }}>
-                  {!vtFechaDesde && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Del</span>}
-                  <input type="date" value={vtFechaDesde} onChange={e => setVtFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: vtFechaDesde ? c.text : "transparent" }} />
-                </div>
-                <div style={{ flex: 1, position: "relative" }}>
-                  {!vtFechaHasta && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Al</span>}
-                  <input type="date" value={vtFechaHasta} onChange={e => setVtFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: vtFechaHasta ? c.text : "transparent" }} />
-                </div>
-              </div>
-              {(vtFechaDesde || vtFechaHasta) && (
-                <button style={{ width: "100%", fontSize: 14, fontWeight: 600, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", padding: "12px 0 0", marginTop: 4, fontFamily: "inherit" }} onClick={() => { setVtFechaDesde(""); setVtFechaHasta(""); }}>
-                  <X size={14} style={{ marginRight: 4, verticalAlign: "middle" }} /> Limpiar fechas
-                </button>
-              )}
-            </div>
-          )}
+          
           <div style={s.section}>
+            {showVtFiltro && (
+              <div style={{ padding: "16px 20px", background: c.card, borderBottom: `1px solid ${c.border}`, borderRadius: 16, marginBottom: 16 }}>
+                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                  <div style={{ flex: 1, position: "relative" }}>
+                    {!vtFechaDesde && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Del</span>}
+                    <input type="date" value={vtFechaDesde} onChange={e => setVtFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: vtFechaDesde ? c.text : "transparent" }} />
+                  </div>
+                  <div style={{ flex: 1, position: "relative" }}>
+                    {!vtFechaHasta && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Al</span>}
+                    <input type="date" value={vtFechaHasta} onChange={e => setVtFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: vtFechaHasta ? c.text : "transparent" }} />
+                  </div>
+                </div>
+                {(vtFechaDesde || vtFechaHasta) && (
+                  <button style={{ width: "100%", fontSize: 14, fontWeight: 600, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", padding: "12px 0 0", marginTop: 4, fontFamily: "inherit" }} onClick={() => { setVtFechaDesde(""); setVtFechaHasta(""); }}>
+                    <X size={14} style={{ marginRight: 4, verticalAlign: "middle" }} /> Limpiar fechas
+                  </button>
+                )}
+              </div>
+            )}
+            
             <div style={{ ...s.label, textAlign: "center", marginBottom: 12 }}>{gastosVerTodos.length} movimientos</div>
             {gastosVerTodos.length === 0 ? (
               <div style={{ ...s.card, textAlign: "center", color: c.muted, padding: "32px", fontWeight: 500 }}>No se encontraron movimientos</div>
@@ -933,6 +933,7 @@ export default function App() {
         </>
       ) : (
         <>
+          {/* HEADER PRINCIPAL FIJO */}
           {(() => {
             let headTitle;
             if (tab === "metas") headTitle = "Mis Metas de Ahorro";
@@ -948,7 +949,7 @@ export default function App() {
             else if (tab === "historial") headTitle = "Historial";
 
             return (
-              <div style={{ padding: "8px 20px 12px", background: c.bg, position: "sticky", top: 0, zIndex: 90 }}>
+              <div style={{ padding: "calc(12px + env(safe-area-inset-top, 0px)) 20px 12px", background: c.bg, position: "fixed", top: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, zIndex: 110, boxSizing: "border-box" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
                     <button onClick={() => setShowMenu(true)} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: c.text, cursor: "pointer", padding: 0, display: "flex" }}>
@@ -964,9 +965,9 @@ export default function App() {
             );
           })()}
 
-          {error && <div style={s.errorCard}><AlertTriangle size={16} style={{ verticalAlign: "middle", marginRight: 8 }} /> {error}</div>}
+          {error && <div style={{...s.errorCard, marginTop: 80}}><AlertTriangle size={16} style={{ verticalAlign: "middle", marginRight: 8 }} /> {error}</div>}
 
-          {/* INICIO CON EL NUEVO PULL TO REFRESH */}
+          {/* INICIO CON EL NUEVO PULL TO REFRESH DENTRO DEL CONTENIDO SCROLLEABLE */}
           {tab === "hoy" && (
             <div 
               style={s.section}
@@ -974,7 +975,7 @@ export default function App() {
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
             >
-              {/* INDICADOR PULL TO REFRESH */}
+              {/* INDICADOR PULL TO REFRESH (Aparece abajo del header) */}
               <div style={{
                 height: isRefreshing ? 60 : pullDistance,
                 overflow: "hidden",
@@ -995,7 +996,7 @@ export default function App() {
                   }} 
                 />
                 <span style={{ fontSize: 12, fontWeight: 600, marginTop: 4, opacity: Math.min(pullDistance / 50, 1), color: c.muted }}>
-                  {isRefreshing ? "Actualizando..." : "Suelta para actualizar"}
+                  Actualizando...
                 </span>
               </div>
               
@@ -1085,6 +1086,7 @@ export default function App() {
                       })}
                    </div>
 
+                   {/* INDICADORES DEL SLIDER */}
                    {listaMetas.length > 1 && (
                      <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 4, marginBottom: 20 }}>
                        {listaMetas.map((_, idx) => (
@@ -1678,7 +1680,7 @@ export default function App() {
 
           {/* PESTAÑA METAS DINÁMICA */}
           {tab === "metas" && (
-            <div style={{ padding: "0 20px 20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", paddingBottom: 140 }}>
+            <div style={{ padding: "calc(76px + env(safe-area-inset-top, 0px)) 20px 20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", paddingBottom: 140 }}>
               <div style={{ fontSize: 14, color: c.muted, marginBottom: 20, fontWeight: 500 }}>Tus objetivos financieros</div>
 
               {listaMetas.length === 0 ? (
@@ -1996,7 +1998,7 @@ export default function App() {
         </div>
       )}
 
-      {/* NUEVA PANTALLA: EXPORTAR REPORTES */}
+      {/* PANTALLA: EXPORTAR REPORTES */}
       {showMenu && profileScreen === "exportar" && (
         <div className="hide-scroll" style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'exportar' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           
@@ -2067,7 +2069,6 @@ export default function App() {
             <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Configuración de categorías</h2>
           </div>
           
-          {/* CATEGORÍAS DE INGRESOS */}
           <div style={{ marginBottom: 32 }}>
             <div style={{ ...s.label, fontSize: 16, color: c.green, marginBottom: 12 }}>Categorías para Ingresos</div>
             
@@ -2094,7 +2095,6 @@ export default function App() {
             </button>
           </div>
 
-          {/* CATEGORÍAS DE GASTOS */}
           <div style={{ marginBottom: 32 }}>
             <div style={{ ...s.label, fontSize: 16, color: c.red, marginBottom: 12 }}>Categorías para Gastos</div>
             
@@ -2120,7 +2120,6 @@ export default function App() {
                <Plus size={18} /> Crear categoría
             </button>
           </div>
-
         </div>
       )}
 
