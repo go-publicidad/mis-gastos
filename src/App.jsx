@@ -264,7 +264,6 @@ export default function App() {
   const [categoriasBase, setCategoriasBase] = useState(INGRESOS_DEFAULT);
   const [categoriasExtra, setCategoriasExtra] = useState(GASTOS_DEFAULT);  
   
-  // NUEVO ESTADO: LISTA DINAMICA DE METAS
   const [listaMetas, setListaMetas] = useState(METAS_INICIALES);
   
   const [tab, setTab] = useState("hoy");
@@ -348,7 +347,7 @@ export default function App() {
   const categorias = [...safeBase, ...safeExtra];
   const isDark = theme === "dark";
 
-  const isModalOpen = showAddModal || !!editando || showEmailModal;
+  const isModalOpen = showAddModal || !!editando || showEmailModal || showCrearMeta;
 
   const c = {
     bg: isDark ? "#0A0A0A" : "#F4F5F7",
@@ -572,14 +571,11 @@ export default function App() {
     showToast("Categoría eliminada", c.muted);
   };
 
-  // NUEVO: FUNCION PARA PROCESAR Y GUARDAR UNA NUEVA META EN LA BD
+  // FUNCION PARA PROCESAR Y GUARDAR UNA NUEVA META EN LA BD
   const procesarNuevaMeta = async () => {
-    if (!metaForm.nombre.trim()) return showToast("Ingresa el nombre de la meta", c.red);
-    if (!metaForm.montoObjetivo || parseFloat(metaForm.montoObjetivo) <= 0) return showToast("Ingresa un monto objetivo", c.red);
-    if (!metaForm.fechaLimite) return showToast("Selecciona una fecha límite", c.red);
-    if (!metaForm.prioridad) return showToast("Selecciona una prioridad", c.red);
-    if (!metaForm.tipo) return showToast("Selecciona un tipo de meta", c.red);
-    if (!metaForm.icono) return showToast("Selecciona un ícono", c.red);
+    if (!metaForm.nombre.trim()) return showToast("⚠️ Ingresa el nombre de la meta", c.red);
+    if (!metaForm.montoObjetivo || parseFloat(metaForm.montoObjetivo) <= 0) return showToast("⚠️ Ingresa un monto objetivo válido", c.red);
+    if (!metaForm.fechaLimite) return showToast("⚠️ Selecciona una fecha límite", c.red);
 
     const nuevaMeta = {
       id: "meta_" + Date.now(),
@@ -793,7 +789,15 @@ export default function App() {
         @keyframes slideInFromLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
         @keyframes slideOutToLeft { from { transform: translateX(0); } to { transform: translateX(-100%); } }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes slideDown { from { transform: translate(-50%, -100%); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
       `}</style>
+
+      {/* COMPONENTE DE AVISOS VISUALES (TOAST) QUE FALTABA */}
+      {toast && (
+        <div style={{ position: "fixed", top: 40, left: "50%", transform: "translateX(-50%)", background: toast.color || "#333", color: "#FFF", padding: "12px 24px", borderRadius: 30, zIndex: 999999, fontWeight: 600, fontSize: 14, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", animation: "slideDown 0.3s ease-out" }}>
+          {toast.msg}
+        </div>
+      )}
 
       {viewAll ? (
         <>
@@ -1264,7 +1268,7 @@ export default function App() {
                     </div>
                     <div style={{ flex: 1, position: "relative" }}>
                       {!filtroHistFechaHasta && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Al</span>}
-                      <input type="date" value={filtroHistFechaHasta} onChange={e => setFiltroHistFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroHistFechaHasta ? c.text : "transparent" }} />
+                      <input type="date" value={filtroHistFechaHasta} onChange={e => setFiltroFechaResumenHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroHistFechaHasta ? c.text : "transparent" }} />
                     </div>
                   </div>
                   {(filtroHistFechaDesde || filtroHistFechaHasta) && <button style={{ width: "100%", fontSize: 14, fontWeight: 700, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 16, fontFamily: "inherit" }} onClick={() => { setFiltroHistFechaDesde(""); setFiltroHistFechaHasta(""); }}>
@@ -1417,6 +1421,90 @@ export default function App() {
         </>
       )}
 
+      {/* NUEVA PANTALLA: CREAR META */}
+      {showCrearMeta && (
+        <div className="hide-scroll" style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'crearMeta' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
+            <button onClick={() => cerrarPantalla('crearMeta', () => setShowCrearMeta(false))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Crear nueva meta</h2>
+          </div>
+          
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Nombre de la meta</div>
+            <input style={{ ...s.input }} placeholder="Ej: Nueva Laptop, Viaje a Europa" value={metaForm.nombre} onChange={e => setMetaForm({ ...metaForm, nombre: e.target.value })} />
+          </div>
+          
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Monto objetivo</div>
+            <input style={{ ...s.input }} type="number" placeholder="S/ 0.00" value={metaForm.montoObjetivo} onChange={e => setMetaForm({ ...metaForm, montoObjetivo: e.target.value })} />
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Aporte inicial <span style={{ color: c.muted, fontWeight: "normal" }}>(opcional)</span></div>
+            <input style={{ ...s.input }} type="number" placeholder="S/ 0.00" value={metaForm.aporteInicial} onChange={e => setMetaForm({ ...metaForm, aporteInicial: e.target.value })} />
+          </div>
+
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Fecha límite</div>
+            <div style={{ position: "relative" }}>
+              {!metaForm.fechaLimite && <span style={{ position: "absolute", top: "50%", left: 14, transform: "translateY(-50%)", color: c.muted, pointerEvents: "none", fontSize: 15 }}>Selecciona una fecha</span>}
+              <input type="date" value={metaForm.fechaLimite} onChange={e => setMetaForm({ ...metaForm, fechaLimite: e.target.value })} style={{ ...s.input, color: metaForm.fechaLimite ? c.text : "transparent" }} />
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Prioridad</div>
+            <div style={{ display: "flex", gap: 12 }}>
+              <button onClick={() => setMetaForm({ ...metaForm, prioridad: 'alta' })} style={{ flex: 1, padding: "12px", borderRadius: 8, border: metaForm.prioridad === 'alta' ? "1px solid #EF4444" : `1px solid ${c.border}`, background: metaForm.prioridad === 'alta' ? (isDark ? "rgba(239,68,68,0.15)" : "#FEF2F2") : c.card, color: metaForm.prioridad === 'alta' ? "#EF4444" : c.text, fontWeight: 600, display: "flex", justifyContent: "center", alignItems: "center", gap: 6, cursor: "pointer", transition: "0.2s" }}>
+                <ChevronUp size={16} /> Alta
+              </button>
+              <button onClick={() => setMetaForm({ ...metaForm, prioridad: 'media' })} style={{ flex: 1, padding: "12px", borderRadius: 8, border: metaForm.prioridad === 'media' ? "1px solid #F59E0B" : `1px solid ${c.border}`, background: metaForm.prioridad === 'media' ? (isDark ? "rgba(245,158,11,0.15)" : "#FFFBEB") : c.card, color: metaForm.prioridad === 'media' ? "#F59E0B" : c.text, fontWeight: 600, display: "flex", justifyContent: "center", alignItems: "center", gap: 6, cursor: "pointer", transition: "0.2s" }}>
+                <Minus size={16} /> Media
+              </button>
+              <button onClick={() => setMetaForm({ ...metaForm, prioridad: 'baja' })} style={{ flex: 1, padding: "12px", borderRadius: 8, border: metaForm.prioridad === 'baja' ? "1px solid #10B981" : `1px solid ${c.border}`, background: metaForm.prioridad === 'baja' ? (isDark ? "rgba(16,185,129,0.15)" : "#ECFDF5") : c.card, color: metaForm.prioridad === 'baja' ? "#10B981" : c.text, fontWeight: 600, display: "flex", justifyContent: "center", alignItems: "center", gap: 6, cursor: "pointer", transition: "0.2s" }}>
+                <ChevronDown size={16} /> Baja
+              </button>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Tipo de meta</div>
+            <div style={{ background: c.card, borderRadius: 12, border: `1px solid ${c.border}`, overflow: "hidden" }}>
+              <div onClick={() => setMetaForm({ ...metaForm, tipo: 'libre' })} style={{ padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, cursor: "pointer", background: metaForm.tipo === 'libre' ? (isDark ? "rgba(16,185,129,0.05)" : "#F0FDF4") : "transparent" }}>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 4 }}>Ahorro libre</div>
+                  <div style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}>Tú decides cuánto ahorrar</div>
+                </div>
+                {metaForm.tipo === 'libre' ? <CheckCircle2 size={24} color="#10B981" /> : <Circle size={24} color={c.muted} />}
+              </div>
+              <div onClick={() => setMetaForm({ ...metaForm, tipo: 'obligatorio' })} style={{ padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", background: metaForm.tipo === 'obligatorio' ? (isDark ? "rgba(16,185,129,0.05)" : "#F0FDF4") : "transparent" }}>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 4 }}>Ahorro obligatorio</div>
+                  <div style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}>Aportes fijos programados</div>
+                </div>
+                {metaForm.tipo === 'obligatorio' ? <CheckCircle2 size={24} color="#10B981" /> : <Circle size={24} color={c.muted} />}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 40 }}>
+            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Imagen / ícono</div>
+            <div className="hide-scroll" style={{ display: "flex", gap: 16, overflowX: "auto", paddingBottom: 4 }}>
+              {METAS_ICONS.map(ico => (
+                <div key={ico} onClick={() => setMetaForm({ ...metaForm, icono: ico })} style={{ width: 56, height: 56, borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, flexShrink: 0, border: metaForm.icono === ico ? `2px solid #10B981` : "2px solid transparent", cursor: "pointer", transition: "0.2s" }}>
+                  {ico}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <button onClick={procesarNuevaMeta} style={{ ...s.btnPrimary, background: "#059669", boxShadow: "0 4px 12px rgba(5, 150, 105, 0.3)", padding: 16, fontSize: 16 }}>
+            Guardar meta
+          </button>
+        </div>
+      )}
+
+      {/* MODALES DE MENU, APARIENCIA, ETC... SE MANTIENEN INTACTOS */}
       {showMenu && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 9999, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: isClosing === 'menu' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
