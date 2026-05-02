@@ -331,8 +331,10 @@ export default function App() {
   const [showAddModal, setShowAddModal] = useState(false);
 
   const [showCrearMeta, setShowCrearMeta] = useState(false);
+  // NUEVO: ESTADO PARA SABER SI ESTAMOS EDITANDO UNA META
+  const [isEditingMetaObj, setIsEditingMetaObj] = useState(false);
   const [metaForm, setMetaForm] = useState({
-    nombre: "", montoObjetivo: "", aporteInicial: "", fechaLimite: "", prioridad: "alta", tipo: "libre", icono: "💻"
+    id: "", nombre: "", montoObjetivo: "", aporteInicial: "", fechaLimite: "", prioridad: "alta", tipo: "libre", icono: "💻"
   });
 
   const [metaSeleccionada, setMetaSeleccionada] = useState(null);
@@ -579,32 +581,47 @@ export default function App() {
     if (!metaForm.montoObjetivo || parseFloat(metaForm.montoObjetivo) <= 0) return showToast("⚠️ Ingresa un monto objetivo válido", c.red);
     if (!metaForm.fechaLimite) return showToast("⚠️ Selecciona una fecha límite", c.red);
 
-    const nuevaMeta = {
-      id: "meta_" + Date.now(),
-      nombre: metaForm.nombre.trim(),
-      montoObjetivo: parseFloat(metaForm.montoObjetivo),
-      aporteInicial: metaForm.aporteInicial ? parseFloat(metaForm.aporteInicial) : 0,
-      fechaLimite: metaForm.fechaLimite,
-      prioridad: metaForm.prioridad,
-      tipo: metaForm.tipo,
-      icono: metaForm.icono
-    };
+    let nuevasMetas;
 
-    const nuevasMetas = [nuevaMeta, ...listaMetas];
+    if (isEditingMetaObj) {
+      // SI ESTAMOS EDITANDO, ACTUALIZAMOS LA META EXISTENTE
+      nuevasMetas = listaMetas.map(m => m.id === metaForm.id ? { 
+        ...metaForm, 
+        montoObjetivo: parseFloat(metaForm.montoObjetivo), 
+        aporteInicial: metaForm.aporteInicial ? parseFloat(metaForm.aporteInicial) : 0 
+      } : m);
+      
+      // Actualizar también la vista de detalle si está abierta
+      setMetaSeleccionada(prev => ({ ...prev, ...metaForm, montoObjetivo: parseFloat(metaForm.montoObjetivo), aporteInicial: metaForm.aporteInicial ? parseFloat(metaForm.aporteInicial) : 0 }));
+      showToast("Meta actualizada con éxito ✓", c.green);
+    } else {
+      // SI ES NUEVA, LA CREAMOS
+      const nuevaMeta = {
+        id: "meta_" + Date.now(),
+        nombre: metaForm.nombre.trim(),
+        montoObjetivo: parseFloat(metaForm.montoObjetivo),
+        aporteInicial: metaForm.aporteInicial ? parseFloat(metaForm.aporteInicial) : 0,
+        fechaLimite: metaForm.fechaLimite,
+        prioridad: metaForm.prioridad,
+        tipo: metaForm.tipo,
+        icono: metaForm.icono
+      };
+      nuevasMetas = [nuevaMeta, ...listaMetas];
+      showToast("Meta guardada con éxito ✓", c.green);
+    }
+
     setListaMetas(nuevasMetas);
-
     setSaving(true);
     await supabase.from("config").upsert([{ key: "listaMetas", value: JSON.stringify(nuevasMetas) }], { onConflict: "key" });
     setSaving(false);
 
-    showToast("Meta guardada con éxito ✓", c.green);
     cerrarPantalla('crearMeta', () => {
       setShowCrearMeta(false);
-      setMetaForm({ nombre: "", montoObjetivo: "", aporteInicial: "", fechaLimite: "", prioridad: "alta", tipo: "libre", icono: "💻" });
+      setIsEditingMetaObj(false);
+      setMetaForm({ id: "", nombre: "", montoObjetivo: "", aporteInicial: "", fechaLimite: "", prioridad: "alta", tipo: "libre", icono: "💻" });
     });
   };
 
-  // NUEVO: FUNCION PARA ELIMINAR META DESDE EL DETALLE
   const eliminarMeta = async (id) => {
     if (!window.confirm("¿Estás seguro que deseas eliminar esta meta? Todo el progreso se perderá.")) return;
 
@@ -618,6 +635,22 @@ export default function App() {
     showToast("Meta eliminada con éxito", c.muted);
     setShowMetaMenu(false);
     cerrarPantalla('detalleMeta', () => setMetaSeleccionada(null));
+  };
+
+  // NUEVO: FUNCION PARA ABRIR EL FORMULARIO DE EDICION
+  const abrirEdicionMeta = () => {
+    setMetaForm({
+      id: metaSeleccionada.id,
+      nombre: metaSeleccionada.nombre,
+      montoObjetivo: metaSeleccionada.montoObjetivo,
+      aporteInicial: metaSeleccionada.aporteInicial,
+      fechaLimite: metaSeleccionada.fechaLimite,
+      prioridad: metaSeleccionada.prioridad,
+      tipo: metaSeleccionada.tipo,
+      icono: metaSeleccionada.icono
+    });
+    setIsEditingMetaObj(true);
+    setShowCrearMeta(true);
   };
 
   const metaTotalNum = parseFloat(metaAhorro) || 0;
@@ -900,7 +933,11 @@ export default function App() {
                       <ArrowLeft size={28} />
                     </button>
                     <h1 style={{ fontSize: 20, fontWeight: 700, color: c.text, margin: 0, fontFamily: "'Montserrat', sans-serif" }}>Mis Metas de Ahorro</h1>
-                    <button onClick={() => setShowCrearMeta(true)} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", padding: 0, color: "#FF803C", display: "flex" }}>
+                    <button onClick={() => {
+                      setIsEditingMetaObj(false);
+                      setMetaForm({ id: "", nombre: "", montoObjetivo: "", aporteInicial: "", fechaLimite: "", prioridad: "alta", tipo: "libre", icono: "💻" });
+                      setShowCrearMeta(true);
+                    }} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", padding: 0, color: "#FF803C", display: "flex" }}>
                       <Plus size={28} strokeWidth={2.5} />
                     </button>
                   </div>
@@ -1410,7 +1447,11 @@ export default function App() {
           {/* BOTON FLOTANTE DE CREAR META SOLO VISIBLE EN LA PESTAÑA METAS */}
           {tab === "metas" && (
             <div style={{ position: "fixed", bottom: "calc(64px + env(safe-area-inset-bottom, 0px))", left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, padding: "32px 20px 16px", background: isDark ? "linear-gradient(to top, #0A0A0A 70%, rgba(10,10,10,0))" : "linear-gradient(to top, #F4F5F7 70%, rgba(244,245,247,0))", zIndex: 80, boxSizing: "border-box" }}>
-              <button onClick={() => setShowCrearMeta(true)} style={{ width: "100%", padding: 16, background: "#059669", color: "#FFF", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", justifyContent: "center", alignItems: "center", gap: 8, boxShadow: "0 4px 12px rgba(5, 150, 105, 0.3)" }}>
+              <button onClick={() => {
+                setIsEditingMetaObj(false);
+                setMetaForm({ id: "", nombre: "", montoObjetivo: "", aporteInicial: "", fechaLimite: "", prioridad: "alta", tipo: "libre", icono: "💻" });
+                setShowCrearMeta(true);
+              }} style={{ width: "100%", padding: 16, background: "#059669", color: "#FFF", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", justifyContent: "center", alignItems: "center", gap: 8, boxShadow: "0 4px 12px rgba(5, 150, 105, 0.3)" }}>
                 <Plus size={20} /> Crear nueva meta
               </button>
             </div>
@@ -1490,7 +1531,7 @@ export default function App() {
             </div>
 
             {/* Contenido scrolleable */}
-            <div style={{ padding: "32px 20px 100px", flex: 1, overflowY: "auto" }}>
+            <div style={{ padding: "32px 20px 20px", flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
               
               {/* Bloque Central de Progreso */}
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 40 }}>
@@ -1520,7 +1561,7 @@ export default function App() {
 
               {/* Tarjeta Resumen */}
               <div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 12 }}>Resumen de tu progreso</div>
-              <div style={{ ...s.card, padding: "20px" }}>
+              <div style={{ ...s.card, padding: "20px", marginBottom: 24 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                   <span style={{ color: c.muted, fontSize: 14, fontWeight: 500 }}>Fecha limite</span>
                   <span style={{ color: c.text, fontSize: 14, fontWeight: 600 }}>{fechaStr}</span>
@@ -1542,28 +1583,26 @@ export default function App() {
                   <span style={{ color: c.text, fontSize: 14, fontWeight: 600 }}>{ahorroDiarioVal > 0 ? `S/ ${ahorroDiarioVal.toFixed(2)}` : "S/ 0.00"}</span>
                 </div>
               </div>
-            </div>
 
-            {/* Boton Inferior (SIN BORDETOP COMO PEDISTE) */}
-            <div style={{ padding: "16px 20px calc(20px + env(safe-area-inset-bottom, 0px))", background: c.bg }}>
+              {/* Boton Editar Meta Integrado (Ya no fijo abajo) */}
               <button 
-                onClick={() => showToast("Edición de meta próximamente")}
+                onClick={abrirEdicionMeta}
                 style={{ width: "100%", padding: 16, background: "#059669", color: "#FFF", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(5, 150, 105, 0.2)" }}
               >
                 Editar meta
               </button>
-            </div>
 
+            </div>
           </div>
         );
       })()}
 
-      {/* NUEVA PANTALLA: CREAR META */}
+      {/* NUEVA PANTALLA: CREAR / EDITAR META */}
       {showCrearMeta && (
         <div className="hide-scroll" style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'crearMeta' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
-            <button onClick={() => cerrarPantalla('crearMeta', () => setShowCrearMeta(false))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
-            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Crear nueva meta</h2>
+            <button onClick={() => cerrarPantalla('crearMeta', () => { setShowCrearMeta(false); setIsEditingMetaObj(false); })} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>{isEditingMetaObj ? "Editar meta" : "Crear nueva meta"}</h2>
           </div>
           
           <div style={{ marginBottom: 20 }}>
@@ -1636,7 +1675,7 @@ export default function App() {
           </div>
 
           <button onClick={procesarNuevaMeta} style={{ ...s.btnPrimary, background: "#059669", boxShadow: "0 4px 12px rgba(5, 150, 105, 0.3)", padding: 16, fontSize: 16 }}>
-            Guardar meta
+            {isEditingMetaObj ? "Guardar cambios" : "Guardar meta"}
           </button>
         </div>
       )}
