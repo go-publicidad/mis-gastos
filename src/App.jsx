@@ -695,11 +695,9 @@ export default function App() {
   const totalIngresosR = ingresosResumen.reduce((a, g) => a + g.monto, 0);
   const ahorroR = totalIngresosR - totalGastadoR;
 
-  // NUEVO: LOGICA PARA CATEGORIAS ELIMINADAS EN REPORTES
   const calcCats = (arr) => {
     const agrupado = {};
     arr.forEach(g => {
-      // Si la categoría existe, usamos su ID real. Si no, usamos la descripcion para no juntar papas con camotes.
       const catExiste = categorias.find(c => c.id === g.categoria);
       const groupKey = catExiste ? g.categoria : `eliminado_${g.descripcion}`;
       
@@ -707,7 +705,7 @@ export default function App() {
         agrupado[groupKey] = {
           id: groupKey,
           label: catExiste ? catExiste.label : g.descripcion,
-          color: catExiste ? catExiste.color : (isDark ? "rgba(255,255,255,0.15)" : "rgba(160,174,192,0.4)"), // Gris con transparencia
+          color: catExiste ? catExiste.color : (isDark ? "rgba(255,255,255,0.15)" : "rgba(160,174,192,0.4)"),
           isDeleted: !catExiste,
           total: 0
         };
@@ -759,7 +757,8 @@ export default function App() {
   const gastosVerTodos = gastos.filter(g => (!vtFechaDesde || g.fecha >= vtFechaDesde) && (!vtFechaHasta || g.fecha <= vtFechaHasta));
 
   const s = {
-    app: { minHeight: "100vh", fontFamily: "'Montserrat', sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: "calc(100px + env(safe-area-inset-bottom, 0px))", width: "100%" },
+    // APLICAMOS userSelect: "none" GLOBALMENTE
+    app: { minHeight: "100vh", fontFamily: "'Montserrat', sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: "calc(100px + env(safe-area-inset-bottom, 0px))", width: "100%", userSelect: "none", WebkitUserSelect: "none" },
     section:    { padding: "20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "stretch" },
     card:       { width: "100%", background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: "16px", marginBottom: 24, overflow: "hidden", boxSizing: "border-box", boxShadow: c.shadow },
     metaCard:   { width: "100%", background: "linear-gradient(135deg,#1A1A1A,#050505)", borderRadius: 16, padding: "20px", marginBottom: 24, boxSizing: "border-box", color: "#FFF", boxShadow: isDark ? "none" : "0 8px 24px rgba(0,0,0,0.15)" },
@@ -777,8 +776,9 @@ export default function App() {
     
     grid2:      { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 24, width: "100%" },
     
-    input: { width: "100%", background: c.input, border: `1px solid ${c.border}`, borderRadius: 10, color: c.text, padding: "12px 14px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", fontWeight: 500, WebkitAppearance: "none", minHeight: 48 },
-    select: { width: "100%", background: c.input, border: `1px solid ${c.border}`, borderRadius: 10, color: c.text, padding: "12px 14px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", fontWeight: 500, cursor: "pointer", WebkitAppearance: "none", minHeight: 48 },
+    // EXCEPCION PARA LOS INPUTS (userSelect: auto)
+    input: { width: "100%", background: c.input, border: `1px solid ${c.border}`, borderRadius: 10, color: c.text, padding: "12px 14px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", fontWeight: 500, WebkitAppearance: "none", minHeight: 48, userSelect: "auto", WebkitUserSelect: "auto" },
+    select: { width: "100%", background: c.input, border: `1px solid ${c.border}`, borderRadius: 10, color: c.text, padding: "12px 14px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", fontWeight: 500, cursor: "pointer", WebkitAppearance: "none", minHeight: 48, userSelect: "auto", WebkitUserSelect: "auto" },
     
     btnPrimary: { background: "#FF803C", color: "#FFF", border: "none", borderRadius: 10, padding: "14px", fontSize: 15, fontWeight: 600, cursor: "pointer", width: "100%", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(255, 128, 60, 0.2)" },
     btnSecondary:{ background: c.input, color: c.text, border: `1px solid ${c.border}`, borderRadius: 10, padding: "12px", fontSize: 14, fontWeight: 600, cursor: "pointer", width: "100%", fontFamily: "inherit" },
@@ -795,17 +795,19 @@ export default function App() {
     navBar: {
       position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480,
       background: c.nav, display: "flex", zIndex: 100,
-      paddingTop: 0, paddingBottom: 0, 
+      // AUMENTADO EL PADDING INFERIOR DEL NAVBAR
+      paddingTop: 10, paddingBottom: `calc(16px + env(safe-area-inset-bottom, 0px))`, 
       boxShadow: isDark ? "0 -2px 10px rgba(0,0,0,0.4)" : "0 -2px 10px rgba(0,0,0,0.06)" 
     },
     navBtn: (a) => ({
-      flex: 1, paddingTop: 10, paddingBottom: `calc(20px + env(safe-area-inset-bottom, 0px))`, backgroundColor: "transparent", WebkitAppearance: "none", border: "none",
+      flex: 1, padding: 0, backgroundColor: "transparent", WebkitAppearance: "none", border: "none",
       color: a ? "#FF803C" : c.muted, fontSize: 12, fontWeight: 400, cursor: "pointer",
       display: "flex", flexDirection: "column", alignItems: "center", gap: 0, fontFamily: "inherit",
       position: "relative"
     }),
     fabCircle: {
-      position: "absolute", top: -24, width: 60, height: 60, borderRadius: "50%",
+      // BOTON NARANJA AUMENTADO A 68x68 Y MAS ARRIBA
+      position: "absolute", top: -34, width: 68, height: 68, borderRadius: "50%",
       background: "#FF803C", color: "#FFF", border: `6px solid ${c.bg}`, 
       display: "flex", alignItems: "center", justifyContent: "center",
       fontSize: 34, fontWeight: 400, cursor: "pointer", fontFamily: "inherit",
@@ -845,6 +847,8 @@ export default function App() {
           overflow-y: ${isModalOpen ? 'hidden' : 'auto'} !important; 
           font-family: 'Montserrat', sans-serif;
           transition: background 0.3s ease, color 0.3s ease;
+          user-select: none;
+          -webkit-user-select: none;
         }
         body * { font-weight: ${useBold ? '700' : 'inherit'}; }
         #root { background: ${c.bg}; min-height: 100vh; width: 100%; max-width: 100%; overflow-x: hidden; overflow-y: ${isModalOpen ? 'hidden' : 'auto'}; }
@@ -939,18 +943,9 @@ export default function App() {
       ) : (
         <>
           {(() => {
-            if (tab === "metas") {
-              return (
-                <div style={{ padding: "12px 20px 16px", background: c.bg, position: "sticky", top: 0, zIndex: 90 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <h1 style={{ fontSize: 20, fontWeight: 700, color: c.text, margin: 0, fontFamily: "'Montserrat', sans-serif" }}>Metas</h1>
-                  </div>
-                </div>
-              );
-            }
-
             let headTitle;
-            if (tab === "hoy") { 
+            if (tab === "metas") headTitle = "Mis Metas de Ahorro";
+            else if (tab === "hoy") { 
               headTitle = (
                 <>
                   <span style={{ fontWeight: 500 }}>¡Hola</span>
@@ -1066,10 +1061,10 @@ export default function App() {
                             {cat ? getIcono(cat.label) : (g.descripcion || "?").charAt(0).toUpperCase()}
                           </div>
                           <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text, textDecoration: cat ? "none" : "line-through" }}>
+                            <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text }}>
                               {cat ? getTexto(cat.label) : g.descripcion}
-                              {cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400, textDecoration: "none" }}>{descAdicional}</span>}
-                              {!cat && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400, textDecoration: "none" }}>(Eliminado)</span>}
+                              {cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400 }}>{descAdicional}</span>}
+                              {!cat && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400 }}>(Eliminado)</span>}
                             </div>
                             <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ahorros"}</div>
                           </div>
@@ -1476,7 +1471,7 @@ export default function App() {
             ))}
 
             <div style={{ width: 72, position: "relative", display: "flex", justifyContent: "center" }}>
-              <button style={s.fabCircle} onClick={() => setShowAddModal(true)}><Plus size={32} /></button>
+              <button style={s.fabCircle} onClick={() => setShowAddModal(true)}><Plus size={36} strokeWidth={2.5} /></button>
             </div>
 
             {[{ id: "historial", icon: <FileText size={24} strokeWidth={2.5} />, label: "Historial" }, 
