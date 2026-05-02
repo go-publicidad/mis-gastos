@@ -251,11 +251,12 @@ const exportarPDF = (gastos, categorias) => {
   win.document.close();
 };
 
-const MenuItem = ({ icon, text, color, mutedColor, border, onClick }) => (
-  <button onClick={onClick} style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", padding: "16px 0", cursor: "pointer", color: color, fontSize: 16, fontWeight: 500, borderBottom: `1px solid ${border}`, textAlign: "left", fontFamily: "inherit" }}>
+// COMPONENTE DE MENU ACTUALIZADO PARA BLOQUES BLANCOS Y FLECHAS NARANJAS
+const MenuItem = ({ icon, text, color, bgColor, border, showArrow = true, onClick }) => (
+  <button onClick={onClick} style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, backgroundColor: bgColor || "transparent", WebkitAppearance: "none", border: "none", padding: "16px 20px", cursor: "pointer", color: color, fontSize: 14, fontWeight: 600, borderBottom: `1px solid ${border}`, textAlign: "left", fontFamily: "inherit", transition: "background-color 0.2s" }}>
     <span style={{ display: "flex", alignItems: "center", color: color }}>{icon}</span>
     <span style={{ flex: 1 }}>{text}</span>
-    <span style={{ color: mutedColor }}><ChevronRight size={20} /></span>
+    {showArrow && <span style={{ color: "#FF803C", display: "flex", alignItems: "center" }}><ChevronRight size={18} /></span>}
   </button>
 );
 
@@ -368,6 +369,16 @@ export default function App() {
     iconBgOrange: isDark ? "rgba(255, 128, 60, 0.15)" : "#FFEDD5",
     iconBgPurple: isDark ? "rgba(168, 85, 247, 0.15)" : "#F3E8FF",
     iconTextPurple: isDark ? "#D8B4FE" : "#A855F7"
+  };
+
+  const menuGroupHeader = {
+    fontSize: 13,
+    color: c.muted,
+    textTransform: "uppercase",
+    letterSpacing: "1px",
+    fontWeight: 700,
+    padding: "16px 20px 8px",
+    margin: 0
   };
 
   const showToast = (msg, color = "#FF803C") => {
@@ -757,7 +768,6 @@ export default function App() {
   const gastosVerTodos = gastos.filter(g => (!vtFechaDesde || g.fecha >= vtFechaDesde) && (!vtFechaHasta || g.fecha <= vtFechaHasta));
 
   const s = {
-    // 1. DESHABILITAR SELECCIÓN DE TEXTO DE FORMA GLOBAL
     app: { minHeight: "100vh", fontFamily: "'Montserrat', sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: "calc(110px + env(safe-area-inset-bottom, 0px))", width: "100%", userSelect: "none", WebkitUserSelect: "none" },
     section:    { padding: "20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "stretch" },
     card:       { width: "100%", background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: "16px", marginBottom: 24, overflow: "hidden", boxSizing: "border-box", boxShadow: c.shadow },
@@ -776,7 +786,6 @@ export default function App() {
     
     grid2:      { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 24, width: "100%" },
     
-    // 2. HABILITAR SELECCION SOLO EN CAMPOS DE TEXTO E INPUTS
     input: { width: "100%", background: c.input, border: `1px solid ${c.border}`, borderRadius: 10, color: c.text, padding: "12px 14px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", fontWeight: 500, WebkitAppearance: "none", minHeight: 48, userSelect: "auto", WebkitUserSelect: "auto" },
     select: { width: "100%", background: c.input, border: `1px solid ${c.border}`, borderRadius: 10, color: c.text, padding: "12px 14px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", fontWeight: 500, cursor: "pointer", WebkitAppearance: "none", minHeight: 48, userSelect: "auto", WebkitUserSelect: "auto" },
     
@@ -792,21 +801,18 @@ export default function App() {
     filterRow:  { display: "flex", gap: 6, flexWrap: "nowrap", overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" },
     filterBtn: (a) => ({ whiteSpace: "nowrap", flexShrink: 0, padding: "8px 16px", borderRadius: 20, border: `1px solid ${a ? "#FF803C" : c.border}`, background: a ? "#FF803C" : c.card, color: a ? "#FFF" : c.muted, fontSize: 13, fontWeight: a ? 600 : 500, cursor: "pointer", fontFamily: "inherit" }),
     
-    // 3. AUMENTAR ESPACIO DEL MENÚ INFERIOR Y QUITAR PADDING TOP PARA LA LINEA NARANJA
     navBar: {
       position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480,
       background: c.nav, display: "flex", zIndex: 100,
       paddingTop: 0, paddingBottom: `calc(20px + env(safe-area-inset-bottom, 0px))`, 
       boxShadow: isDark ? "0 -2px 10px rgba(0,0,0,0.4)" : "0 -2px 10px rgba(0,0,0,0.06)" 
     },
-    // MOVER EL PADDING A LOS BOTONES
     navBtn: (a) => ({
       flex: 1, paddingTop: 16, paddingBottom: 8, backgroundColor: "transparent", WebkitAppearance: "none", border: "none",
       color: a ? "#FF803C" : c.muted, fontSize: 12, fontWeight: 400, cursor: "pointer",
       display: "flex", flexDirection: "column", alignItems: "center", gap: 4, fontFamily: "inherit",
       position: "relative"
     }),
-    // 4. AGRANDAR EL BOTON FLOTANTE Y CENTRARLO PERFECTAMENTE EN EL BORDE SUPERIOR
     fabCircle: {
       position: "absolute", top: 0, left: "50%", transform: "translate(-50%, -50%)", 
       width: 68, height: 68, borderRadius: "50%",
@@ -945,9 +951,18 @@ export default function App() {
       ) : (
         <>
           {(() => {
+            if (tab === "metas") {
+              return (
+                <div style={{ padding: "12px 20px 16px", background: c.bg, position: "sticky", top: 0, zIndex: 90 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <h1 style={{ fontSize: 20, fontWeight: 700, color: c.text, margin: 0, fontFamily: "'Montserrat', sans-serif" }}>Metas</h1>
+                  </div>
+                </div>
+              );
+            }
+
             let headTitle;
-            if (tab === "metas") headTitle = "Mis Metas de Ahorro";
-            else if (tab === "hoy") { 
+            if (tab === "hoy") { 
               headTitle = (
                 <>
                   <span style={{ fontWeight: 500 }}>¡Hola</span>
@@ -1472,7 +1487,7 @@ export default function App() {
               </button>
             ))}
 
-            <div style={{ width: 72, position: "relative" }}>
+            <div style={{ width: 72, position: "relative", display: "flex", justifyContent: "center" }}>
               <button style={s.fabCircle} onClick={() => setShowAddModal(true)}><Plus size={36} strokeWidth={2.5} color="#FFF" /></button>
             </div>
 
@@ -1685,33 +1700,41 @@ export default function App() {
         </div>
       )}
 
-      {/* MODALES DE MENU, APARIENCIA, ETC... SE MANTIENEN INTACTOS */}
+      {/* MENU PRINCIPAL */}
       {showMenu && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 9999, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: isClosing === 'menu' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 9999, padding: "env(safe-area-inset-top, 20px) 0 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: isClosing === 'menu' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+          
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 0, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16, paddingLeft: 20, paddingRight: 20 }}>
             <button onClick={() => cerrarPantalla('menu', () => setShowMenu(false))} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
-            <h2 style={{ margin: 0, fontSize: 22, color: c.text, fontWeight: 700 }}>Mi Perfil</h2>
+            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Menú Principal</h2>
           </div>
 
-          <div style={{ marginBottom: 32 }}>
-            <div style={{ fontSize: 14, color: c.text, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Mi cuenta</div>
-            <MenuItem icon={<UserCircle size={24} color="#FF803C" />} text="Mis datos" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("datos")} />
-            <MenuItem icon={<Lock size={24} color="#FF803C" />} text="Cambiar mi clave" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("clave")} />
-            <MenuItem icon={<Trophy size={24} color="#FF803C" />} text="Mis logros / Insignias" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("logros")} />
+          <div style={{ marginBottom: 24 }}>
+            <div style={menuGroupHeader}>MI CUENTA</div>
+            <div style={{ borderTop: `1px solid ${c.border}`, borderBottom: `1px solid ${c.border}` }}>
+              <MenuItem bgColor={c.card} icon={<UserCircle size={20} color="#FF803C" />} text="Mis datos" color={c.text} border={c.border} onClick={() => setProfileScreen("datos")} />
+              <MenuItem bgColor={c.card} icon={<Lock size={20} color="#FF803C" />} text="Cambiar mi clave" color={c.text} border={c.border} onClick={() => setProfileScreen("clave")} />
+              <MenuItem bgColor={c.card} icon={<Trophy size={20} color="#FF803C" />} text="Mis logros / Insignias" color={c.text} border={"transparent"} onClick={() => setProfileScreen("logros")} />
+            </div>
           </div>
 
-          <div style={{ marginBottom: 32 }}>
-            <div style={{ fontSize: 14, color: c.text, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8, fontWeight: 700 }}>Ajustes</div>
-            <MenuItem icon={<Target size={24} color="#FF803C" />} text="Mi Meta de Ahorro" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("configuracion")} />
-            <MenuItem icon={<Palette size={24} color="#FF803C" />} text="Apariencia (Tema Claro/Oscuro)" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { setShowApariencia(true); setProfileScreen(null); }} />
-            <MenuItem icon={<Download size={24} color="#FF803C" />} text="Exportar Reportes" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => { cerrarPantalla('menu', () => { setShowMenu(false); setShowEmailModal(true); }); }} />
-            <MenuItem icon={<Headphones size={24} color="#FF803C" />} text="Centro de ayuda" color={c.text} mutedColor={c.muted} border={c.border} onClick={() => setProfileScreen("ayuda")} />
+          <div style={{ marginBottom: 24 }}>
+            <div style={menuGroupHeader}>AJUSTES</div>
+            <div style={{ borderTop: `1px solid ${c.border}`, borderBottom: `1px solid ${c.border}` }}>
+              <MenuItem bgColor={c.card} icon={<Target size={20} color="#FF803C" />} text="Mi Meta de Ahorro" color={c.text} border={c.border} onClick={() => setProfileScreen("configuracion")} />
+              <MenuItem bgColor={c.card} icon={<Palette size={20} color="#FF803C" />} text="Apariencia (Tema Claro/Oscuro)" color={c.text} border={c.border} onClick={() => { setShowApariencia(true); setProfileScreen(null); }} />
+              <MenuItem bgColor={c.card} icon={<Download size={20} color="#FF803C" />} text="Exportar Reportes" color={c.text} border={c.border} onClick={() => { cerrarPantalla('menu', () => { setShowMenu(false); setShowEmailModal(true); }); }} />
+              <MenuItem bgColor={c.card} icon={<Headphones size={20} color="#FF803C" />} text="Centro de ayuda" color={c.text} border={"transparent"} onClick={() => setProfileScreen("ayuda")} />
+            </div>
           </div>
 
-          <div style={{ marginTop: "auto", paddingTop: 32 }}>
-            <MenuItem icon={<LogOut size={24}/>} text="Cerrar sesión" color={c.red} mutedColor={c.muted} border={c.border} />
-            <MenuItem icon={<Trash2 size={24}/>} text="Eliminar mi cuenta" color={c.red} mutedColor={c.muted} border={c.border} />
+          <div style={{ marginTop: "auto", paddingTop: 32, paddingBottom: 20 }}>
+            <div style={{ borderTop: `1px solid ${c.border}`, borderBottom: `1px solid ${c.border}` }}>
+              <MenuItem bgColor={c.card} icon={<LogOut size={20}/>} text="Cerrar sesión" color={c.red} border={c.border} showArrow={false} />
+              <MenuItem bgColor={c.card} icon={<Trash2 size={20}/>} text="Eliminar mi cuenta" color={c.red} border={"transparent"} showArrow={false} />
+            </div>
           </div>
+
         </div>
       )}
 
