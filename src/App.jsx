@@ -6,7 +6,7 @@ import {
   Edit2, Trash2, X, Calendar, Mail, CheckCircle2, ChevronRight,
   UserCircle, Lock, Trophy, Palette, Download, Headphones, LogOut, AlertTriangle,
   BarChart2, Plane, Laptop, ShieldCheck, TrendingUp, Plus, PlusCircle, ArrowLeft, Clock,
-  ChevronUp, Minus, ChevronDown, Circle
+  ChevronUp, Minus, ChevronDown, Circle, MoreVertical
 } from "lucide-react";
 
 const SUPABASE_URL = "https://jboazxmcmvvcscqeerbz.supabase.co";
@@ -330,11 +330,13 @@ export default function App() {
   
   const [showAddModal, setShowAddModal] = useState(false);
 
-  // ESTADOS FORMULARIO NUEVA META
   const [showCrearMeta, setShowCrearMeta] = useState(false);
   const [metaForm, setMetaForm] = useState({
     nombre: "", montoObjetivo: "", aporteInicial: "", fechaLimite: "", prioridad: "alta", tipo: "libre", icono: "💻"
   });
+
+  // NUEVO: ESTADO PARA META SELECCIONADA Y VISTA DETALLE
+  const [metaSeleccionada, setMetaSeleccionada] = useState(null);
 
   const [theme, setTheme] = useState("dark");
   const [isAutoTheme, setIsAutoTheme] = useState(false);
@@ -347,7 +349,7 @@ export default function App() {
   const categorias = [...safeBase, ...safeExtra];
   const isDark = theme === "dark";
 
-  const isModalOpen = showAddModal || !!editando || showEmailModal || showCrearMeta;
+  const isModalOpen = showAddModal || !!editando || showEmailModal || showCrearMeta || !!metaSeleccionada;
 
   const c = {
     bg: isDark ? "#0A0A0A" : "#F4F5F7",
@@ -571,7 +573,6 @@ export default function App() {
     showToast("Categoría eliminada", c.muted);
   };
 
-  // FUNCION PARA PROCESAR Y GUARDAR UNA NUEVA META EN LA BD
   const procesarNuevaMeta = async () => {
     if (!metaForm.nombre.trim()) return showToast("⚠️ Ingresa el nombre de la meta", c.red);
     if (!metaForm.montoObjetivo || parseFloat(metaForm.montoObjetivo) <= 0) return showToast("⚠️ Ingresa un monto objetivo válido", c.red);
@@ -1357,7 +1358,8 @@ export default function App() {
                   const bgIconColor = PASTEL_COLORS[index % PASTEL_COLORS.length];
 
                   return (
-                    <div key={meta.id} style={{ ...s.card, padding: "20px", marginBottom: 16 }}>
+                    // AGREGADO EL ONCLICK AQUÍ
+                    <div key={meta.id} onClick={() => setMetaSeleccionada({ ...meta, indexColor: index })} style={{ ...s.card, padding: "20px", marginBottom: 16, cursor: "pointer" }}>
                       <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
                         <div style={{ width: 70, height: 70, borderRadius: "50%", background: bgIconColor, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 32 }}>
                           {meta.icono}
@@ -1388,10 +1390,6 @@ export default function App() {
                   );
                 })
               )}
-
-              <button onClick={() => setShowCrearMeta(true)} style={{ ...s.btnPrimary, background: "#059669", boxShadow: "0 4px 12px rgba(5, 150, 105, 0.3)", display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 8 }}>
-                <Plus size={20} /> Crear nueva meta
-              </button>
             </div>
           )}
 
@@ -1420,6 +1418,111 @@ export default function App() {
           </div>
         </>
       )}
+
+      {/* NUEVA PANTALLA: RESUMEN DE LA META SELECCIONADA */}
+      {metaSeleccionada && (() => {
+        const obj = parseFloat(metaSeleccionada.montoObjetivo) || 1;
+        const ahorrado = parseFloat(metaSeleccionada.aporteInicial) || 0;
+        const faltan = Math.max(0, obj - ahorrado);
+        const pct = Math.min(100, Math.round((ahorrado / obj) * 100));
+
+        let fechaStr = "Sin fecha límite";
+        let diasRestantes = 0;
+        
+        if (metaSeleccionada.fechaLimite) {
+          const mesesAbv = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+          const [y, m, d] = metaSeleccionada.fechaLimite.split("-");
+          fechaStr = `${parseInt(d)} ${mesesAbv[parseInt(m)-1]} ${y}`;
+          diasRestantes = diffDias(hoy(), metaSeleccionada.fechaLimite);
+        }
+
+        const ahorroDiarioVal = diasRestantes > 0 ? (faltan / diasRestantes) : 0;
+        const bgIconColor = PASTEL_COLORS[metaSeleccionada.indexColor % PASTEL_COLORS.length];
+
+        return (
+          <div className="hide-scroll" style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, display: "flex", flexDirection: "column", animation: isClosing === 'detalleMeta' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+            
+            {/* Cabecera */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "env(safe-area-inset-top, 20px) 20px 16px", background: c.bg, borderBottom: `1px solid ${c.border}` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <button onClick={() => cerrarPantalla('detalleMeta', () => setMetaSeleccionada(null))} style={{ background: "none", border: "none", color: c.muted, cursor: "pointer", padding: 0, display: "flex" }}>
+                  <ArrowLeft size={28} />
+                </button>
+                <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>{metaSeleccionada.nombre}</h2>
+              </div>
+              <button style={{ background: "none", border: "none", color: c.muted, cursor: "pointer", padding: 0, display: "flex" }}>
+                <MoreVertical size={24} />
+              </button>
+            </div>
+
+            {/* Contenido scrolleable */}
+            <div style={{ padding: "32px 20px 100px", flex: 1, overflowY: "auto" }}>
+              
+              {/* Bloque Central de Progreso */}
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 40 }}>
+                <div style={{ position: "relative", marginBottom: 24 }}>
+                  <div style={{ width: 110, height: 110, borderRadius: "50%", background: bgIconColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 56 }}>
+                    {metaSeleccionada.icono}
+                  </div>
+                  <div style={{ position: "absolute", bottom: 0, right: 0, width: 28, height: 28, background: "#FFF", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
+                    <CheckCircle2 size={20} color={c.green} />
+                  </div>
+                </div>
+
+                <div style={{ fontSize: 32, fontWeight: 700, color: c.green, marginBottom: 4 }}>
+                  S/ {formatMoney(ahorrado).replace("S/ ", "")}
+                </div>
+                <div style={{ fontSize: 14, color: c.muted, fontWeight: 500, marginBottom: 24 }}>
+                  de S/ {formatMoney(obj).replace("S/ ", "")}
+                </div>
+
+                <div style={{ width: "100%", display: "flex", alignItems: "center", gap: 16 }}>
+                  <div style={{ background: isDark ? "#333" : "#E5E7EB", borderRadius: 6, height: 10, flex: 1, overflow: "hidden" }}>
+                    <div style={{ background: c.green, height: "100%", width: `${pct}%`, borderRadius: 6 }}></div>
+                  </div>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: c.text }}>{pct}%</span>
+                </div>
+              </div>
+
+              {/* Tarjeta Resumen */}
+              <div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 12 }}>Resumen de tu progreso</div>
+              <div style={{ ...s.card, padding: "20px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <span style={{ color: c.muted, fontSize: 14, fontWeight: 500 }}>Fecha limite</span>
+                  <span style={{ color: c.text, fontSize: 14, fontWeight: 600 }}>{fechaStr}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <span style={{ color: c.muted, fontSize: 14, fontWeight: 500 }}>Faltan</span>
+                  <span style={{ color: c.text, fontSize: 14, fontWeight: 600 }}>{metaSeleccionada.fechaLimite ? `${Math.max(0, diasRestantes)} días` : "—"}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <span style={{ color: c.muted, fontSize: 14, fontWeight: 500 }}>Ahorrado</span>
+                  <span style={{ color: c.text, fontSize: 14, fontWeight: 600 }}>S/ {formatMoney(ahorrado).replace("S/ ", "")}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <span style={{ color: c.muted, fontSize: 14, fontWeight: 500 }}>Falta por ahorrar</span>
+                  <span style={{ color: c.text, fontSize: 14, fontWeight: 600 }}>S/ {formatMoney(faltan).replace("S/ ", "")}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ color: c.muted, fontSize: 14, fontWeight: 500 }}>Ahorro diario necesario</span>
+                  <span style={{ color: c.text, fontSize: 14, fontWeight: 600 }}>{ahorroDiarioVal > 0 ? `S/ ${ahorroDiarioVal.toFixed(2)}` : "S/ 0.00"}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Boton Inferior */}
+            <div style={{ padding: "16px 20px calc(20px + env(safe-area-inset-bottom, 0px))", background: c.bg, borderTop: `1px solid ${c.border}` }}>
+              <button 
+                onClick={() => showToast("Edición de meta próximamente")}
+                style={{ width: "100%", padding: 16, background: "#059669", color: "#FFF", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
+              >
+                Editar meta
+              </button>
+            </div>
+
+          </div>
+        );
+      })()}
 
       {/* NUEVA PANTALLA: CREAR META */}
       {showCrearMeta && (
