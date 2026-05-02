@@ -6,7 +6,7 @@ import {
   Edit2, Trash2, X, Calendar, Mail, CheckCircle2, ChevronRight,
   UserCircle, Lock, Trophy, Palette, Download, Headphones, LogOut, AlertTriangle,
   BarChart2, Plane, Laptop, ShieldCheck, TrendingUp, Plus, PlusCircle, ArrowLeft, Clock,
-  ChevronUp, Minus, ChevronDown, Circle, MoreVertical, TrendingDown, Bell
+  ChevronUp, Minus, ChevronDown, Circle, MoreVertical, TrendingDown, Bell, Loader2
 } from "lucide-react";
 
 const SUPABASE_URL = "https://jboazxmcmvvcscqeerbz.supabase.co";
@@ -407,6 +407,7 @@ export default function App() {
 
   useEffect(() => { window.scrollTo(0, 0); }, [tab]);
 
+  // LOGICA PARA PULL TO REFRESH EN INICIO - MEJORADO PARA NATIVO
   const handleTouchStart = (e) => {
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
     if (scrollTop <= 0) {
@@ -430,7 +431,12 @@ export default function App() {
   const handleTouchEnd = async () => {
     if (pullDistance > 50) {
       setIsRefreshing(true);
-      await loadData();
+      setPullDistance(60); // Mantener el espacio mientras recarga
+      
+      // Minimo 800ms de feedback visual para que el usuario sepa que funciono
+      const delay = new Promise(resolve => setTimeout(resolve, 800));
+      await Promise.all([loadData(), delay]);
+      
       setIsRefreshing(false);
     }
     setPullDistance(0);
@@ -835,6 +841,7 @@ export default function App() {
           transition: background 0.3s ease, color 0.3s ease;
           user-select: none;
           -webkit-user-select: none;
+          overscroll-behavior-y: none; /* BLOQUEA EL PULL-TO-REFRESH NATIVO DE CHROME/SAFARI */
         }
         body * { font-weight: ${useBold ? '700' : 'inherit'}; }
         #root { background: ${c.bg}; min-height: 100vh; width: 100%; max-width: 100%; overflow-x: hidden; overflow-y: ${isModalOpen ? 'hidden' : 'auto'}; }
@@ -980,40 +987,54 @@ export default function App() {
             );
           })()}
 
-          {error && <div style={{...s.errorCard, marginTop: 80}}><AlertTriangle size={16} style={{ verticalAlign: "middle", marginRight: 8 }} /> {error}</div>}
+          {error && <div style={{...s.errorCard, marginTop: 80, position: "relative", zIndex: 20}}><AlertTriangle size={16} style={{ verticalAlign: "middle", marginRight: 8 }} /> {error}</div>}
 
-          {/* INICIO CON EL NUEVO PULL TO REFRESH DENTRO DEL CONTENIDO SCROLLEABLE */}
+          {/* INDICADOR PULL TO REFRESH FIJO ATRÁS DEL CONTENIDO */}
+          {tab === "hoy" && (
+            <div style={{
+              position: "fixed",
+              top: "calc(76px + env(safe-area-inset-top, 0px))",
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: "100%",
+              maxWidth: 480,
+              height: 80,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 10,
+              color: "#10B981"
+            }}>
+              <Loader2 
+                size={24} 
+                style={{ 
+                  animation: isRefreshing ? "spin 1s linear infinite" : "none", 
+                  transform: isRefreshing ? "none" : `rotate(${pullDistance * 5}deg)` 
+                }} 
+              />
+              <span style={{ fontSize: 12, fontWeight: 600, marginTop: 4, opacity: Math.min(pullDistance / 50, 1), color: c.muted }}>
+                Actualizando...
+              </span>
+            </div>
+          )}
+
+          {/* CONTENIDO PRINCIPAL SCROLLEABLE QUE SE DESLIZA HACIA ABAJO */}
           {tab === "hoy" && (
             <div 
-              style={s.section}
+              style={{
+                ...s.section,
+                background: c.bg, // Oculta el spinner de atrás cuando está en posición 0
+                minHeight: "100vh",
+                position: "relative",
+                zIndex: 20,
+                transform: `translateY(${isRefreshing ? 60 : pullDistance}px)`,
+                transition: pullDistance === 0 || isRefreshing ? "transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)" : "none",
+              }}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
             >
-              {/* INDICADOR PULL TO REFRESH */}
-              <div style={{
-                height: isRefreshing ? 60 : pullDistance,
-                overflow: "hidden",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "flex-end", 
-                paddingBottom: (isRefreshing || pullDistance > 0) ? 16 : 0,
-                transition: pullDistance === 0 || isRefreshing ? "height 0.3s ease" : "none",
-                width: "100%",
-                color: "#10B981"
-              }}>
-                <RefreshCw 
-                  size={24} 
-                  style={{ 
-                    animation: isRefreshing ? "spin 1s linear infinite" : "none", 
-                    transform: isRefreshing ? "none" : `rotate(${pullDistance * 3}deg)` 
-                  }} 
-                />
-                <span style={{ fontSize: 12, fontWeight: 600, marginTop: 4, opacity: Math.min(pullDistance / 50, 1), color: c.muted }}>
-                  Actualizando...
-                </span>
-              </div>
               
               {listaMetas.length === 0 ? (
                  <div style={{ ...s.sliderCard, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", marginBottom: 24, textAlign: "center" }}>
