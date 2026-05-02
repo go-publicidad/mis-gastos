@@ -757,8 +757,8 @@ export default function App() {
   const gastosVerTodos = gastos.filter(g => (!vtFechaDesde || g.fecha >= vtFechaDesde) && (!vtFechaHasta || g.fecha <= vtFechaHasta));
 
   const s = {
-    // APLICAMOS userSelect: "none" GLOBALMENTE
-    app: { minHeight: "100vh", fontFamily: "'Montserrat', sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: "calc(100px + env(safe-area-inset-bottom, 0px))", width: "100%", userSelect: "none", WebkitUserSelect: "none" },
+    // 1. DESHABILITAR SELECCIÓN DE TEXTO DE FORMA GLOBAL
+    app: { minHeight: "100vh", fontFamily: "'Montserrat', sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: "calc(110px + env(safe-area-inset-bottom, 0px))", width: "100%", userSelect: "none", WebkitUserSelect: "none" },
     section:    { padding: "20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "stretch" },
     card:       { width: "100%", background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: "16px", marginBottom: 24, overflow: "hidden", boxSizing: "border-box", boxShadow: c.shadow },
     metaCard:   { width: "100%", background: "linear-gradient(135deg,#1A1A1A,#050505)", borderRadius: 16, padding: "20px", marginBottom: 24, boxSizing: "border-box", color: "#FFF", boxShadow: isDark ? "none" : "0 8px 24px rgba(0,0,0,0.15)" },
@@ -776,7 +776,7 @@ export default function App() {
     
     grid2:      { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 24, width: "100%" },
     
-    // EXCEPCION PARA LOS INPUTS (userSelect: auto)
+    // 2. HABILITAR SELECCION SOLO EN CAMPOS DE TEXTO E INPUTS
     input: { width: "100%", background: c.input, border: `1px solid ${c.border}`, borderRadius: 10, color: c.text, padding: "12px 14px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", fontWeight: 500, WebkitAppearance: "none", minHeight: 48, userSelect: "auto", WebkitUserSelect: "auto" },
     select: { width: "100%", background: c.input, border: `1px solid ${c.border}`, borderRadius: 10, color: c.text, padding: "12px 14px", fontSize: 16, outline: "none", boxSizing: "border-box", fontFamily: "inherit", fontWeight: 500, cursor: "pointer", WebkitAppearance: "none", minHeight: 48, userSelect: "auto", WebkitUserSelect: "auto" },
     
@@ -792,25 +792,27 @@ export default function App() {
     filterRow:  { display: "flex", gap: 6, flexWrap: "nowrap", overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" },
     filterBtn: (a) => ({ whiteSpace: "nowrap", flexShrink: 0, padding: "8px 16px", borderRadius: 20, border: `1px solid ${a ? "#FF803C" : c.border}`, background: a ? "#FF803C" : c.card, color: a ? "#FFF" : c.muted, fontSize: 13, fontWeight: a ? 600 : 500, cursor: "pointer", fontFamily: "inherit" }),
     
+    // 3. AUMENTAR ESPACIO DEL MENÚ INFERIOR Y QUITAR PADDING TOP PARA LA LINEA NARANJA
     navBar: {
       position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480,
       background: c.nav, display: "flex", zIndex: 100,
-      // AUMENTADO EL PADDING INFERIOR DEL NAVBAR
-      paddingTop: 10, paddingBottom: `calc(16px + env(safe-area-inset-bottom, 0px))`, 
+      paddingTop: 0, paddingBottom: `calc(20px + env(safe-area-inset-bottom, 0px))`, 
       boxShadow: isDark ? "0 -2px 10px rgba(0,0,0,0.4)" : "0 -2px 10px rgba(0,0,0,0.06)" 
     },
+    // MOVER EL PADDING A LOS BOTONES
     navBtn: (a) => ({
-      flex: 1, padding: 0, backgroundColor: "transparent", WebkitAppearance: "none", border: "none",
+      flex: 1, paddingTop: 16, paddingBottom: 8, backgroundColor: "transparent", WebkitAppearance: "none", border: "none",
       color: a ? "#FF803C" : c.muted, fontSize: 12, fontWeight: 400, cursor: "pointer",
-      display: "flex", flexDirection: "column", alignItems: "center", gap: 0, fontFamily: "inherit",
+      display: "flex", flexDirection: "column", alignItems: "center", gap: 4, fontFamily: "inherit",
       position: "relative"
     }),
+    // 4. AGRANDAR EL BOTON FLOTANTE Y CENTRARLO PERFECTAMENTE EN EL BORDE SUPERIOR
     fabCircle: {
-      // BOTON NARANJA AUMENTADO A 68x68 Y MAS ARRIBA
-      position: "absolute", top: -34, width: 68, height: 68, borderRadius: "50%",
+      position: "absolute", top: 0, left: "50%", transform: "translate(-50%, -50%)", 
+      width: 68, height: 68, borderRadius: "50%",
       background: "#FF803C", color: "#FFF", border: `6px solid ${c.bg}`, 
       display: "flex", alignItems: "center", justifyContent: "center",
-      fontSize: 34, fontWeight: 400, cursor: "pointer", fontFamily: "inherit",
+      cursor: "pointer", fontFamily: "inherit",
       boxShadow: "0 4px 12px rgba(255, 128, 60, 0.4)", zIndex: 105, padding: 0
     },
 
@@ -1061,10 +1063,10 @@ export default function App() {
                             {cat ? getIcono(cat.label) : (g.descripcion || "?").charAt(0).toUpperCase()}
                           </div>
                           <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text }}>
+                            <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text, textDecoration: cat ? "none" : "line-through" }}>
                               {cat ? getTexto(cat.label) : g.descripcion}
-                              {cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400 }}>{descAdicional}</span>}
-                              {!cat && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400 }}>(Eliminado)</span>}
+                              {cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400, textDecoration: "none" }}>{descAdicional}</span>}
+                              {!cat && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400, textDecoration: "none" }}>(Eliminado)</span>}
                             </div>
                             <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ahorros"}</div>
                           </div>
@@ -1381,7 +1383,7 @@ export default function App() {
 
           {/* PESTAÑA METAS DINÁMICA */}
           {tab === "metas" && (
-            <div style={{ padding: "0 20px 20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", paddingBottom: 140 }}>
+            <div style={{ padding: "0 20px 20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", paddingBottom: 150 }}>
               <div style={{ fontSize: 14, color: c.muted, marginBottom: 20, fontWeight: 500 }}>Tus objetivos financieros</div>
 
               {listaMetas.length === 0 ? (
@@ -1449,7 +1451,7 @@ export default function App() {
 
           {/* BOTON FLOTANTE DE CREAR META SOLO VISIBLE EN LA PESTAÑA METAS */}
           {tab === "metas" && (
-            <div style={{ position: "fixed", bottom: "calc(104px + env(safe-area-inset-bottom, 0px))", left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, padding: "20px 20px", background: isDark ? "linear-gradient(to top, #0A0A0A 80%, rgba(10,10,10,0))" : "linear-gradient(to top, #F4F5F7 80%, rgba(244,245,247,0))", zIndex: 80, boxSizing: "border-box", pointerEvents: "none" }}>
+            <div style={{ position: "fixed", bottom: "calc(110px + env(safe-area-inset-bottom, 0px))", left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, padding: "20px 20px", background: isDark ? "linear-gradient(to top, #0A0A0A 80%, rgba(10,10,10,0))" : "linear-gradient(to top, #F4F5F7 80%, rgba(244,245,247,0))", zIndex: 80, boxSizing: "border-box", pointerEvents: "none" }}>
               <button onClick={() => {
                 setIsEditingMetaObj(false);
                 setMetaForm({ id: "", nombre: "", montoObjetivo: "", aporteInicial: "", fechaLimite: "", prioridad: "alta", tipo: "libre", icono: "💻" });
@@ -1470,8 +1472,8 @@ export default function App() {
               </button>
             ))}
 
-            <div style={{ width: 72, position: "relative", display: "flex", justifyContent: "center" }}>
-              <button style={s.fabCircle} onClick={() => setShowAddModal(true)}><Plus size={36} strokeWidth={2.5} /></button>
+            <div style={{ width: 72, position: "relative" }}>
+              <button style={s.fabCircle} onClick={() => setShowAddModal(true)}><Plus size={36} strokeWidth={2.5} color="#FFF" /></button>
             </div>
 
             {[{ id: "historial", icon: <FileText size={24} strokeWidth={2.5} />, label: "Historial" }, 
