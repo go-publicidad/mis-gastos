@@ -37,6 +37,7 @@ const METAS_INICIALES = [];
 const COLORES_CUSTOM = ["#FF6B6B","#FF803C","#6BCB77","#4D96FF","#C77DFF","#FF9F1C","#2EC4B6","#E71D36","#F72585","#B5E48C"];
 const PASTEL_COLORS = ["#A7F3D0", "#BFDBFE", "#FED7AA", "#E9D5FF", "#FECACA", "#FDE047"];
 const METAS_ICONS = ["💻", "✈️", "🏠", "🚗", "🛍️", "🎓", "📱"];
+const CAT_ICONS = ["💰", "💼", "📈", "🍽️", "🚌", "❤️", "🏠", "🎮", "📦", "🛒", "✈️", "📱", "🍔", "🍺", "🎬", "🏥", "💡", "💧", "👗", "🐕", "📚", "⛽", "🎟️", "🎁", "🏃"];
 
 const getLimaTime = () => new Date(Date.now() - 18000000);
 const hoy = () => getLimaTime().toISOString().split("T")[0];
@@ -258,9 +259,6 @@ export default function App() {
   const [ingresoMensual, setIngresoMensual] = useState("");
   
   const [userName, setUserName] = useState("Paul Flores");
-
-  const [isEditingMeta, setIsEditingMeta] = useState(false);
-  const [isEditingIngreso, setIsEditingIngreso] = useState(false);
   
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -270,21 +268,8 @@ export default function App() {
   const [editando, setEditando] = useState(null);   
   const [editForm, setEditForm] = useState({});
 
-  const [showNuevaCatBase, setShowNuevaCatBase] = useState(false);
-  const [nuevaCatBaseLabel, setNuevaCatBaseLabel] = useState("");
-  const [nuevaCatBaseColor, setNuevaCatBaseColor] = useState(COLORES_CUSTOM[0]);
-
-  const [showNuevaCat, setShowNuevaCat] = useState(false);
-  const [nuevaCatLabel, setNuevaCatLabel] = useState("");
-  const [nuevaCatColor, setNuevaCatColor] = useState(COLORES_CUSTOM[0]);
-
-  const [editandoCat, setEditandoCat] = useState(null);
-  const [editCatLabel, setEditCatLabel] = useState("");
-  const [editCatColor, setEditCatColor] = useState("");
-
-  const [editandoCatBase, setEditandoCatBase] = useState(null);
-  const [editCatBaseLabel, setEditCatBaseLabel] = useState("");
-  const [editCatBaseColor, setEditCatBaseColor] = useState("");
+  // ESTADO UNIFICADO PARA CREAR/EDITAR CATEGORIAS
+  const [catForm, setCatForm] = useState({ visible: false, id: null, tipo: 'ingreso', nombre: '', icono: '📌', color: COLORES_CUSTOM[0] });
 
   const [filtroHistTipo, setFiltroHistTipo] = useState("todos");
   const [filtroHistCat, setFiltroHistCat] = useState("todas");
@@ -292,7 +277,6 @@ export default function App() {
   const [filtroHistFechaHasta, setFiltroHistFechaHasta] = useState("");
   const [showFiltrosMenu, setShowFiltrosMenu] = useState(false);
 
-  // NUEVOS ESTADOS PARA FASE 3: REPORTES
   const [filtroReporteTipo, setFiltroReporteTipo] = useState("general");
   const [reporteMetaId, setReporteMetaId] = useState("");
 
@@ -343,7 +327,7 @@ export default function App() {
   const categorias = [...safeBase, ...safeExtra];
   const isDark = theme === "dark";
 
-  const isModalOpen = showAddModal || !!editando || showEmailModal || showCrearMeta || !!metaSeleccionada || showAporteModal;
+  const isModalOpen = showAddModal || !!editando || showEmailModal || showCrearMeta || !!metaSeleccionada || showAporteModal || catForm.visible;
 
   const c = {
     bg: isDark ? "#0A0A0A" : "#F4F5F7",
@@ -479,71 +463,60 @@ export default function App() {
     cerrarPantalla('datos', () => setProfileScreen(null));
   };
 
-  const agregarCategoriaBase = async () => {
-    const label = nuevaCatBaseLabel.trim();
-    if (!label) { showToast("Escribe un nombre", c.red); return; }
-    const id = "base_" + Date.now();
-    const nueva = { id, label, color: nuevaCatBaseColor };
-    const updated = [...safeBase, nueva];
-    setCategoriasBase(updated);
-    await supabase.from("config").upsert([{ key: "categoriasBase", value: JSON.stringify(updated) }], { onConflict: "key" });
-    setNuevaCatBaseLabel("");
-    setShowNuevaCatBase(false);
-    showToast(`Categoría "${label}" creada ✓`);
+  // NUEVA LÓGICA UNIFICADA PARA CATEGORÍAS
+  const abrirCrearCat = (tipo) => {
+    setCatForm({ visible: true, id: null, tipo, nombre: "", icono: "📌", color: COLORES_CUSTOM[0] });
   };
 
-  const agregarCategoria = async () => {
-    const label = nuevaCatLabel.trim();
-    if (!label) { showToast("Escribe un nombre", c.red); return; }
-    const id = "custom_" + Date.now();
-    const nueva = { id, label, color: nuevaCatColor };
-    const updated = [...safeExtra, nueva];
-    setCategoriasExtra(updated);
-    await supabase.from("config").upsert([{ key: "categoriasCustom", value: JSON.stringify(updated) }], { onConflict: "key" });
-    setNuevaCatLabel("");
-    setShowNuevaCat(false);
-    showToast(`Categoría "${label}" creada ✓`);
+  const abrirEditarCat = (cat, tipo) => {
+    setCatForm({ visible: true, id: cat.id, tipo, nombre: getTexto(cat.label), icono: getIcono(cat.label), color: cat.color || COLORES_CUSTOM[0] });
   };
 
-  const eliminarCategoria = async (id) => {
+  const guardarCatForm = async () => {
+    const nombre = catForm.nombre.trim();
+    if (!nombre) { showToast("Escribe un nombre", c.red); return; }
+    
+    const labelFinal = `${catForm.icono} ${nombre}`;
+    const esIngreso = catForm.tipo === 'ingreso';
+    const arrayActual = esIngreso ? safeBase : safeExtra;
+    const key = esIngreso ? "categoriasBase" : "categoriasCustom";
+
+    let nuevoArray;
+    if (catForm.id) {
+        nuevoArray = arrayActual.map(c => c.id === catForm.id ? { ...c, label: labelFinal, color: catForm.color } : c);
+    } else {
+        const id = (esIngreso ? "base_" : "custom_") + Date.now();
+        nuevoArray = [...arrayActual, { id, label: labelFinal, color: catForm.color }];
+    }
+
+    if (esIngreso) setCategoriasBase(nuevoArray);
+    else setCategoriasExtra(nuevoArray);
+
+    setSaving(true);
+    await supabase.from("config").upsert([{ key, value: JSON.stringify(nuevoArray) }], { onConflict: "key" });
+    setSaving(false);
+    
+    showToast(catForm.id ? "Categoría actualizada ✓" : "Categoría creada ✓", c.green);
+    setCatForm({ ...catForm, visible: false });
+  };
+
+  const eliminarCat = async (id, tipo) => {
     if (!window.confirm("¿Seguro que deseas eliminar esta categoría?")) return;
-    const updated = safeExtra.filter(cat => cat.id !== id);
-    setCategoriasExtra(updated);
-    await supabase.from("config").upsert([{ key: "categoriasCustom", value: JSON.stringify(updated) }], { onConflict: "key" });
+    const esIngreso = tipo === 'ingreso';
+    const arrayActual = esIngreso ? safeBase : safeExtra;
+    const key = esIngreso ? "categoriasBase" : "categoriasCustom";
+
+    const nuevoArray = arrayActual.filter(c => c.id !== id);
+    
+    if (esIngreso) setCategoriasBase(nuevoArray);
+    else setCategoriasExtra(nuevoArray);
+
+    setSaving(true);
+    await supabase.from("config").upsert([{ key, value: JSON.stringify(nuevoArray) }], { onConflict: "key" });
+    setSaving(false);
     showToast("Categoría eliminada", c.muted);
   };
 
-  const abrirEdicionCat = (cat) => { setEditandoCat(cat.id); setEditCatLabel(cat.label); setEditCatColor(cat.color); };
-
-  const guardarEdicionCat = async () => {
-    const label = editCatLabel.trim();
-    if (!label) { showToast("Escribe un nombre", c.red); return; }
-    const updated = safeExtra.map(cat => cat.id === editandoCat ? { ...cat, label, color: editCatColor } : cat);
-    setCategoriasExtra(updated);
-    await supabase.from("config").upsert([{ key: "categoriasCustom", value: JSON.stringify(updated) }], { onConflict: "key" });
-    setEditandoCat(null);
-    showToast("Categoría actualizada ✓");
-  };
-
-  const abrirEdicionCatBase = (cat) => { setEditandoCatBase(cat.id); setEditCatBaseLabel(cat.label); setEditCatBaseColor(cat.color); };
-
-  const guardarEdicionCatBase = async () => {
-    const label = editCatBaseLabel.trim();
-    if (!label) { showToast("Escribe un nombre", c.red); return; }
-    const updated = safeBase.map(cat => cat.id === editandoCatBase ? { ...cat, label, color: editCatBaseColor } : cat);
-    setCategoriasBase(updated);
-    await supabase.from("config").upsert([{ key: "categoriasBase", value: JSON.stringify(updated) }], { onConflict: "key" });
-    setEditandoCatBase(null);
-    showToast("Categoría base actualizada ✓");
-  };
-
-  const eliminarCategoriaBase = async (id) => {
-    if (!window.confirm("¿Seguro que deseas eliminar esta categoría base?")) return;
-    const updated = safeBase.filter(cat => cat.id !== id);
-    setCategoriasBase(updated);
-    await supabase.from("config").upsert([{ key: "categoriasBase", value: JSON.stringify(updated) }], { onConflict: "key" });
-    showToast("Categoría eliminada", c.muted);
-  };
 
   const procesarNuevaMeta = async () => {
     if (!metaForm.nombre.trim()) return showToast("⚠️ Ingresa el nombre de la meta", c.red);
@@ -1316,7 +1289,6 @@ export default function App() {
                      return acc;
                  }, {});
 
-                 // Solo mostramos los ultimos 6 días con aportes
                  const aportesChartData = Object.keys(aportesPorFecha).sort().slice(-6).map(fecha => ({
                      fecha,
                      total: aportesPorFecha[fecha]
@@ -1872,7 +1844,9 @@ export default function App() {
           <div style={{ marginBottom: 24 }}>
             <div style={menuGroupHeader}>AJUSTES</div>
             <div style={{ borderTop: `1px solid ${c.border}`, borderBottom: `1px solid ${c.border}` }}>
-              <MenuItem bgColor={c.card} icon={<Target size={20} color="#FF803C" />} text="Mi Meta de Ahorro" color={c.text} border={c.border} onClick={() => setProfileScreen("configuracion")} />
+              {/* OPCION ACTUALIZADA: "Configuración de categorías" reemplaza a Mi Meta de Ahorro */}
+              <MenuItem bgColor={c.card} icon={<Settings size={20} color="#FF803C" />} text="Configuración de categorías" color={c.text} border={c.border} onClick={() => setProfileScreen("categorias")} />
+              
               <MenuItem bgColor={c.card} icon={<Palette size={20} color="#FF803C" />} text="Apariencia (Tema Claro/Oscuro)" color={c.text} border={c.border} onClick={() => { setShowApariencia(true); setProfileScreen(null); }} />
               <MenuItem bgColor={c.card} icon={<Download size={20} color="#FF803C" />} text="Exportar Reportes" color={c.text} border={c.border} onClick={() => { cerrarPantalla('menu', () => { setShowMenu(false); setShowEmailModal(true); }); }} />
               <MenuItem bgColor={c.card} icon={<Headphones size={20} color="#FF803C" />} text="Centro de ayuda" color={c.text} border={"transparent"} onClick={() => setProfileScreen("ayuda")} />
@@ -1889,138 +1863,109 @@ export default function App() {
         </div>
       )}
 
-      {showMenu && profileScreen === "configuracion" && (
-        <div className="hide-scroll" style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'configuracion' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+      {/* NUEVA PANTALLA: CONFIGURACION DE CATEGORÍAS (REEMPLAZA A LA ANTIGUA CONFIGURACION) */}
+      {showMenu && profileScreen === "categorias" && (
+        <div className="hide-scroll" style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'categorias' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+          
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
-            <button onClick={() => cerrarPantalla('configuracion', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
-            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Mi Meta de Ahorro</h2>
+            <button onClick={() => cerrarPantalla('categorias', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Configuración de categorías</h2>
           </div>
           
-          <div style={{...s.card, marginBottom: 24}}>
-            <div style={{ ...s.label, textAlign: "center", marginBottom: 4 }}>Definir meta de ahorro (S/)</div>
-            <input style={{ ...s.input, marginBottom: 24, fontSize: 20, textAlign: "center", color: "#FF803C", fontWeight: 600 }} type={isEditingMeta ? "number" : "text"} placeholder="Ej: 100000" value={isEditingMeta ? metaAhorro : (metaAhorro ? formatMoney(metaAhorro) : "")} onFocus={() => setIsEditingMeta(true)} onBlur={() => setIsEditingMeta(false)} onChange={e => setMetaAhorro(e.target.value)} />
+          {/* CATEGORÍAS DE INGRESOS */}
+          <div style={{ marginBottom: 32 }}>
+            <div style={{ ...s.label, fontSize: 16, color: c.green, marginBottom: 12 }}>Categorías para Ingresos</div>
             
-            <div style={{ ...s.label, textAlign: "center", marginBottom: 4 }}>Período de ahorro</div>
-            <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
-              <div style={{ flex: 1, position: "relative" }}>
-                {!fechaInicioPlan && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Del</span>}
-                <input type="date" value={fechaInicioPlan} onChange={e => setFechaInicioPlan(e.target.value)} style={{ ...s.input, textAlign: "center", color: fechaInicioPlan ? c.text : "transparent" }} />
-              </div>
-              <div style={{ flex: 1, position: "relative" }}>
-                {!fechaFinPlan && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Al</span>}
-                <input type="date" value={fechaFinPlan} onChange={e => setFechaFinPlan(e.target.value)} style={{ ...s.input, textAlign: "center", color: fechaFinPlan ? c.text : "transparent" }} />
-              </div>
-            </div>
-            
-            <div style={{ ...s.label, textAlign: "center", marginBottom: 4 }}>Ingreso mensual (S/)</div>
-            <input style={{ ...s.input, marginBottom: 24, fontSize: 20, textAlign: "center", color: c.green, fontWeight: 600 }} type={isEditingIngreso ? "number" : "text"} placeholder="Ej: 5000" value={isEditingIngreso ? ingresoMensual : (ingresoMensual ? formatMoney(ingresoMensual) : "")} onFocus={() => setIsEditingIngreso(true)} onBlur={() => setIsEditingIngreso(false)} onChange={e => setIngresoMensual(e.target.value)} />
-            <button style={s.btnPrimary} onClick={guardarConfig} disabled={saving}>{saving ? "Guardando..." : "Guardar configuración"}</button>
-          </div>
-
-          {ingMensual > 0 && metaTotalNum > 0 && (
-            <div style={s.metaCard}>
-              <div style={{ ...s.metaLabel, textAlign: "center", marginBottom: 0 }}>Tu plan para {formatMoney(metaTotalNum)}</div>
-              <div style={{ fontSize: 14, color: "#CCC", lineHeight: 1.9, marginTop: 12, textAlign: "center", fontWeight: 500 }}>
-                <div>📥 Ingreso mensual: <strong style={{ color: "#E8E0D0", fontWeight: 700 }}>{formatMoney(ingMensual)}</strong></div>
-                <div>🎯 Ahorro necesario/mes: <strong style={{ color: "#FF803C", fontWeight: 700 }}>{formatMoney(ahorroMetaDiario * 30)}</strong></div>
-                <div>💸 Gasto máximo/mes: <strong style={{ color: c.green, fontWeight: 700 }}>{formatMoney(ingMensual - (ahorroMetaDiario * 30))}</strong></div>
-                <div>📆 Gasto máximo/día: <strong style={{ color: c.green, fontWeight: 700 }}>{formatMoney(presupuestoDiario)}</strong></div>
-              </div>
-            </div>
-          )}
-
-          <div style={{...s.card, marginBottom: 12}}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <div style={{...s.label, marginBottom:0}}>Categoría para Ingresos</div>
-              <button style={{ backgroundColor: "#FF803C", WebkitAppearance: "none", color: "#FFF", border: "none", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontWeight: 600, fontFamily: "inherit", fontSize: 13 }} onClick={() => setShowNuevaCatBase(v => !v)}>+ Nuevo</button>
-            </div>
-            
-            {showNuevaCatBase && (
-              <div style={{ background: c.input, borderRadius: 12, padding: 16, marginBottom: 16 }}>
-                <input style={{ ...s.input, marginBottom: 12 }} placeholder="Ej: 💰 Bono" value={nuevaCatBaseLabel} onChange={e => setNuevaCatBaseLabel(e.target.value)} />
-                <div style={{ ...s.label, marginBottom: 8 }}>Elige un color</div>
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
-                  {COLORES_CUSTOM.map(col => <div key={col} onClick={() => setNuevaCatBaseColor(col)} style={{ width: 28, height: 28, borderRadius: "50%", background: col, cursor: "pointer", border: nuevaCatBaseColor === col ? `3px solid ${c.text}` : "3px solid transparent" }} />)}
-                </div>
-                <div style={{ display: "flex", gap: 10 }}><button style={s.btnSecondary} onClick={() => setShowNuevaCatBase(false)}>Cancelar</button><button style={s.btnPrimary} onClick={agregarCategoriaBase}>Agregar</button></div>
-              </div>
-            )}
-
-            {safeBase.length === 0 ? <div style={{ color: c.muted, fontSize: 14, fontWeight: 500, textAlign: "center", padding: "12px 0" }}>No hay categorías de ingresos</div> : safeBase.map((cat, i, arr) => (
-              editandoCatBase === cat.id ? (
-                <div key={cat.id} style={{ background: c.input, borderRadius: 12, padding: 16, margin: "8px 0" }}>
-                  <input style={{ ...s.input, marginBottom: 12 }} value={editCatBaseLabel} onChange={e => setEditCatBaseLabel(e.target.value)} />
-                  <div style={{ ...s.label, marginBottom: 8 }}>Elige un color</div>
-                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
-                    {COLORES_CUSTOM.map(col => <div key={col} onClick={() => setEditCatBaseColor(col)} style={{ width: 28, height: 28, borderRadius: "50%", background: col, cursor: "pointer", border: editCatBaseColor === col ? `3px solid ${c.text}` : "3px solid transparent" }} />)}
-                  </div>
-                  <div style={{ display: "flex", gap: 10 }}><button style={s.btnSecondary} onClick={() => setEditandoCatBase(null)}>Cancelar</button><button style={s.btnPrimary} onClick={guardarEdicionCatBase}>Guardar</button></div>
-                </div>
-              ) : (
-                <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: i === arr.length - 1 ? "none" : `1px solid ${c.border}` }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
-                       {getIcono(cat.label)}
+            <div style={{ ...s.card, padding: 8, marginBottom: 12 }}>
+                {safeBase.length === 0 ? <div style={{ color: c.muted, fontSize: 14, fontWeight: 500, textAlign: "center", padding: "16px 0" }}>No hay categorías creadas</div> : 
+                  safeBase.map((cat, i, arr) => (
+                    <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 8px", borderBottom: i === arr.length - 1 ? "none" : `1px solid ${c.border}` }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                        <div style={{ width: 38, height: 38, borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>
+                           {getIcono(cat.label)}
+                        </div>
+                        <span style={{ fontSize: 15, fontWeight: 600 }}>{getTexto(cat.label)}</span>
+                      </div>
+                      <div style={{ display: "flex", gap: 4 }}>
+                        <button style={s.editBtn} onClick={() => abrirEditarCat(cat, 'ingreso')}><Edit2 size={18}/></button>
+                        <button style={s.deleteBtn} onClick={() => eliminarCat(cat.id, 'ingreso')}><Trash2 size={18}/></button>
+                      </div>
                     </div>
-                    <span style={{ fontSize: 15, fontWeight: 600 }}>{getTexto(cat.label)}</span>
-                  </div>
-                  <div>
-                    <button style={s.editBtn} onClick={() => abrirEdicionCatBase(cat)}><Edit2 size={16}/></button>
-                    <button style={s.deleteBtn} onClick={() => eliminarCategoriaBase(cat.id)}><Trash2 size={16}/></button>
-                  </div>
-                </div>
-              )
-            ))}
+                  ))
+                }
+            </div>
+            <button onClick={() => abrirCrearCat('ingreso')} style={{ width: "100%", padding: 14, background: "#059669", color: "#FFF", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: 8, boxShadow: "0 4px 12px rgba(5, 150, 105, 0.2)" }}>
+               <Plus size={18} /> Crear categoría
+            </button>
           </div>
 
-          <div style={s.card}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}><div style={{...s.label, marginBottom:0}}>Categoría para Gastos</div><button style={{ backgroundColor: "#FF803C", WebkitAppearance: "none", color: "#FFF", border: "none", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontWeight: 600, fontFamily: "inherit", fontSize: 13 }} onClick={() => setShowNuevaCat(v => !v)}>+ Nuevo</button></div>
-            {showNuevaCat && (
-              <div style={{ background: c.input, borderRadius: 12, padding: 16, marginBottom: 16 }}>
-                <input style={{ ...s.input, marginBottom: 12 }} placeholder="Ej: 🛍️ Compras" value={nuevaCatLabel} onChange={e => setNuevaCatLabel(e.target.value)} />
-                <div style={{ ...s.label, marginBottom: 8 }}>Elige un color</div>
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>{COLORES_CUSTOM.map(col => <div key={col} onClick={() => setNuevaCatColor(col)} style={{ width: 28, height: 28, borderRadius: "50%", background: col, cursor: "pointer", border: nuevaCatColor === col ? `3px solid ${c.text}` : "3px solid transparent" }} />)}</div>
-                <div style={{ display: "flex", gap: 10 }}><button style={s.btnSecondary} onClick={() => setShowNuevaCat(false)}>Cancelar</button><button style={s.btnPrimary} onClick={agregarCategoria}>Agregar</button></div>
-              </div>
-            )}
-            {safeExtra.length === 0 ? <div style={{ color: c.muted, fontSize: 14, fontWeight: 500, textAlign: "center", padding: "12px 0" }}>Aún no hay categorías de gastos</div> : safeExtra.map((cat, i, arr) => (
-              editandoCat === cat.id ? (
-                <div key={cat.id} style={{ background: c.input, borderRadius: 12, padding: 16, margin: "8px 0" }}>
-                  <input style={{ ...s.input, marginBottom: 12 }} value={editCatLabel} onChange={e => setEditCatLabel(e.target.value)} />
-                  <div style={{ ...s.label, marginBottom: 8 }}>Elige un color</div>
-                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>{COLORES_CUSTOM.map(col => <div key={col} onClick={() => setEditCatColor(col)} style={{ width: 28, height: 28, borderRadius: "50%", background: col, cursor: "pointer", border: editCatColor === col ? `3px solid ${c.text}` : "3px solid transparent" }} />)}</div>
-                  <div style={{ display: "flex", gap: 10 }}><button style={s.btnSecondary} onClick={() => setEditandoCat(null)}>Cancelar</button><button style={s.btnPrimary} onClick={guardarEdicionCat}>Guardar</button></div>
-                </div>
-              ) : (
-                <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: i === arr.length - 1 ? "none" : `1px solid ${c.border}` }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
-                       {getIcono(cat.label)}
+          {/* CATEGORÍAS DE GASTOS */}
+          <div style={{ marginBottom: 32 }}>
+            <div style={{ ...s.label, fontSize: 16, color: c.red, marginBottom: 12 }}>Categorías para Gastos</div>
+            
+            <div style={{ ...s.card, padding: 8, marginBottom: 12 }}>
+                {safeExtra.length === 0 ? <div style={{ color: c.muted, fontSize: 14, fontWeight: 500, textAlign: "center", padding: "16px 0" }}>No hay categorías creadas</div> : 
+                  safeExtra.map((cat, i, arr) => (
+                    <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 8px", borderBottom: i === arr.length - 1 ? "none" : `1px solid ${c.border}` }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                        <div style={{ width: 38, height: 38, borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>
+                           {getIcono(cat.label)}
+                        </div>
+                        <span style={{ fontSize: 15, fontWeight: 600 }}>{getTexto(cat.label)}</span>
+                      </div>
+                      <div style={{ display: "flex", gap: 4 }}>
+                        <button style={s.editBtn} onClick={() => abrirEditarCat(cat, 'gasto')}><Edit2 size={18}/></button>
+                        <button style={s.deleteBtn} onClick={() => eliminarCat(cat.id, 'gasto')}><Trash2 size={18}/></button>
+                      </div>
                     </div>
-                    <span style={{ fontSize: 15, fontWeight: 600 }}>{getTexto(cat.label)}</span>
-                  </div>
-                  <div>
-                    <button style={s.editBtn} onClick={() => abrirEdicionCat(cat)}><Edit2 size={16}/></button>
-                    <button style={s.deleteBtn} onClick={() => eliminarCategoria(cat.id)}><Trash2 size={16}/></button>
-                  </div>
+                  ))
+                }
+            </div>
+            <button onClick={() => abrirCrearCat('gasto')} style={{ width: "100%", padding: 14, background: "#059669", color: "#FFF", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: 8, boxShadow: "0 4px 12px rgba(5, 150, 105, 0.2)" }}>
+               <Plus size={18} /> Crear categoría
+            </button>
+          </div>
+
+        </div>
+      )}
+
+      {/* MODAL UNIFICADO PARA CREAR/EDITAR CATEGORÍA */}
+      {catForm.visible && (
+        <div className="hide-scroll" style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10001, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+          
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
+            <button onClick={() => setCatForm({...catForm, visible: false})} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>{catForm.id ? "Editar categoría" : "Crear categoría"}</h2>
+          </div>
+
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Nombre de la categoría ►</div>
+            <input style={s.input} placeholder={catForm.tipo === 'ingreso' ? "Ej: Sueldo, Venta..." : "Ej: Comida, Transporte..."} value={catForm.nombre} onChange={e => setCatForm({...catForm, nombre: e.target.value})} />
+          </div>
+
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Seleccionar icono ►</div>
+            <div className="hide-scroll" style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8 }}>
+              {CAT_ICONS.map(ico => (
+                <div key={ico} onClick={() => setCatForm({...catForm, icono: ico})} style={{ width: 56, height: 56, borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, flexShrink: 0, border: catForm.icono === ico ? `2px solid #10B981` : "2px solid transparent", cursor: "pointer", transition: "0.2s" }}>
+                  {ico}
                 </div>
-              )
-            ))}
+              ))}
+            </div>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, marginTop: 24 }}>
-            <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0, color: c.red }}>Opciones avanzadas</h3>
+          <div style={{ marginBottom: 40 }}>
+            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Color de la categoría</div>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              {COLORES_CUSTOM.map(col => (
+                <div key={col} onClick={() => setCatForm({...catForm, color: col})} style={{ width: 38, height: 38, borderRadius: "50%", background: col, cursor: "pointer", border: catForm.color === col ? `3px solid ${c.text}` : "3px solid transparent", transition: "0.2s" }} />
+              ))}
+            </div>
           </div>
 
-          <div style={{ ...s.card, borderColor: isDark ? "#3A1A1A" : "#FECACA", padding: 20 }}>
-            <div style={{ ...s.label, marginBottom: 16, color: c.red, textAlign: "center" }}>Zona de peligro</div>
-            <button style={{ ...s.btnSecondary, padding: 14, color: c.red, borderColor: isDark ? "#5A1A1A" : "#F87171", fontWeight: 600 }} onClick={async () => {
-              if (window.prompt("Escribe BORRAR TODO para confirmar:") === "BORRAR TODO") {
-                await supabase.from("gastos").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-                setGastos([]); showToast("Todos los movimientos eliminados", c.muted);
-              }
-            }}>Eliminar todos los movimientos</button>
-          </div>
+          <button onClick={guardarCatForm} disabled={saving} style={{ ...s.btnPrimary, background: "#059669", boxShadow: "0 4px 12px rgba(5, 150, 105, 0.3)", padding: 16, fontSize: 16 }}>
+            {saving ? "Guardando..." : (catForm.id ? "Guardar cambios" : "Crear categoría")}
+          </button>
         </div>
       )}
 
@@ -2268,17 +2213,12 @@ export default function App() {
           
           <div style={{ ...s.card, padding: 16, marginBottom: 12 }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 8 }}>¿Cómo edito una categoría?</div>
-            <div style={{ fontSize: 13, color: c.muted, lineHeight: 1.5, fontWeight: 500 }}>Ve a Configuración &gt; Categorías Personalizadas y presiona el ícono del lápiz junto a la categoría que deseas modificar.</div>
+            <div style={{ fontSize: 13, color: c.muted, lineHeight: 1.5, fontWeight: 500 }}>Ve a Configuración &gt; Configuración de categorías y presiona el ícono del lápiz junto a la categoría que deseas modificar.</div>
           </div>
 
           <div style={{ ...s.card, padding: 16, marginBottom: 12 }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 8 }}>¿Cómo funciona la proyección?</div>
             <div style={{ fontSize: 13, color: c.muted, lineHeight: 1.5, fontWeight: 500 }}>Calculamos tu promedio de ahorro diario desde que iniciaste tu plan, y con eso estimamos en qué fecha exacta llegarás a tu meta si mantienes ese ritmo.</div>
-          </div>
-
-          <div style={{ ...s.card, padding: 16, marginBottom: 24 }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 8 }}>Mi meta se reinició, ¿qué hago?</div>
-            <div style={{ fontSize: 13, color: c.muted, lineHeight: 1.5, fontWeight: 500 }}>Verifica que el periodo de ahorro (Fechas Del / Al) en tu configuración abarque el día de hoy.</div>
           </div>
 
           <a href="mailto:soporte@ahorrometa.com" style={{ ...s.btnSecondary, display: "block", textAlign: "center", textDecoration: "none", padding: "16px 0", fontSize: 15 }}>
