@@ -335,7 +335,6 @@ export default function App() {
     nombre: "", montoObjetivo: "", aporteInicial: "", fechaLimite: "", prioridad: "alta", tipo: "libre", icono: "💻"
   });
 
-  // NUEVO: ESTADO PARA META SELECCIONADA Y VISTA DETALLE
   const [metaSeleccionada, setMetaSeleccionada] = useState(null);
 
   const [theme, setTheme] = useState("dark");
@@ -795,7 +794,7 @@ export default function App() {
 
       {/* COMPONENTE DE AVISOS VISUALES (TOAST) QUE FALTABA */}
       {toast && (
-        <div style={{ position: "fixed", top: 40, left: "50%", transform: "translateX(-50%)", background: toast.color || "#333", color: "#FFF", padding: "12px 24px", borderRadius: 30, zIndex: 999999, fontWeight: 600, fontSize: 14, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", animation: "slideDown 0.3s ease-out" }}>
+        <div style={{ position: "fixed", top: 40, left: "50%", transform: "translateX(-50%)", background: toast.color || "#333", color: "#FFF", padding: "12px 24px", borderRadius: 30, zIndex: 999999, fontWeight: 600, fontSize: 14, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", animation: "slideDown 0.3s ease-out", whiteSpace: "nowrap" }}>
           {toast.msg}
         </div>
       )}
@@ -1326,7 +1325,7 @@ export default function App() {
 
           {/* PESTAÑA METAS DINÁMICA */}
           {tab === "metas" && (
-            <div style={{ padding: "0 20px 20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+            <div style={{ padding: "0 20px 20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", paddingBottom: 100 }}>
               <div style={{ fontSize: 14, color: c.muted, marginBottom: 20, fontWeight: 500 }}>Tus objetivos financieros</div>
 
               {listaMetas.length === 0 ? (
@@ -1358,7 +1357,6 @@ export default function App() {
                   const bgIconColor = PASTEL_COLORS[index % PASTEL_COLORS.length];
 
                   return (
-                    // AGREGADO EL ONCLICK AQUÍ
                     <div key={meta.id} onClick={() => setMetaSeleccionada({ ...meta, indexColor: index })} style={{ ...s.card, padding: "20px", marginBottom: 16, cursor: "pointer" }}>
                       <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
                         <div style={{ width: 70, height: 70, borderRadius: "50%", background: bgIconColor, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 32 }}>
@@ -1390,6 +1388,15 @@ export default function App() {
                   );
                 })
               )}
+            </div>
+          )}
+
+          {/* BOTON FLOTANTE DE CREAR META SOLO VISIBLE EN LA PESTAÑA METAS */}
+          {tab === "metas" && (
+            <div style={{ position: "fixed", bottom: "calc(64px + env(safe-area-inset-bottom, 0px))", left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, padding: "32px 20px 16px", background: isDark ? "linear-gradient(to top, #0A0A0A 70%, rgba(10,10,10,0))" : "linear-gradient(to top, #F4F5F7 70%, rgba(244,245,247,0))", zIndex: 80, boxSizing: "border-box" }}>
+              <button onClick={() => setShowCrearMeta(true)} style={{ width: "100%", padding: 16, background: "#059669", color: "#FFF", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", justifyContent: "center", alignItems: "center", gap: 8, boxShadow: "0 4px 12px rgba(5, 150, 105, 0.3)" }}>
+                <Plus size={20} /> Crear nueva meta
+              </button>
             </div>
           )}
 
