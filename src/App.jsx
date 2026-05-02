@@ -336,6 +336,7 @@ export default function App() {
   });
 
   const [metaSeleccionada, setMetaSeleccionada] = useState(null);
+  const [showMetaMenu, setShowMetaMenu] = useState(false);
 
   const [theme, setTheme] = useState("dark");
   const [isAutoTheme, setIsAutoTheme] = useState(false);
@@ -378,6 +379,7 @@ export default function App() {
     setTimeout(() => {
       action();
       setIsClosing("");
+      setShowMetaMenu(false);
     }, 280);
   };
 
@@ -602,6 +604,22 @@ export default function App() {
     });
   };
 
+  // NUEVO: FUNCION PARA ELIMINAR META DESDE EL DETALLE
+  const eliminarMeta = async (id) => {
+    if (!window.confirm("¿Estás seguro que deseas eliminar esta meta? Todo el progreso se perderá.")) return;
+
+    const nuevasMetas = listaMetas.filter(m => m.id !== id);
+    setListaMetas(nuevasMetas);
+
+    setSaving(true);
+    await supabase.from("config").upsert([{ key: "listaMetas", value: JSON.stringify(nuevasMetas) }], { onConflict: "key" });
+    setSaving(false);
+
+    showToast("Meta eliminada con éxito", c.muted);
+    setShowMetaMenu(false);
+    cerrarPantalla('detalleMeta', () => setMetaSeleccionada(null));
+  };
+
   const metaTotalNum = parseFloat(metaAhorro) || 0;
   const ingMensual = parseFloat(ingresoMensual) || 0;
   const diasTotalPlan = Math.max(1, diffDias(fechaInicioPlan, fechaFinPlan) + 1);
@@ -792,7 +810,6 @@ export default function App() {
         @keyframes slideDown { from { transform: translate(-50%, -100%); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
       `}</style>
 
-      {/* COMPONENTE DE AVISOS VISUALES (TOAST) QUE FALTABA */}
       {toast && (
         <div style={{ position: "fixed", top: 40, left: "50%", transform: "translateX(-50%)", background: toast.color || "#333", color: "#FFF", padding: "12px 24px", borderRadius: 30, zIndex: 999999, fontWeight: 600, fontSize: 14, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", animation: "slideDown 0.3s ease-out", whiteSpace: "nowrap" }}>
           {toast.msg}
@@ -874,7 +891,6 @@ export default function App() {
         </>
       ) : (
         <>
-          {/* ENCABEZADO UNIFICADO PARA TODAS LAS PESTAÑAS */}
           {(() => {
             if (tab === "metas") {
               return (
@@ -1457,9 +1473,20 @@ export default function App() {
                 </button>
                 <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>{metaSeleccionada.nombre}</h2>
               </div>
-              <button style={{ background: "none", border: "none", color: c.muted, cursor: "pointer", padding: 0, display: "flex" }}>
-                <MoreVertical size={24} />
-              </button>
+              <div style={{ position: "relative" }}>
+                <button onClick={() => setShowMetaMenu(!showMetaMenu)} style={{ background: "none", border: "none", color: c.muted, cursor: "pointer", padding: 0, display: "flex" }}>
+                  <MoreVertical size={24} />
+                </button>
+                
+                {/* MENU DESPLEGABLE ELIMINAR META */}
+                {showMetaMenu && (
+                  <div style={{ position: "absolute", top: 30, right: 0, background: c.card, border: `1px solid ${c.border}`, borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", zIndex: 105, overflow: "hidden", minWidth: 140 }}>
+                    <button onClick={() => eliminarMeta(metaSeleccionada.id)} style={{ width: "100%", padding: "14px 16px", background: "transparent", border: "none", color: c.red, textAlign: "left", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, fontFamily: "inherit" }}>
+                      <Trash2 size={18} /> Eliminar
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Contenido scrolleable */}
@@ -1517,11 +1544,11 @@ export default function App() {
               </div>
             </div>
 
-            {/* Boton Inferior */}
-            <div style={{ padding: "16px 20px calc(20px + env(safe-area-inset-bottom, 0px))", background: c.bg, borderTop: `1px solid ${c.border}` }}>
+            {/* Boton Inferior (SIN BORDETOP COMO PEDISTE) */}
+            <div style={{ padding: "16px 20px calc(20px + env(safe-area-inset-bottom, 0px))", background: c.bg }}>
               <button 
                 onClick={() => showToast("Edición de meta próximamente")}
-                style={{ width: "100%", padding: 16, background: "#059669", color: "#FFF", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
+                style={{ width: "100%", padding: 16, background: "#059669", color: "#FFF", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(5, 150, 105, 0.2)" }}
               >
                 Editar meta
               </button>
