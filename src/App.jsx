@@ -271,7 +271,6 @@ export default function App() {
 
   const [catForm, setCatForm] = useState({ visible: false, id: null, tipo: 'ingreso', nombre: '', icono: '📌', color: COLORES_CUSTOM[0] });
 
-  // NUEVOS ESTADOS DE HISTORIAL
   const [filtroHistModo, setFiltroHistModo] = useState("general");
   const [filtroHistMeta, setFiltroHistMeta] = useState("todas");
   const [filtroHistTipo, setFiltroHistTipo] = useState("todos");
@@ -295,13 +294,15 @@ export default function App() {
   const [vtFechaDesde, setVtFechaDesde] = useState("");
   const [vtFechaHasta, setVtFechaHasta] = useState("");
   
-  const [showEmailModal, setShowEmailModal] = useState(false);
-  const [emailDestino, setEmailDestino] = useState("");
-  
   const [showMenu, setShowMenu] = useState(false);
   const [showApariencia, setShowApariencia] = useState(false);
   const [profileScreen, setProfileScreen] = useState(null);
   
+  // NUEVOS ESTADOS DE EXPORTACIÓN
+  const [exportFechaDesde, setExportFechaDesde] = useState("");
+  const [exportFechaHasta, setExportFechaHasta] = useState("");
+  const [exportEmail, setExportEmail] = useState("");
+
   const [filtroLogros, setFiltroLogros] = useState("desbloqueados");
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -330,7 +331,7 @@ export default function App() {
   const categorias = [...safeBase, ...safeExtra];
   const isDark = theme === "dark";
 
-  const isModalOpen = showAddModal || !!editando || showEmailModal || showCrearMeta || !!metaSeleccionada || showAporteModal || catForm.visible;
+  const isModalOpen = showAddModal || !!editando || showCrearMeta || !!metaSeleccionada || showAporteModal || catForm.visible;
 
   const c = {
     bg: isDark ? "#0A0A0A" : "#F4F5F7",
@@ -541,12 +542,25 @@ export default function App() {
       setMetaSeleccionada(prev => ({ ...prev, ...metaForm, montoObjetivo: parseFloat(metaForm.montoObjetivo), aporteInicial: metaForm.aporteInicial ? parseFloat(metaForm.aporteInicial) : 0 }));
       showToast("Meta actualizada con éxito ✓", c.green);
     } else {
+      const nuevaMetaId = "meta_" + Date.now();
+      const aporteInicialVal = metaForm.aporteInicial ? parseFloat(metaForm.aporteInicial) : 0;
+
       const nuevaMeta = {
-        id: "meta_" + Date.now(), nombre: metaForm.nombre.trim(), montoObjetivo: parseFloat(metaForm.montoObjetivo),
-        aporteInicial: metaForm.aporteInicial ? parseFloat(metaForm.aporteInicial) : 0, fechaLimite: metaForm.fechaLimite,
+        id: nuevaMetaId, nombre: metaForm.nombre.trim(), montoObjetivo: parseFloat(metaForm.montoObjetivo),
+        aporteInicial: aporteInicialVal, fechaLimite: metaForm.fechaLimite,
         prioridad: metaForm.prioridad, tipo: metaForm.tipo, icono: metaForm.icono
       };
       nuevasMetas = [nuevaMeta, ...listaMetas];
+
+      // REGISTRO AUTOMÁTICO DE APORTE INICIAL SI ES MAYOR A 0
+      if (aporteInicialVal > 0) {
+        const nuevoAporte = { fecha: hoy(), monto: aporteInicialVal, descripcion: `Aporte inicial a ${nuevaMeta.nombre}`, categoria: "meta_aporte", tipo: "aporte" };
+        const { data: dataAporte, error: errAporte } = await supabase.from("gastos").insert([nuevoAporte]).select();
+        if (dataAporte) {
+            setGastos(prev => [{ ...dataAporte[0], fecha: getFechaLocal(dataAporte[0].created_at) }, ...prev]);
+        }
+      }
+
       showToast("Meta guardada con éxito ✓", c.green);
     }
 
@@ -675,20 +689,18 @@ export default function App() {
   const cMaxI = maxIngreso * 1.2;
   const cMaxG = maxGasto * 1.2;
 
-  // NUEVA LÓGICA DE FILTRADO PARA HISTORIAL (FASE 3)
   const gastosFiltradosHist = gastos.filter(g => {
     const pasaFiltroFecha = (!filtroHistFechaDesde || g.fecha >= filtroHistFechaDesde) && 
                             (!filtroHistFechaHasta || g.fecha <= filtroHistFechaHasta);
     if (!pasaFiltroFecha) return false;
 
     if (filtroHistModo === "general") {
-      if (g.tipo === "aporte") return false; // Ocultamos los aportes en flujo general
+      if (g.tipo === "aporte") return false; 
       const pasaTipo = filtroHistTipo === "todos" || g.tipo === filtroHistTipo;
       const pasaCat = filtroHistCat === "todas" || g.categoria === filtroHistCat;
       return pasaTipo && pasaCat;
     } else {
-      // Modo Mis Metas
-      if (g.tipo !== "aporte") return false; // Solo mostramos aportes
+      if (g.tipo !== "aporte") return false; 
       if (filtroHistMeta !== "todas") {
         const metaObj = listaMetas.find(m => m.id === filtroHistMeta);
         if (metaObj && !g.descripcion.includes(metaObj.nombre)) return false;
@@ -813,9 +825,6 @@ export default function App() {
             <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 24, cursor: "pointer", padding: 0 }} onClick={() => { setViewAll(false); window.scrollTo(0, 0); }}>←</button>
             <h2 style={{ margin: 0, fontSize: 18, color: c.text, fontWeight: 600 }}>Movimientos</h2>
             <div style={{ display: "flex", gap: 16 }}>
-              <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 20, cursor: "pointer", padding: 0 }} onClick={() => setShowEmailModal(true)}>
-                <Mail size={20} />
-              </button>
               <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 20, cursor: "pointer", padding: 0 }} onClick={() => setShowVtFiltro(!showVtFiltro)}>
                 <Calendar size={20} />
               </button>
@@ -919,7 +928,6 @@ export default function App() {
 
           {error && <div style={s.errorCard}><AlertTriangle size={16} style={{ verticalAlign: "middle", marginRight: 8 }} /> {error}</div>}
 
-          {/* INICIO CON EL NUEVO SLIDER DE METAS Y PUNTITOS */}
           {tab === "hoy" && (
             <div style={s.section}>
               
@@ -1009,7 +1017,6 @@ export default function App() {
                       })}
                    </div>
 
-                   {/* INDICADORES DEL SLIDER */}
                    {listaMetas.length > 1 && (
                      <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 4, marginBottom: 20 }}>
                        {listaMetas.map((_, idx) => (
@@ -1557,11 +1564,6 @@ export default function App() {
                 </div>
               )}
 
-              <div style={{ display: "flex", gap: 12, marginBottom: 24, width: "100%" }}>
-                <button style={{...s.btnSecondary, background: c.card, border: `1px solid ${c.border}`}} onClick={() => exportarCSV(gastosFiltradosHist, categorias)}>📊 Descargar Excel</button>
-                <button style={{...s.btnSecondary, background: c.card, border: `1px solid ${c.border}`}} onClick={() => exportarPDF(gastosFiltradosHist, categorias)}>📄 Descargar PDF</button>
-              </div>
-
               {gastosFiltradosHist.length === 0 ? (
                  <div style={{ ...s.card, textAlign: "center", color: c.muted, padding: "40px 20px", fontWeight: 500 }}>Sin movimientos con estos filtros</div> 
               ) : (
@@ -1859,8 +1861,8 @@ export default function App() {
           </div>
 
           <div style={{ marginBottom: 20 }}>
-            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Aporte inicial <span style={{ color: c.muted, fontWeight: "normal" }}>(opcional)</span></div>
-            <input style={{ ...s.input }} type="number" placeholder="S/ 0.00" value={metaForm.aporteInicial} onChange={e => setMetaForm({ ...metaForm, aporteInicial: e.target.value })} />
+            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Aporte inicial <span style={{ color: c.muted, fontWeight: "normal" }}>{isEditingMetaObj ? "(No se puede editar)" : "(Opcional)"}</span></div>
+            <input style={{ ...s.input, opacity: isEditingMetaObj ? 0.6 : 1 }} type="number" placeholder="S/ 0.00" value={metaForm.aporteInicial} onChange={e => setMetaForm({ ...metaForm, aporteInicial: e.target.value })} disabled={isEditingMetaObj} />
           </div>
 
           <div style={{ marginBottom: 24 }}>
@@ -1868,21 +1870,6 @@ export default function App() {
             <div style={{ position: "relative" }}>
               {!metaForm.fechaLimite && <span style={{ position: "absolute", top: "50%", left: 14, transform: "translateY(-50%)", color: c.muted, pointerEvents: "none", fontSize: 15 }}>Selecciona una fecha</span>}
               <input type="date" value={metaForm.fechaLimite} onChange={e => setMetaForm({ ...metaForm, fechaLimite: e.target.value })} style={{ ...s.input, color: metaForm.fechaLimite ? c.text : "transparent" }} />
-            </div>
-          </div>
-
-          <div style={{ marginBottom: 24 }}>
-            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Prioridad</div>
-            <div style={{ display: "flex", gap: 12 }}>
-              <button onClick={() => setMetaForm({ ...metaForm, prioridad: 'alta' })} style={{ flex: 1, padding: "12px", borderRadius: 8, border: metaForm.prioridad === 'alta' ? "1px solid #EF4444" : `1px solid ${c.border}`, background: metaForm.prioridad === 'alta' ? (isDark ? "rgba(239,68,68,0.15)" : "#FEF2F2") : c.card, color: metaForm.prioridad === 'alta' ? "#EF4444" : c.text, fontWeight: 600, display: "flex", justifyContent: "center", alignItems: "center", gap: 6, cursor: "pointer", transition: "0.2s" }}>
-                <ChevronUp size={16} /> Alta
-              </button>
-              <button onClick={() => setMetaForm({ ...metaForm, prioridad: 'media' })} style={{ flex: 1, padding: "12px", borderRadius: 8, border: metaForm.prioridad === 'media' ? "1px solid #F59E0B" : `1px solid ${c.border}`, background: metaForm.prioridad === 'media' ? (isDark ? "rgba(245,158,11,0.15)" : "#FFFBEB") : c.card, color: metaForm.prioridad === 'media' ? "#F59E0B" : c.text, fontWeight: 600, display: "flex", justifyContent: "center", alignItems: "center", gap: 6, cursor: "pointer", transition: "0.2s" }}>
-                <Minus size={16} /> Media
-              </button>
-              <button onClick={() => setMetaForm({ ...metaForm, prioridad: 'baja' })} style={{ flex: 1, padding: "12px", borderRadius: 8, border: metaForm.prioridad === 'baja' ? "1px solid #10B981" : `1px solid ${c.border}`, background: metaForm.prioridad === 'baja' ? (isDark ? "rgba(16,185,129,0.15)" : "#ECFDF5") : c.card, color: metaForm.prioridad === 'baja' ? "#10B981" : c.text, fontWeight: 600, display: "flex", justifyContent: "center", alignItems: "center", gap: 6, cursor: "pointer", transition: "0.2s" }}>
-                <ChevronDown size={16} /> Baja
-              </button>
             </div>
           </div>
 
@@ -1926,7 +1913,10 @@ export default function App() {
             <div style={{ borderTop: `1px solid ${c.border}`, borderBottom: `1px solid ${c.border}` }}>
               <MenuItem bgColor={c.card} icon={<Settings size={20} color="#FF803C" />} text="Configuración de categorías" color={c.text} border={c.border} onClick={() => setProfileScreen("categorias")} />
               <MenuItem bgColor={c.card} icon={<Palette size={20} color="#FF803C" />} text="Apariencia (Tema Claro/Oscuro)" color={c.text} border={c.border} onClick={() => { setShowApariencia(true); setProfileScreen(null); }} />
-              <MenuItem bgColor={c.card} icon={<Download size={20} color="#FF803C" />} text="Exportar Reportes" color={c.text} border={c.border} onClick={() => { cerrarPantalla('menu', () => { setShowMenu(false); setShowEmailModal(true); }); }} />
+              
+              {/* OPCION ACTUALIZADA: NUEVA PANTALLA DE EXPORTAR REPORTES */}
+              <MenuItem bgColor={c.card} icon={<Download size={20} color="#FF803C" />} text="Exportar Reportes" color={c.text} border={c.border} onClick={() => setProfileScreen("exportar")} />
+              
               <MenuItem bgColor={c.card} icon={<Headphones size={20} color="#FF803C" />} text="Centro de ayuda" color={c.text} border={"transparent"} onClick={() => setProfileScreen("ayuda")} />
             </div>
           </div>
@@ -1938,6 +1928,68 @@ export default function App() {
             </div>
           </div>
 
+        </div>
+      )}
+
+      {/* NUEVA PANTALLA: EXPORTAR REPORTES */}
+      {showMenu && profileScreen === "exportar" && (
+        <div className="hide-scroll" style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'exportar' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+          
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
+            <button onClick={() => cerrarPantalla('exportar', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Exportar Reportes</h2>
+          </div>
+          
+          <div style={{ ...s.card, padding: 20, marginBottom: 24 }}>
+            <div style={{ ...s.label, marginBottom: 16 }}>1. Selecciona el rango de fechas</div>
+            <div style={{ display: "flex", gap: 12, marginBottom: 8 }}>
+              <div style={{ flex: 1, position: "relative" }}>
+                {!exportFechaDesde && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Desde</span>}
+                <input type="date" value={exportFechaDesde} onChange={e => setExportFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: exportFechaDesde ? c.text : "transparent" }} />
+              </div>
+              <div style={{ flex: 1, position: "relative" }}>
+                {!exportFechaHasta && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Hasta</span>}
+                <input type="date" value={exportFechaHasta} onChange={e => setExportFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: exportFechaHasta ? c.text : "transparent" }} />
+              </div>
+            </div>
+            {(exportFechaDesde || exportFechaHasta) && (
+              <button style={{ width: "100%", fontSize: 14, fontWeight: 700, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 8, fontFamily: "inherit" }} onClick={() => { setExportFechaDesde(""); setExportFechaHasta(""); }}>
+                <X size={14} style={{ marginRight: 4, verticalAlign: "middle" }} /> Limpiar fechas
+              </button>
+            )}
+          </div>
+
+          <div style={{ ...s.card, padding: 20, marginBottom: 24 }}>
+            <div style={{ ...s.label, marginBottom: 16 }}>2. Descargar archivo</div>
+            <div style={{ display: "flex", gap: 12 }}>
+              <button style={{...s.btnSecondary, background: c.bg, border: `1px solid ${c.border}`, flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, padding: 16}} onClick={() => {
+                 const filtrados = gastos.filter(g => (!exportFechaDesde || g.fecha >= exportFechaDesde) && (!exportFechaHasta || g.fecha <= exportFechaHasta));
+                 exportarCSV(filtrados, categorias);
+              }}>
+                <span style={{fontSize: 24}}>📊</span> Excel
+              </button>
+              <button style={{...s.btnSecondary, background: c.bg, border: `1px solid ${c.border}`, flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, padding: 16}} onClick={() => {
+                 const filtrados = gastos.filter(g => (!exportFechaDesde || g.fecha >= exportFechaDesde) && (!exportFechaHasta || g.fecha <= exportFechaHasta));
+                 exportarPDF(filtrados, categorias);
+              }}>
+                <span style={{fontSize: 24}}>📄</span> PDF
+              </button>
+            </div>
+          </div>
+
+          <div style={{ ...s.card, padding: 20, marginBottom: 24 }}>
+            <div style={{ ...s.label, marginBottom: 8 }}>3. O enviar por correo</div>
+            <p style={{ margin: "0 0 16px", fontSize: 13, color: c.muted, fontWeight: 500 }}>Recibirás un resumen en tu bandeja de entrada.</p>
+            <input style={{ ...s.input, marginBottom: 16 }} type="email" placeholder="correo@ejemplo.com" value={exportEmail} onChange={e => setExportEmail(e.target.value)} />
+            <button style={{ ...s.btnPrimary, background: "#4D96FF", boxShadow: "0 4px 12px rgba(77, 150, 255, 0.3)" }} onClick={() => {
+              if(!exportEmail) return showToast("Ingresa un correo", c.red);
+              showToast("Reporte enviado con éxito", c.green);
+              setExportEmail("");
+            }}>
+              Enviar Reporte
+            </button>
+          </div>
+          
         </div>
       )}
 
@@ -2356,20 +2408,6 @@ export default function App() {
               <input style={{ ...s.input, flex: 1, marginBottom: 0, fontSize: 15, fontWeight: 500 }} type="text" placeholder="Descripción" value={editForm.descripcion} onChange={e => setEditForm(f => ({ ...f, descripcion: e.target.value }))} />
             </div>
             <button style={{...s.btnPrimary, padding: "16px"}} onClick={guardarEdicion} disabled={saving}>{saving ? "Guardando..." : "Guardar Cambios"}</button>
-          </div>
-        </div>
-      )}
-
-      {showEmailModal && (
-        <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setShowEmailModal(false); }}>
-          <div style={{ ...s.modal, textAlign: "center", animation: "slideUp 0.3s ease-out" }}>
-            <h3 style={{ margin: "0 0 8px", fontSize: 20, color: c.text, fontWeight: 700 }}>Enviar reporte</h3>
-            <p style={{ margin: "0 0 20px", fontSize: 14, color: c.muted, fontWeight: 500 }}>Ingresa el e-mail del destinatario.</p>
-            <input style={{ ...s.input, marginBottom: 20, textAlign: "center", fontWeight: 500 }} type="email" placeholder="correo@ejemplo.com" value={emailDestino} onChange={e => setEmailDestino(e.target.value)} />
-            <div style={{ display: "flex", gap: 12, borderTop: `1px solid ${c.border}`, paddingTop: 16 }}>
-              <button style={{ flex: 1, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: c.text, fontSize: 16, cursor: "pointer", padding: "10px 0", fontFamily: "inherit", fontWeight: 600 }} onClick={() => setShowEmailModal(false)}>Cancelar</button>
-              <button style={{ flex: 1, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#4D96FF", fontSize: 16, cursor: "pointer", padding: "10px 0", fontWeight: 700, fontFamily: "inherit" }} onClick={() => { showToast("Enviado con éxito", c.green); setShowEmailModal(false); setEmailDestino(""); }}>Enviar</button>
-            </div>
           </div>
         </div>
       )}
