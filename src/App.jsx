@@ -180,6 +180,7 @@ const exportarCSV = (gastos, categorias) => {
   URL.revokeObjectURL(url);
 };
 
+// NUEVO: SE AÑADIO BOTON X EN LA PARTE SUPERIOR DERECHA PARA CERRAR
 const exportarPDF = (gastos, categorias) => {
   const filas = gastos.map(g => {
     const { fecha, hora } = formatDateTime(g.created_at);
@@ -204,7 +205,7 @@ const exportarPDF = (gastos, categorias) => {
       h2{color:#FF803C;margin-top:0;font-size:24px;font-weight:700;}
       .header-meta {color:#6B7280;margin-bottom:24px;font-size:14px;font-weight:500;}
       .btn-print {display:inline-block;margin-bottom:20px;padding:12px 24px;background:#FF803C;color:#000;font-weight:700;border:none;border-radius:12px;cursor:pointer;font-family:inherit;font-size:14px;box-shadow:0 4px 12px rgba(255, 128, 60, 0.2);}
-      
+      .btn-close {position:absolute;top:20px;right:20px;background:none;border:none;font-size:32px;cursor:pointer;color:#1a1a1a;line-height:1;}
       .card-history {
         width:100%;
         max-width:800px;
@@ -216,20 +217,19 @@ const exportarPDF = (gastos, categorias) => {
         box-shadow:0 8px 24px rgba(0,0,0,0.06);
         box-sizing:border-box;
       }
-      
       table{width:100%;border-collapse:collapse;margin-top:12px;border-radius:12px;overflow:hidden;}
       th{background:#F9FAFB;color:#6B7280;padding:14px 16px;text-align:left;font-weight:600;border-bottom:1px solid #E5E7EB;text-transform:uppercase;font-size:11px;letter-spacing:1px;}
       td{padding:14px 16px;border-bottom:1px solid #E5E7EB;}
       tr:last-child td{border-bottom:none;}
       tr:nth-child(even){background:#F9FAFB;}
-      
       @media print{
-        button{display:none;}
+        .btn-print, .btn-close {display:none;}
         body{background:#FFFFFF;padding:0;}
         .card-history{border:none;box-shadow:none;padding:0;}
       }
     </style></head><body>
-    <div style="max-width:800px;margin:0 auto;">
+    <button onclick="window.close()" class="btn-close">×</button>
+    <div style="max-width:800px;margin:0 auto;position:relative;">
       <button onclick="window.print()" class="btn-print">🖨️ Imprimir / Guardar PDF</button>
       <div class="card-history">
         <h2>Ahorro Meta — Historial de movimientos</h2>
@@ -738,13 +738,15 @@ export default function App() {
           </div>
           {showVtFiltro && (
             <div style={{ padding: "16px 20px", background: c.card, borderBottom: `1px solid ${c.border}` }}>
-              <div style={{ ...s.label, textAlign: "center" }}>Filtrar por fecha</div>
+              {/* ETIQUETAS DEL Y AL AÑADIDAS AQUÍ */}
               <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                 <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                  <input type="date" placeholder="Del" value={vtFechaDesde} onChange={e => setVtFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: vtFechaDesde ? c.text : "transparent" }} />
+                  <div style={{ fontSize: 12, color: c.muted, marginBottom: 4, fontWeight: 600, paddingLeft: 4 }}>Del</div>
+                  <input type="date" value={vtFechaDesde} onChange={e => setVtFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: vtFechaDesde ? c.text : "transparent" }} />
                 </div>
                 <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                  <input type="date" placeholder="Al" value={vtFechaHasta} onChange={e => setVtFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: vtFechaHasta ? c.text : "transparent" }} />
+                  <div style={{ fontSize: 12, color: c.muted, marginBottom: 4, fontWeight: 600, paddingLeft: 4 }}>Al</div>
+                  <input type="date" value={vtFechaHasta} onChange={e => setVtFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: vtFechaHasta ? c.text : "transparent" }} />
                 </div>
               </div>
               {(vtFechaDesde || vtFechaHasta) && (
@@ -960,12 +962,15 @@ export default function App() {
 
               {filtroResumen === "rango" && (
                 <div style={{ ...s.card, padding: 16 }}>
-                  <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
+                  {/* ETIQUETAS DEL Y AL AÑADIDAS AQUÍ */}
+                  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                     <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                      <input type="date" placeholder="Del" value={filtroFechaResumenDesde} onChange={e => setFiltroFechaResumenDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenDesde ? c.text : "transparent" }} />
+                      <div style={{ fontSize: 12, color: c.muted, marginBottom: 4, fontWeight: 600, paddingLeft: 4 }}>Del</div>
+                      <input type="date" value={filtroFechaResumenDesde} onChange={e => setFiltroFechaResumenDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenDesde ? c.text : "transparent" }} />
                     </div>
                     <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                      <input type="date" placeholder="Al" value={filtroFechaResumenHasta} onChange={e => setFiltroFechaResumenHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenHasta ? c.text : "transparent" }} />
+                      <div style={{ fontSize: 12, color: c.muted, marginBottom: 4, fontWeight: 600, paddingLeft: 4 }}>Al</div>
+                      <input type="date" value={filtroFechaResumenHasta} onChange={e => setFiltroFechaResumenHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenHasta ? c.text : "transparent" }} />
                     </div>
                   </div>
                   {(filtroFechaResumenDesde || filtroFechaResumenHasta) && (
@@ -1168,13 +1173,16 @@ export default function App() {
 
               {showFiltrosMenu && (
                 <div style={{...s.card, marginBottom: 24, animation: "slideUp 0.3s ease-out"}}>
-                  <div style={{ ...s.label, textAlign: "center", margin: "8px 0 16px" }}>Filtrar por fecha</div>
+                  {/* TEXTO DE TITULO ELIMINADO COMO PEDISTE */}
+                  {/* ETIQUETAS DEL Y AL AÑADIDAS AQUÍ */}
                   <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                    <div style={{ flex: 1 }}>
-                      <input type="date" placeholder="Del" value={filtroHistFechaDesde} onChange={e => setFiltroHistFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroHistFechaDesde ? c.text : "transparent" }} />
+                    <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
+                      <div style={{ fontSize: 12, color: c.muted, marginBottom: 4, fontWeight: 600, paddingLeft: 4 }}>Del</div>
+                      <input type="date" value={filtroHistFechaDesde} onChange={e => setFiltroHistFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroHistFechaDesde ? c.text : "transparent" }} />
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <input type="date" placeholder="Al" value={filtroHistFechaHasta} onChange={e => setFiltroHistFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroHistFechaHasta ? c.text : "transparent" }} />
+                    <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
+                      <div style={{ fontSize: 12, color: c.muted, marginBottom: 4, fontWeight: 600, paddingLeft: 4 }}>Al</div>
+                      <input type="date" value={filtroHistFechaHasta} onChange={e => setFiltroHistFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroHistFechaHasta ? c.text : "transparent" }} />
                     </div>
                   </div>
                   {(filtroHistFechaDesde || filtroHistFechaHasta) && <button style={{ width: "100%", fontSize: 14, fontWeight: 700, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 16, fontFamily: "inherit" }} onClick={() => { setFiltroHistFechaDesde(""); setFiltroHistFechaHasta(""); }}>
@@ -1249,12 +1257,15 @@ export default function App() {
 
               {filtroResumen === "rango" && (
                 <div style={{ ...s.card, padding: 16 }}>
+                  {/* ETIQUETAS DEL Y AL AÑADIDAS AQUÍ */}
                   <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
                     <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                      <input type="date" placeholder="Del" value={filtroFechaResumenDesde} onChange={e => setFiltroFechaResumenDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenDesde ? c.text : "transparent" }} />
+                      <div style={{ fontSize: 12, color: c.muted, marginBottom: 4, fontWeight: 600, paddingLeft: 4 }}>Del</div>
+                      <input type="date" value={filtroFechaResumenDesde} onChange={e => setFiltroFechaResumenDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenDesde ? c.text : "transparent" }} />
                     </div>
                     <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                      <input type="date" placeholder="Al" value={filtroFechaResumenHasta} onChange={e => setFiltroFechaResumenHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenHasta ? c.text : "transparent" }} />
+                      <div style={{ fontSize: 12, color: c.muted, marginBottom: 4, fontWeight: 600, paddingLeft: 4 }}>Al</div>
+                      <input type="date" value={filtroFechaResumenHasta} onChange={e => setFiltroFechaResumenHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenHasta ? c.text : "transparent" }} />
                     </div>
                   </div>
                   {(filtroFechaResumenDesde || filtroFechaResumenHasta) && (
