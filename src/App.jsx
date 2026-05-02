@@ -180,7 +180,6 @@ const exportarCSV = (gastos, categorias) => {
   URL.revokeObjectURL(url);
 };
 
-// NUEVO: SE AÑADIO BOTON X EN LA PARTE SUPERIOR DERECHA PARA CERRAR
 const exportarPDF = (gastos, categorias) => {
   const filas = gastos.map(g => {
     const { fecha, hora } = formatDateTime(g.created_at);
@@ -204,8 +203,10 @@ const exportarPDF = (gastos, categorias) => {
       body{font-family:'Montserrat',sans-serif;padding:30px 20px;font-size:13px;background-color:#F4F5F7;color:#1a1a1a;margin:0;}
       h2{color:#FF803C;margin-top:0;font-size:24px;font-weight:700;}
       .header-meta {color:#6B7280;margin-bottom:24px;font-size:14px;font-weight:500;}
-      .btn-print {display:inline-block;margin-bottom:20px;padding:12px 24px;background:#FF803C;color:#000;font-weight:700;border:none;border-radius:12px;cursor:pointer;font-family:inherit;font-size:14px;box-shadow:0 4px 12px rgba(255, 128, 60, 0.2);}
-      .btn-close {position:absolute;top:20px;right:20px;background:none;border:none;font-size:32px;cursor:pointer;color:#1a1a1a;line-height:1;}
+      .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+      .btn-print { margin:0; padding:12px 24px; background:#FF803C; color:#000; font-weight:700; border:none; border-radius:12px; cursor:pointer; font-family:inherit; font-size:14px; box-shadow:0 4px 12px rgba(255, 128, 60, 0.2); }
+      .btn-close { background: #1a1a1a; color: #FFF; border: none; border-radius: 12px; width: 44px; height: 44px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2); font-weight: bold; }
+      .btn-close:hover { background: #000; }
       .card-history {
         width:100%;
         max-width:800px;
@@ -223,14 +224,16 @@ const exportarPDF = (gastos, categorias) => {
       tr:last-child td{border-bottom:none;}
       tr:nth-child(even){background:#F9FAFB;}
       @media print{
-        .btn-print, .btn-close {display:none;}
+        .top-bar {display:none;}
         body{background:#FFFFFF;padding:0;}
         .card-history{border:none;box-shadow:none;padding:0;}
       }
     </style></head><body>
-    <button onclick="window.close()" class="btn-close">×</button>
-    <div style="max-width:800px;margin:0 auto;position:relative;">
-      <button onclick="window.print()" class="btn-print">🖨️ Imprimir / Guardar PDF</button>
+    <div style="max-width:800px;margin:0 auto;">
+      <div class="top-bar">
+        <button onclick="window.print()" class="btn-print">🖨️ Imprimir / Guardar PDF</button>
+        <button onclick="window.close()" class="btn-close">✕</button>
+      </div>
       <div class="card-history">
         <h2>Ahorro Meta — Historial de movimientos</h2>
         <p class="header-meta">Exportado el ${formatFecha(hoy())} · Total registros: ${gastos.length}</p>
@@ -738,14 +741,13 @@ export default function App() {
           </div>
           {showVtFiltro && (
             <div style={{ padding: "16px 20px", background: c.card, borderBottom: `1px solid ${c.border}` }}>
-              {/* ETIQUETAS DEL Y AL AÑADIDAS AQUÍ */}
               <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                  <div style={{ fontSize: 12, color: c.muted, marginBottom: 4, fontWeight: 600, paddingLeft: 4 }}>Del</div>
+                <div style={{ flex: 1, position: "relative" }}>
+                  {!vtFechaDesde && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Del</span>}
                   <input type="date" value={vtFechaDesde} onChange={e => setVtFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: vtFechaDesde ? c.text : "transparent" }} />
                 </div>
-                <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                  <div style={{ fontSize: 12, color: c.muted, marginBottom: 4, fontWeight: 600, paddingLeft: 4 }}>Al</div>
+                <div style={{ flex: 1, position: "relative" }}>
+                  {!vtFechaHasta && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Al</span>}
                   <input type="date" value={vtFechaHasta} onChange={e => setVtFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: vtFechaHasta ? c.text : "transparent" }} />
                 </div>
               </div>
@@ -962,14 +964,13 @@ export default function App() {
 
               {filtroResumen === "rango" && (
                 <div style={{ ...s.card, padding: 16 }}>
-                  {/* ETIQUETAS DEL Y AL AÑADIDAS AQUÍ */}
                   <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                    <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                      <div style={{ fontSize: 12, color: c.muted, marginBottom: 4, fontWeight: 600, paddingLeft: 4 }}>Del</div>
+                    <div style={{ flex: 1, position: "relative" }}>
+                      {!filtroFechaResumenDesde && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Del</span>}
                       <input type="date" value={filtroFechaResumenDesde} onChange={e => setFiltroFechaResumenDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenDesde ? c.text : "transparent" }} />
                     </div>
-                    <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                      <div style={{ fontSize: 12, color: c.muted, marginBottom: 4, fontWeight: 600, paddingLeft: 4 }}>Al</div>
+                    <div style={{ flex: 1, position: "relative" }}>
+                      {!filtroFechaResumenHasta && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Al</span>}
                       <input type="date" value={filtroFechaResumenHasta} onChange={e => setFiltroFechaResumenHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenHasta ? c.text : "transparent" }} />
                     </div>
                   </div>
@@ -1173,15 +1174,14 @@ export default function App() {
 
               {showFiltrosMenu && (
                 <div style={{...s.card, marginBottom: 24, animation: "slideUp 0.3s ease-out"}}>
-                  {/* TEXTO DE TITULO ELIMINADO COMO PEDISTE */}
                   {/* ETIQUETAS DEL Y AL AÑADIDAS AQUÍ */}
                   <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                    <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                      <div style={{ fontSize: 12, color: c.muted, marginBottom: 4, fontWeight: 600, paddingLeft: 4 }}>Del</div>
+                    <div style={{ flex: 1, position: "relative" }}>
+                      {!filtroHistFechaDesde && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Del</span>}
                       <input type="date" value={filtroHistFechaDesde} onChange={e => setFiltroHistFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroHistFechaDesde ? c.text : "transparent" }} />
                     </div>
-                    <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                      <div style={{ fontSize: 12, color: c.muted, marginBottom: 4, fontWeight: 600, paddingLeft: 4 }}>Al</div>
+                    <div style={{ flex: 1, position: "relative" }}>
+                      {!filtroHistFechaHasta && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Al</span>}
                       <input type="date" value={filtroHistFechaHasta} onChange={e => setFiltroHistFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroHistFechaHasta ? c.text : "transparent" }} />
                     </div>
                   </div>
@@ -1258,13 +1258,13 @@ export default function App() {
               {filtroResumen === "rango" && (
                 <div style={{ ...s.card, padding: 16 }}>
                   {/* ETIQUETAS DEL Y AL AÑADIDAS AQUÍ */}
-                  <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
-                    <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                      <div style={{ fontSize: 12, color: c.muted, marginBottom: 4, fontWeight: 600, paddingLeft: 4 }}>Del</div>
+                  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                    <div style={{ flex: 1, position: "relative" }}>
+                      {!filtroFechaResumenDesde && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Del</span>}
                       <input type="date" value={filtroFechaResumenDesde} onChange={e => setFiltroFechaResumenDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenDesde ? c.text : "transparent" }} />
                     </div>
-                    <div style={{ flex: 1, width: "100%", minWidth: 0 }}>
-                      <div style={{ fontSize: 12, color: c.muted, marginBottom: 4, fontWeight: 600, paddingLeft: 4 }}>Al</div>
+                    <div style={{ flex: 1, position: "relative" }}>
+                      {!filtroFechaResumenHasta && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Al</span>}
                       <input type="date" value={filtroFechaResumenHasta} onChange={e => setFiltroFechaResumenHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenHasta ? c.text : "transparent" }} />
                     </div>
                   </div>
@@ -1561,6 +1561,75 @@ export default function App() {
               }
             }}>Eliminar todos los movimientos</button>
           </div>
+        </div>
+      )}
+
+      {showApariencia && (
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: isClosing === 'apariencia' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
+            <button onClick={() => cerrarPantalla('apariencia', () => { setShowApariencia(false); })} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: "700" }}>Pantalla y brillo</h2>
+          </div>
+
+          <div style={{ fontSize: 14, color: c.muted, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 12, fontWeight: 700 }}>Aspecto</div>
+          <div style={{ background: c.card, borderRadius: 16, padding: "20px 20px 0", marginBottom: 24, border: `1px solid ${c.border}`, boxShadow: c.shadow }}>
+            
+            <div style={{ display: "flex", justifyContent: "space-around", paddingBottom: 24 }}>
+              <div onClick={() => { setTheme("light"); showToast("Tema Claro activado"); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer" }}>
+                <div style={{ width: 66, height: 130, borderRadius: 12, background: "#FFF", border: theme === "light" ? "3px solid #34C759" : "1px solid #CCC", position: "relative", overflow: "hidden" }}>
+                  <div style={{ position: "absolute", top: 12, left: 6, right: 6, height: 24, background: "#E5E5E5", borderRadius: 4 }} />
+                  <div style={{ position: "absolute", top: 44, left: 6, right: 6, height: 18, background: "#E5E5E5", borderRadius: 4 }} />
+                </div>
+                <span style={{ fontSize: 16, fontWeight: 600 }}>Claro</span>
+                <div style={{ width: 22, height: 22, borderRadius: "50%", border: theme === "light" ? "none" : `1px solid ${c.muted}`, background: theme === "light" ? "#34C759" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {theme === "light" && <span style={{ color: "#FFF", fontSize: 14 }}>✓</span>}
+                </div>
+              </div>
+
+              <div onClick={() => { setTheme("dark"); showToast("Tema Oscuro activado"); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer" }}>
+                <div style={{ width: 66, height: 130, borderRadius: 12, background: "#111", border: theme === "dark" ? "3px solid #34C759" : "1px solid #444", position: "relative", overflow: "hidden" }}>
+                  <div style={{ position: "absolute", top: 12, left: 6, right: 6, height: 24, background: "#333", borderRadius: 4 }} />
+                  <div style={{ position: "absolute", top: 44, left: 6, right: 6, height: 18, background: "#333", borderRadius: 4 }} />
+                </div>
+                <span style={{ fontSize: 16, fontWeight: 600 }}>Oscuro</span>
+                <div style={{ width: 22, height: 22, borderRadius: "50%", border: theme === "dark" ? "none" : `1px solid ${c.muted}`, background: theme === "dark" ? "#34C759" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {theme === "dark" && <span style={{ color: "#FFF", fontSize: 14 }}>✓</span>}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ borderTop: `1px solid ${c.border}`, padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 16, fontWeight: 600 }}>Automático</span>
+              <div onClick={() => setIsAutoTheme(!isAutoTheme)} style={{ width: 50, height: 30, background: isAutoTheme ? "#34C759" : c.border, borderRadius: 15, position: "relative", cursor: "pointer", transition: "0.3s" }}>
+                <div style={{ width: 26, height: 26, background: "#FFF", borderRadius: "50%", position: "absolute", top: 2, left: isAutoTheme ? 22 : 2, transition: "0.3s", boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}/>
+              </div>
+            </div>
+
+            {isAutoTheme && (
+              <div style={{ borderTop: `1px solid ${c.border}`, padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
+                <span style={{ fontSize: 16, fontWeight: 600 }}>Opciones</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ color: c.muted, fontSize: 14, fontWeight: 400 }}>Claro hasta el atardecer</span>
+                  <span style={{ color: c.muted, fontSize: 18 }}>›</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div style={{ background: c.card, borderRadius: 16, padding: "0 20px", border: `1px solid ${c.border}`, boxShadow: c.shadow }}>
+            <div style={{ padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, cursor: "pointer" }}>
+              <span style={{ fontSize: 16, fontWeight: 600 }}>Tamaño del texto</span>
+              <span style={{ color: c.muted, fontSize: 18 }}>›</span>
+            </div>
+            <div style={{ padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 16, fontWeight: 600 }}>Negritas</span>
+              <div onClick={() => setUseBold(!useBold)} style={{ width: 50, height: 30, background: useBold ? "#34C759" : c.border, borderRadius: 15, position: "relative", cursor: "pointer", transition: "0.3s" }}>
+                <div style={{ width: 26, height: 26, background: "#FFF", borderRadius: "50%", position: "absolute", top: 2, left: useBold ? 22 : 2, transition: "0.3s", boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }}/>
+              </div>
+            </div>
+          </div>
+          
+          <button style={{ ...s.btnPrimary, marginTop: 30 }} onClick={() => { guardarConfig(); cerrarPantalla('apariencia', () => setShowApariencia(false)); }}>Guardar Preferencias</button>
         </div>
       )}
 
