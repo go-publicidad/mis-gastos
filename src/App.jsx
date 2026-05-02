@@ -32,7 +32,7 @@ const GASTOS_DEFAULT = [
   { id: "otros",           label: "📦 Otros",              color: "#8A9BA8" },
 ];
 
-const METAS_INICIALES = []; // Iniciamos vacio para simular el caso de crear la primera
+const METAS_INICIALES = []; 
 
 const COLORES_CUSTOM = ["#FF6B6B","#FF803C","#6BCB77","#4D96FF","#C77DFF","#FF9F1C","#2EC4B6","#E71D36","#F72585","#B5E48C"];
 const PASTEL_COLORS = ["#A7F3D0", "#BFDBFE", "#FED7AA", "#E9D5FF", "#FECACA", "#FDE047"];
@@ -152,6 +152,88 @@ const diffDias = (d1Str, d2Str) => {
   return Math.round((Date.UTC(y2, m2 - 1, day2) - Date.UTC(y1, m1 - 1, day1)) / 86400000);
 };
 
+const exportarCSV = (gastos, categorias) => {
+  const header = "Fecha,Hora,Tipo,Categoría,Descripción,Monto\n";
+  const rows = gastos.map(g => {
+    const { fecha, hora } = formatDateTime(g.created_at);
+    const catLabel = categorias.find(c => c.id === g.categoria)?.label || "(Eliminado)";
+    const desc = (g.descripcion || "").replace(/,/g, ";");
+    return `${fecha},${hora},${g.tipo},${catLabel},${desc},${g.monto}`;
+  }).join("\n");
+  const blob = new Blob(["\uFEFF" + header + rows], { type: "text/csv;charset=utf-8;" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href     = url;
+  a.download = `ahorro-meta-${hoy()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+const exportarPDF = (gastos, categorias) => {
+  const filas = gastos.map(g => {
+    const { fecha, hora } = formatDateTime(g.created_at);
+    const cat  = categorias.find(c => c.id === g.categoria);
+    const catLabel = cat?.label || "(Eliminado)";
+    const color = g.tipo === "gasto" ? "#c0392b" : "#27ae60";
+    const signo = g.tipo === "gasto" ? "-" : "+";
+    return `<tr>
+      <td style="font-weight:500;">${fecha}<br/><small style="color:#888">${hora}</small></td>
+      <td style="font-weight:600;color:${cat?.color || "#888"}">${catLabel}</td>
+      <td style="color:#1a1a1a;">${g.descripcion || ""}</td>
+      <td style="color:${color};font-weight:bold;text-align:right">${signo} S/ ${Number(g.monto).toFixed(2)}</td>
+    </tr>`;
+  }).join("");
+
+  const win = window.open("", "_blank");
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"/>
+    <title>Historial Ahorro Meta</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+      body{font-family:'Montserrat',sans-serif;padding:30px 20px;font-size:13px;background-color:#F4F5F7;color:#1a1a1a;margin:0;}
+      h2{color:#FF803C;margin-top:0;font-size:24px;font-weight:700;}
+      .header-meta {color:#6B7280;margin-bottom:24px;font-size:14px;font-weight:500;}
+      .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+      .btn-print { margin:0; padding:12px 24px; background:#FF803C; color:#000; font-weight:700; border:none; border-radius:12px; cursor:pointer; font-family:inherit; font-size:14px; box-shadow:0 4px 12px rgba(255, 128, 60, 0.2); }
+      .btn-close { background: #1a1a1a; color: #FFF; border: none; border-radius: 12px; width: 44px; height: 44px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2); font-weight: bold; }
+      .btn-close:hover { background: #000; }
+      .card-history {
+        width:100%;
+        max-width:800px;
+        margin:0 auto;
+        background:#FFFFFF;
+        border:1px solid #E5E7EB;
+        border-radius:24px;
+        padding:32px;
+        box-shadow:0 8px 24px rgba(0,0,0,0.06);
+        box-sizing:border-box;
+      }
+      table{width:100%;border-collapse:collapse;margin-top:12px;border-radius:12px;overflow:hidden;}
+      th{background:#F9FAFB;color:#6B7280;padding:14px 16px;text-align:left;font-weight:600;border-bottom:1px solid #E5E7EB;text-transform:uppercase;font-size:11px;letter-spacing:1px;}
+      td{padding:14px 16px;border-bottom:1px solid #E5E7EB;}
+      tr:last-child td{border-bottom:none;}
+      tr:nth-child(even){background:#F9FAFB;}
+      @media print{
+        .top-bar {display:none;}
+        body{background:#FFFFFF;padding:0;}
+        .card-history{border:none;box-shadow:none;padding:0;}
+      }
+    </style></head><body>
+    <div style="max-width:800px;margin:0 auto;">
+      <div class="top-bar">
+        <button onclick="window.print()" class="btn-print">🖨️ Imprimir / Guardar PDF</button>
+        <button onclick="window.close()" class="btn-close">✕</button>
+      </div>
+      <div class="card-history">
+        <h2>Ahorro Meta — Historial de movimientos</h2>
+        <p class="header-meta">Exportado el ${formatFecha(hoy())} · Total registros: ${gastos.length}</p>
+        <table><thead><tr><th>Fecha / Hora</th><th>Categoría</th><th>Descripción</th><th>Monto</th></tr></thead>
+        <tbody>${filas}</tbody></table>
+      </div>
+    </div>
+    </body></html>`);
+  win.document.close();
+};
+
 const MenuItem = ({ icon, text, color, bgColor, border, showArrow = true, onClick }) => (
   <button onClick={onClick} style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, backgroundColor: bgColor || "transparent", WebkitAppearance: "none", border: "none", padding: "16px 20px", cursor: "pointer", color: color, fontSize: 14, fontWeight: 600, borderBottom: `1px solid ${border}`, textAlign: "left", fontFamily: "inherit", transition: "background-color 0.2s" }}>
     <span style={{ display: "flex", alignItems: "center", color: color }}>{icon}</span>
@@ -233,7 +315,6 @@ export default function App() {
 
   const [showAddModal, setShowAddModal] = useState(false);
 
-  // NUEVOS ESTADOS PARA APORTES A METAS
   const [showAporteModal, setShowAporteModal] = useState(false);
   const [aporteMonto, setAporteMonto] = useState("");
   const [aporteMetaId, setAporteMetaId] = useState(null);
@@ -394,6 +475,72 @@ export default function App() {
     cerrarPantalla('datos', () => setProfileScreen(null));
   };
 
+  const agregarCategoriaBase = async () => {
+    const label = nuevaCatBaseLabel.trim();
+    if (!label) { showToast("Escribe un nombre", c.red); return; }
+    const id = "base_" + Date.now();
+    const nueva = { id, label, color: nuevaCatBaseColor };
+    const updated = [...safeBase, nueva];
+    setCategoriasBase(updated);
+    await supabase.from("config").upsert([{ key: "categoriasBase", value: JSON.stringify(updated) }], { onConflict: "key" });
+    setNuevaCatBaseLabel("");
+    setShowNuevaCatBase(false);
+    showToast(`Categoría "${label}" creada ✓`);
+  };
+
+  const agregarCategoria = async () => {
+    const label = nuevaCatLabel.trim();
+    if (!label) { showToast("Escribe un nombre", c.red); return; }
+    const id = "custom_" + Date.now();
+    const nueva = { id, label, color: nuevaCatColor };
+    const updated = [...safeExtra, nueva];
+    setCategoriasExtra(updated);
+    await supabase.from("config").upsert([{ key: "categoriasCustom", value: JSON.stringify(updated) }], { onConflict: "key" });
+    setNuevaCatLabel("");
+    setShowNuevaCat(false);
+    showToast(`Categoría "${label}" creada ✓`);
+  };
+
+  const eliminarCategoria = async (id) => {
+    if (!window.confirm("¿Seguro que deseas eliminar esta categoría?")) return;
+    const updated = safeExtra.filter(cat => cat.id !== id);
+    setCategoriasExtra(updated);
+    await supabase.from("config").upsert([{ key: "categoriasCustom", value: JSON.stringify(updated) }], { onConflict: "key" });
+    showToast("Categoría eliminada", c.muted);
+  };
+
+  const abrirEdicionCat = (cat) => { setEditandoCat(cat.id); setEditCatLabel(cat.label); setEditCatColor(cat.color); };
+
+  const guardarEdicionCat = async () => {
+    const label = editCatLabel.trim();
+    if (!label) { showToast("Escribe un nombre", c.red); return; }
+    const updated = safeExtra.map(cat => cat.id === editandoCat ? { ...cat, label, color: editCatColor } : cat);
+    setCategoriasExtra(updated);
+    await supabase.from("config").upsert([{ key: "categoriasCustom", value: JSON.stringify(updated) }], { onConflict: "key" });
+    setEditandoCat(null);
+    showToast("Categoría actualizada ✓");
+  };
+
+  const abrirEdicionCatBase = (cat) => { setEditandoCatBase(cat.id); setEditCatBaseLabel(cat.label); setEditCatBaseColor(cat.color); };
+
+  const guardarEdicionCatBase = async () => {
+    const label = editCatBaseLabel.trim();
+    if (!label) { showToast("Escribe un nombre", c.red); return; }
+    const updated = safeBase.map(cat => cat.id === editandoCatBase ? { ...cat, label, color: editCatBaseColor } : cat);
+    setCategoriasBase(updated);
+    await supabase.from("config").upsert([{ key: "categoriasBase", value: JSON.stringify(updated) }], { onConflict: "key" });
+    setEditandoCatBase(null);
+    showToast("Categoría base actualizada ✓");
+  };
+
+  const eliminarCategoriaBase = async (id) => {
+    if (!window.confirm("¿Seguro que deseas eliminar esta categoría base?")) return;
+    const updated = safeBase.filter(cat => cat.id !== id);
+    setCategoriasBase(updated);
+    await supabase.from("config").upsert([{ key: "categoriasBase", value: JSON.stringify(updated) }], { onConflict: "key" });
+    showToast("Categoría eliminada", c.muted);
+  };
+
   const procesarNuevaMeta = async () => {
     if (!metaForm.nombre.trim()) return showToast("⚠️ Ingresa el nombre de la meta", c.red);
     if (!metaForm.montoObjetivo || parseFloat(metaForm.montoObjetivo) <= 0) return showToast("⚠️ Ingresa un monto objetivo válido", c.red);
@@ -446,15 +593,12 @@ export default function App() {
     setShowCrearMeta(true);
   };
 
-  // LOGICA DE APORTAR A UNA META
   const procesarAporte = async () => {
     const monto = parseFloat(aporteMonto);
     if (!monto || monto <= 0) return showToast("Ingresa un monto válido", c.red);
     setSaving(true);
 
     const metaDestino = listaMetas.find(m => m.id === aporteMetaId);
-    
-    // 1. Guardar en Movimientos (Tipo especial: aporte)
     const nuevo = { fecha: hoy(), monto, descripcion: `Aporte a ${metaDestino.nombre}`, categoria: "meta_aporte", tipo: "aporte" };
     const { data, error: err } = await supabase.from("gastos").insert([nuevo]).select();
     
@@ -462,7 +606,6 @@ export default function App() {
     
     setGastos(prev => [{ ...data[0], fecha: getFechaLocal(data[0].created_at) }, ...prev]);
 
-    // 2. Actualizar la Meta en listaMetas sumándole el aporte
     const nuevasMetas = listaMetas.map(m => m.id === aporteMetaId ? { ...m, aporteInicial: m.aporteInicial + monto } : m);
     setListaMetas(nuevasMetas);
     await supabase.from("config").upsert([{ key: "listaMetas", value: JSON.stringify(nuevasMetas) }], { onConflict: "key" });
@@ -484,13 +627,11 @@ export default function App() {
   
   const movimientosHoy = gastos.filter(g => g.fecha === fechaHoy);
 
-  // FILTRAMOS LOS 'aportes' PARA QUE NO INFLEN LOS GASTOS NI INGRESOS GLOBALES DEL "RESUMEN DE HOY"
   const totalGastadoHoy = movimientosHoy.filter(g => g.tipo === "gasto").reduce((a, g) => a + g.monto, 0);
   const totalIngresosHoy = movimientosHoy.filter(g => g.tipo === "ingreso").reduce((a, g) => a + g.monto, 0);
 
   const totalGastado = gastos.filter(g => g.tipo === "gasto").reduce((a, g) => a + g.monto, 0);
   const totalIngresos = gastos.filter(g => g.tipo === "ingreso").reduce((a, g) => a + g.monto, 0);
-  const ahorroAcumulado = totalIngresos - totalGastado;
   
   const getFiltradosResumen = () => {
     if (filtroResumen === "hoy") return gastos.filter(g => g.fecha === hoy() && g.tipo !== "aporte");
@@ -569,7 +710,6 @@ export default function App() {
     section:    { padding: "20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "stretch" },
     card:       { width: "100%", background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: "16px", marginBottom: 24, overflow: "hidden", boxSizing: "border-box", boxShadow: c.shadow },
     
-    // NUEVOS ESTILOS PARA EL SLIDER DE METAS EN INICIO
     sliderContainer: { display: "flex", overflowX: "auto", scrollSnapType: "x mandatory", gap: 16, paddingBottom: 16, marginTop: 4, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" },
     slideItem: { minWidth: "100%", scrollSnapAlign: "start", flexShrink: 0 },
     sliderCard: { width: "100%", background: "#111", borderRadius: 20, padding: "20px", boxSizing: "border-box", color: "#FFF", boxShadow: "0 10px 30px rgba(0,0,0,0.15)", position: "relative" },
@@ -814,13 +954,11 @@ export default function App() {
                            <div key={meta.id} style={s.slideItem}>
                                <div style={s.sliderCard}>
                                   
-                                  {i === 0 && (
-                                     <div style={{ position: "absolute", top: 16, left: 20, background: "rgba(168,85,247,0.2)", color: "#D8B4FE", padding: "4px 10px", borderRadius: 12, fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
-                                        ★ Meta principal
-                                     </div>
-                                  )}
+                                  <div style={{ position: "absolute", top: 16, left: 20, background: i === 0 ? "rgba(168,85,247,0.2)" : (isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)"), color: i === 0 ? "#D8B4FE" : (isDark ? "#AAA" : "#666"), padding: "4px 10px", borderRadius: 12, fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
+                                      {i === 0 ? "★ Meta principal" : "Meta secundaria"}
+                                  </div>
 
-                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: i === 0 ? 28 : 0, marginBottom: 16 }}>
+                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 28, marginBottom: 16 }}>
                                       <div>
                                           <div style={{ fontSize: 20, fontWeight: 700, color: "#FFF", marginBottom: 4, display: "flex", alignItems: "center", gap: 8 }}>
                                               {meta.nombre} <span style={{ fontSize: 24 }}>{meta.icono}</span>
@@ -1135,6 +1273,7 @@ export default function App() {
             </div>
           )}
 
+          {/* PESTAÑA HISTORIAL */}
           {tab === "historial" && (
             <div style={s.section}>
               
@@ -1315,19 +1454,16 @@ export default function App() {
                   );
                 })
               )}
-            </div>
-          )}
-
-          {/* BOTON FLOTANTE DE CREAR META SOLO VISIBLE EN LA PESTAÑA METAS */}
-          {tab === "metas" && (
-            <div style={{ position: "fixed", bottom: "calc(104px + env(safe-area-inset-bottom, 0px))", left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, padding: "20px 20px", background: isDark ? "linear-gradient(to top, #0A0A0A 80%, rgba(10,10,10,0))" : "linear-gradient(to top, #F4F5F7 80%, rgba(244,245,247,0))", zIndex: 80, boxSizing: "border-box", pointerEvents: "none" }}>
+              
+              {/* NUEVO BOTON AL FINAL DE LA LISTA */}
               <button onClick={() => {
                 setIsEditingMetaObj(false);
                 setMetaForm({ id: "", nombre: "", montoObjetivo: "", aporteInicial: "", fechaLimite: "", prioridad: "alta", tipo: "libre", icono: "💻" });
                 setShowCrearMeta(true);
-              }} style={{ pointerEvents: "auto", width: "100%", padding: 16, background: "#059669", color: "#FFF", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", justifyContent: "center", alignItems: "center", gap: 8, boxShadow: "0 4px 12px rgba(5, 150, 105, 0.3)" }}>
+              }} style={{ width: "100%", padding: 16, background: "#059669", color: "#FFF", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", justifyContent: "center", alignItems: "center", gap: 8, boxShadow: "0 4px 12px rgba(5, 150, 105, 0.3)", marginTop: 8 }}>
                 <Plus size={20} /> Crear nueva meta
               </button>
+              
             </div>
           )}
 
@@ -1531,26 +1667,6 @@ export default function App() {
               <button onClick={() => setMetaForm({ ...metaForm, prioridad: 'baja' })} style={{ flex: 1, padding: "12px", borderRadius: 8, border: metaForm.prioridad === 'baja' ? "1px solid #10B981" : `1px solid ${c.border}`, background: metaForm.prioridad === 'baja' ? (isDark ? "rgba(16,185,129,0.15)" : "#ECFDF5") : c.card, color: metaForm.prioridad === 'baja' ? "#10B981" : c.text, fontWeight: 600, display: "flex", justifyContent: "center", alignItems: "center", gap: 6, cursor: "pointer", transition: "0.2s" }}>
                 <ChevronDown size={16} /> Baja
               </button>
-            </div>
-          </div>
-
-          <div style={{ marginBottom: 24 }}>
-            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Tipo de meta</div>
-            <div style={{ background: c.card, borderRadius: 12, border: `1px solid ${c.border}`, overflow: "hidden" }}>
-              <div onClick={() => setMetaForm({ ...metaForm, tipo: 'libre' })} style={{ padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, cursor: "pointer", background: metaForm.tipo === 'libre' ? (isDark ? "rgba(16,185,129,0.05)" : "#F0FDF4") : "transparent" }}>
-                <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 4 }}>Ahorro libre</div>
-                  <div style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}>Tú decides cuánto ahorrar</div>
-                </div>
-                {metaForm.tipo === 'libre' ? <CheckCircle2 size={24} color="#10B981" /> : <Circle size={24} color={c.muted} />}
-              </div>
-              <div onClick={() => setMetaForm({ ...metaForm, tipo: 'obligatorio' })} style={{ padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", background: metaForm.tipo === 'obligatorio' ? (isDark ? "rgba(16,185,129,0.05)" : "#F0FDF4") : "transparent" }}>
-                <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 4 }}>Ahorro obligatorio</div>
-                  <div style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}>Aportes fijos programados</div>
-                </div>
-                {metaForm.tipo === 'obligatorio' ? <CheckCircle2 size={24} color="#10B981" /> : <Circle size={24} color={c.muted} />}
-              </div>
             </div>
           </div>
 
@@ -2004,6 +2120,56 @@ export default function App() {
           <a href="mailto:soporte@ahorrometa.com" style={{ ...s.btnSecondary, display: "block", textAlign: "center", textDecoration: "none", padding: "16px 0", fontSize: 15 }}>
             ✉️ Contactar a soporte
           </a>
+        </div>
+      )}
+
+      {showAddModal && (
+        <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setShowAddModal(false); }}>
+          <div style={{...s.modal, animation: "slideUp 0.3s ease-out"}}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <h3 style={{ margin: 0, fontSize: 18, color: c.text, fontWeight: 700 }}>Registrar Movimiento</h3>
+              <button onClick={() => setShowAddModal(false)} style={{ background: "none", border: "none", color: c.muted, fontSize: 24, cursor: "pointer", padding: 0 }}>×</button>
+            </div>
+            
+            <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+              <button style={s.tipoBtn(form.tipo === "ingreso", c.green)} onClick={() => setForm(f => ({ ...f, tipo: "ingreso", categoria: safeBase[0]?.id || "" }))}>+ Ingreso</button>
+              <button style={s.tipoBtn(form.tipo === "gasto", c.red)} onClick={() => setForm(f => ({ ...f, tipo: "gasto", categoria: safeExtra[0]?.id || "" }))}>− Gasto</button>
+            </div>
+            
+            <input autoFocus style={{ ...s.input, marginBottom: 16, fontSize: 32, textAlign: "center", fontWeight: 700, padding: "20px 10px", height: "auto" }} type="number" placeholder="0.00" value={form.monto} onChange={e => setForm(f => ({ ...f, monto: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
+            
+            <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
+              <select style={{ ...s.select, flex: 1, marginBottom: 0 }} value={form.categoria} onChange={e => setForm(f => ({ ...f, categoria: e.target.value }))}>
+                {(form.tipo === "ingreso" ? safeBase : safeExtra).map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+              </select>
+              <input style={{ ...s.input, flex: 1, marginBottom: 0, fontSize: 15, fontWeight: 500 }} type="text" placeholder="Descripción" value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
+            </div>
+            
+            <button style={{...s.btnPrimary, padding: "16px"}} onClick={agregarMovimiento} disabled={saving}>{saving ? "Guardando..." : "Guardar Registro"}</button>
+          </div>
+        </div>
+      )}
+
+      {editando && (
+        <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setEditando(null); }}>
+          <div style={{...s.modal, animation: "slideUp 0.3s ease-out"}}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <h3 style={{ margin: 0, fontSize: 18, color: c.text, fontWeight: 700 }}>Editar Movimiento</h3>
+              <button onClick={() => setEditando(null)} style={{ background: "none", border: "none", color: c.muted, fontSize: 24, cursor: "pointer", padding: 0 }}>×</button>
+            </div>
+            <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+              <button style={s.tipoBtn(editForm.tipo === "ingreso", c.green)} onClick={() => setEditForm(f => ({ ...f, tipo: "ingreso", categoria: safeBase[0]?.id || "" }))}>+ Ingreso</button>
+              <button style={s.tipoBtn(editForm.tipo === "gasto", c.red)} onClick={() => setEditForm(f => ({ ...f, tipo: "gasto", categoria: safeExtra[0]?.id || "" }))}>− Gasto</button>
+            </div>
+            <input style={{ ...s.input, marginBottom: 16, fontSize: 32, textAlign: "center", fontWeight: 700, padding: "20px 10px", height: "auto" }} type="number" placeholder="0.00" value={editForm.monto} onChange={e => setEditForm(f => ({ ...f, monto: e.target.value }))} />
+            <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
+              <select style={{ ...s.select, flex: 1, marginBottom: 0 }} value={editForm.categoria} onChange={e => setEditForm(f => ({ ...f, categoria: e.target.value }))}>
+                {(editForm.tipo === "ingreso" ? safeBase : safeExtra).map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+              </select>
+              <input style={{ ...s.input, flex: 1, marginBottom: 0, fontSize: 15, fontWeight: 500 }} type="text" placeholder="Descripción" value={editForm.descripcion} onChange={e => setEditForm(f => ({ ...f, descripcion: e.target.value }))} />
+            </div>
+            <button style={{...s.btnPrimary, padding: "16px"}} onClick={guardarEdicion} disabled={saving}>{saving ? "Guardando..." : "Guardar Cambios"}</button>
+          </div>
         </div>
       )}
 
