@@ -32,7 +32,14 @@ const GASTOS_DEFAULT = [
   { id: "otros",           label: "📦 Otros",              color: "#8A9BA8" },
 ];
 
+const METAS_INICIALES = [
+  { id: "m1", nombre: "Nueva Laptop", montoObjetivo: 4000, aporteInicial: 2850, fechaLimite: "2025-12-25", prioridad: "alta", tipo: "libre", icono: "💻" },
+  { id: "m2", nombre: "Viaje a Cusco", montoObjetivo: 2500, aporteInicial: 1200, fechaLimite: "2025-04-15", prioridad: "media", tipo: "libre", icono: "✈️" },
+  { id: "m3", nombre: "Fondo de Emergencia", montoObjetivo: 10000, aporteInicial: 3200, fechaLimite: "", prioridad: "baja", tipo: "libre", icono: "🏠" }
+];
+
 const COLORES_CUSTOM = ["#FF6B6B","#FF803C","#6BCB77","#4D96FF","#C77DFF","#FF9F1C","#2EC4B6","#E71D36","#F72585","#B5E48C"];
+const PASTEL_COLORS = ["#A7F3D0", "#BFDBFE", "#FED7AA", "#E9D5FF", "#FECACA", "#FDE047"];
 const METAS_ICONS = ["💻", "✈️", "🏠", "🚗", "🛍️", "🎓", "📱"];
 
 const getLimaTime = () => new Date(Date.now() - 18000000);
@@ -257,6 +264,9 @@ export default function App() {
   const [categoriasBase, setCategoriasBase] = useState(INGRESOS_DEFAULT);
   const [categoriasExtra, setCategoriasExtra] = useState(GASTOS_DEFAULT);  
   
+  // NUEVO ESTADO: LISTA DINAMICA DE METAS
+  const [listaMetas, setListaMetas] = useState(METAS_INICIALES);
+  
   const [tab, setTab] = useState("hoy");
   const [form, setForm] = useState({ monto: "", descripcion: "", categoria: "comida", tipo: "gasto" });
   
@@ -321,7 +331,7 @@ export default function App() {
   
   const [showAddModal, setShowAddModal] = useState(false);
 
-  // NUEVO: ESTADOS PARA CREAR META
+  // ESTADOS FORMULARIO NUEVA META
   const [showCrearMeta, setShowCrearMeta] = useState(false);
   const [metaForm, setMetaForm] = useState({
     nombre: "", montoObjetivo: "", aporteInicial: "", fechaLimite: "", prioridad: "alta", tipo: "libre", icono: "💻"
@@ -409,6 +419,12 @@ export default function App() {
             try { 
               const p = JSON.parse(getVal("categoriasBase")); 
               if(Array.isArray(p)) setCategoriasBase(p);
+            } catch(_) {}
+          }
+          if (getVal("listaMetas")) {
+            try { 
+              const p = JSON.parse(getVal("listaMetas")); 
+              if(Array.isArray(p) && p.length > 0) setListaMetas(p);
             } catch(_) {}
           }
         }
@@ -556,13 +572,32 @@ export default function App() {
     showToast("Categoría eliminada", c.muted);
   };
 
-  const procesarNuevaMeta = () => {
+  // NUEVO: FUNCION PARA PROCESAR Y GUARDAR UNA NUEVA META EN LA BD
+  const procesarNuevaMeta = async () => {
     if (!metaForm.nombre.trim()) return showToast("Ingresa el nombre de la meta", c.red);
     if (!metaForm.montoObjetivo || parseFloat(metaForm.montoObjetivo) <= 0) return showToast("Ingresa un monto objetivo", c.red);
     if (!metaForm.fechaLimite) return showToast("Selecciona una fecha límite", c.red);
     if (!metaForm.prioridad) return showToast("Selecciona una prioridad", c.red);
     if (!metaForm.tipo) return showToast("Selecciona un tipo de meta", c.red);
     if (!metaForm.icono) return showToast("Selecciona un ícono", c.red);
+
+    const nuevaMeta = {
+      id: "meta_" + Date.now(),
+      nombre: metaForm.nombre.trim(),
+      montoObjetivo: parseFloat(metaForm.montoObjetivo),
+      aporteInicial: metaForm.aporteInicial ? parseFloat(metaForm.aporteInicial) : 0,
+      fechaLimite: metaForm.fechaLimite,
+      prioridad: metaForm.prioridad,
+      tipo: metaForm.tipo,
+      icono: metaForm.icono
+    };
+
+    const nuevasMetas = [nuevaMeta, ...listaMetas];
+    setListaMetas(nuevasMetas);
+
+    setSaving(true);
+    await supabase.from("config").upsert([{ key: "listaMetas", value: JSON.stringify(nuevasMetas) }], { onConflict: "key" });
+    setSaving(false);
 
     showToast("Meta guardada con éxito ✓", c.green);
     cerrarPantalla('crearMeta', () => {
@@ -1284,100 +1319,71 @@ export default function App() {
             </div>
           )}
 
-          {/* PESTAÑA METAS */}
+          {/* PESTAÑA METAS DINÁMICA */}
           {tab === "metas" && (
             <div style={{ padding: "0 20px 20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
               <div style={{ fontSize: 14, color: c.muted, marginBottom: 20, fontWeight: 500 }}>Tus objetivos financieros</div>
 
-              {/* Card 1 */}
-              <div style={{ ...s.card, padding: "20px", marginBottom: 16 }}>
-                <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
-                  <div style={{ width: 70, height: 70, borderRadius: "50%", background: "#A7F3D0", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <Laptop size={36} color="#333" />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: c.text, marginBottom: 6 }}>Nueva Laptop</div>
-                    <div style={{ marginBottom: 12 }}>
-                      <span style={{ fontSize: 18, fontWeight: 700, color: c.green }}>S/ 2,850.00</span>
-                      <span style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}> de S/ 4,000.00</span>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <div style={{ background: isDark ? "#333" : "#E5E7EB", borderRadius: 4, height: 8, flex: 1, overflow: "hidden" }}>
-                        <div style={{ background: c.green, height: "100%", width: "71%", borderRadius: 4 }}></div>
-                      </div>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: c.text }}>71%</span>
-                    </div>
-                  </div>
+              {listaMetas.length === 0 ? (
+                <div style={{ ...s.card, textAlign: "center", padding: "40px 20px", color: c.muted, fontWeight: 500 }}>
+                  Aún no tienes metas creadas. ¡Anímate a crear una!
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: `1px solid ${c.border}`, paddingTop: 16 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, color: c.muted, fontSize: 13, fontWeight: 500 }}>
-                    <Calendar size={16} /> 25 dic 2025
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, color: c.muted, fontSize: 13, fontWeight: 500 }}>
-                    <Clock size={16} /> En 145 días
-                  </div>
-                </div>
-              </div>
+              ) : (
+                listaMetas.map((meta, index) => {
+                  const obj = parseFloat(meta.montoObjetivo) || 1;
+                  const ahorrado = parseFloat(meta.aporteInicial) || 0;
+                  const faltan = Math.max(0, obj - ahorrado);
+                  const pct = Math.min(100, Math.round((ahorrado / obj) * 100));
 
-              {/* Card 2 */}
-              <div style={{ ...s.card, padding: "20px", marginBottom: 16 }}>
-                <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
-                  <div style={{ width: 70, height: 70, borderRadius: "50%", background: "#BFDBFE", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <Plane size={36} color="#333" />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: c.text, marginBottom: 6 }}>Viaje a Cusco</div>
-                    <div style={{ marginBottom: 12 }}>
-                      <span style={{ fontSize: 18, fontWeight: 700, color: c.green }}>S/ 1,200.00</span>
-                      <span style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}> de S/ 2,500.00</span>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <div style={{ background: isDark ? "#333" : "#E5E7EB", borderRadius: 4, height: 8, flex: 1, overflow: "hidden" }}>
-                        <div style={{ background: c.green, height: "100%", width: "48%", borderRadius: 4 }}></div>
-                      </div>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: c.text }}>48%</span>
-                    </div>
-                  </div>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: `1px solid ${c.border}`, paddingTop: 16 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, color: c.muted, fontSize: 13, fontWeight: 500 }}>
-                    <Calendar size={16} /> 15 abr 2025
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, color: c.muted, fontSize: 13, fontWeight: 500 }}>
-                    <Clock size={16} /> En 55 días
-                  </div>
-                </div>
-              </div>
+                  let fechaStr = "Sin fecha límite";
+                  let diasStr = "Sin prisa";
+                  let diasRestantes = 0;
+                  
+                  if (meta.fechaLimite) {
+                    const mesesAbv = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+                    const [y, m, d] = meta.fechaLimite.split("-");
+                    fechaStr = `${parseInt(d)} ${mesesAbv[parseInt(m)-1]} ${y}`;
 
-              {/* Card 3 */}
-              <div style={{ ...s.card, padding: "20px", marginBottom: 16 }}>
-                <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
-                  <div style={{ width: 70, height: 70, borderRadius: "50%", background: "#FED7AA", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <Home size={36} color="#333" />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: c.text, marginBottom: 6 }}>Fondo de Emergencia</div>
-                    <div style={{ marginBottom: 12 }}>
-                      <span style={{ fontSize: 18, fontWeight: 700, color: c.green }}>S/ 3,200.00</span>
-                      <span style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}> de S/ 10,000.00</span>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <div style={{ background: isDark ? "#333" : "#E5E7EB", borderRadius: 4, height: 8, flex: 1, overflow: "hidden" }}>
-                        <div style={{ background: c.green, height: "100%", width: "32%", borderRadius: 4 }}></div>
+                    diasRestantes = diffDias(hoy(), meta.fechaLimite);
+                    if (diasRestantes < 0) diasStr = "Vencida";
+                    else if (diasRestantes === 0) diasStr = "¡Hoy!";
+                    else diasStr = `En ${diasRestantes} días`;
+                  }
+
+                  const bgIconColor = PASTEL_COLORS[index % PASTEL_COLORS.length];
+
+                  return (
+                    <div key={meta.id} style={{ ...s.card, padding: "20px", marginBottom: 16 }}>
+                      <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
+                        <div style={{ width: 70, height: 70, borderRadius: "50%", background: bgIconColor, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 32 }}>
+                          {meta.icono}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 16, fontWeight: 700, color: c.text, marginBottom: 6 }}>{meta.nombre}</div>
+                          <div style={{ marginBottom: 12 }}>
+                            <span style={{ fontSize: 18, fontWeight: 700, color: c.green }}>S/ {formatMoney(ahorrado).replace("S/ ", "")}</span>
+                            <span style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}> de S/ {formatMoney(obj).replace("S/ ", "")}</span>
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                            <div style={{ background: isDark ? "#333" : "#E5E7EB", borderRadius: 4, height: 8, flex: 1, overflow: "hidden" }}>
+                              <div style={{ background: c.green, height: "100%", width: `${pct}%`, borderRadius: 4 }}></div>
+                            </div>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: c.text }}>{pct}%</span>
+                          </div>
+                        </div>
                       </div>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: c.text }}>32%</span>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: `1px solid ${c.border}`, paddingTop: 16 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, color: c.muted, fontSize: 13, fontWeight: 500 }}>
+                          <Calendar size={16} /> {fechaStr}
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, color: (!meta.fechaLimite || diasRestantes > 0) ? c.muted : c.red, fontSize: 13, fontWeight: 500 }}>
+                          <Clock size={16} /> {diasStr}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: `1px solid ${c.border}`, paddingTop: 16 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, color: c.muted, fontSize: 13, fontWeight: 500 }}>
-                    <Calendar size={16} /> Sin fecha limite
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, color: c.green, fontSize: 12, fontWeight: 700, background: isDark ? "rgba(16, 185, 129, 0.15)" : "#D1FAE5", padding: "4px 10px", borderRadius: 12 }}>
-                    Sin prisa
-                  </div>
-                </div>
-              </div>
+                  );
+                })
+              )}
 
               <button onClick={() => setShowCrearMeta(true)} style={{ ...s.btnPrimary, background: "#059669", boxShadow: "0 4px 12px rgba(5, 150, 105, 0.3)", display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 8 }}>
                 <Plus size={20} /> Crear nueva meta
@@ -1411,90 +1417,6 @@ export default function App() {
         </>
       )}
 
-      {/* NUEVA PANTALLA: CREAR META */}
-      {showCrearMeta && (
-        <div className="hide-scroll" style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'crearMeta' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
-            <button onClick={() => cerrarPantalla('crearMeta', () => setShowCrearMeta(false))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
-            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Crear nueva meta</h2>
-          </div>
-          
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Nombre de la meta</div>
-            <input style={{ ...s.input }} placeholder="Ej: Nueva Laptop, Viaje a Europa" value={metaForm.nombre} onChange={e => setMetaForm({ ...metaForm, nombre: e.target.value })} />
-          </div>
-          
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Monto objetivo</div>
-            <input style={{ ...s.input }} type="number" placeholder="S/ 0.00" value={metaForm.montoObjetivo} onChange={e => setMetaForm({ ...metaForm, montoObjetivo: e.target.value })} />
-          </div>
-
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Aporte inicial <span style={{ color: c.muted, fontWeight: "normal" }}>(opcional)</span></div>
-            <input style={{ ...s.input }} type="number" placeholder="S/ 0.00" value={metaForm.aporteInicial} onChange={e => setMetaForm({ ...metaForm, aporteInicial: e.target.value })} />
-          </div>
-
-          <div style={{ marginBottom: 24 }}>
-            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Fecha límite</div>
-            <div style={{ position: "relative" }}>
-              {!metaForm.fechaLimite && <span style={{ position: "absolute", top: "50%", left: 14, transform: "translateY(-50%)", color: c.muted, pointerEvents: "none", fontSize: 15 }}>Selecciona una fecha</span>}
-              <input type="date" value={metaForm.fechaLimite} onChange={e => setMetaForm({ ...metaForm, fechaLimite: e.target.value })} style={{ ...s.input, color: metaForm.fechaLimite ? c.text : "transparent" }} />
-            </div>
-          </div>
-
-          <div style={{ marginBottom: 24 }}>
-            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Prioridad</div>
-            <div style={{ display: "flex", gap: 12 }}>
-              <button onClick={() => setMetaForm({ ...metaForm, prioridad: 'alta' })} style={{ flex: 1, padding: "12px", borderRadius: 8, border: metaForm.prioridad === 'alta' ? "1px solid #EF4444" : `1px solid ${c.border}`, background: metaForm.prioridad === 'alta' ? (isDark ? "rgba(239,68,68,0.15)" : "#FEF2F2") : c.card, color: metaForm.prioridad === 'alta' ? "#EF4444" : c.text, fontWeight: 600, display: "flex", justifyContent: "center", alignItems: "center", gap: 6, cursor: "pointer", transition: "0.2s" }}>
-                <ChevronUp size={16} /> Alta
-              </button>
-              <button onClick={() => setMetaForm({ ...metaForm, prioridad: 'media' })} style={{ flex: 1, padding: "12px", borderRadius: 8, border: metaForm.prioridad === 'media' ? "1px solid #F59E0B" : `1px solid ${c.border}`, background: metaForm.prioridad === 'media' ? (isDark ? "rgba(245,158,11,0.15)" : "#FFFBEB") : c.card, color: metaForm.prioridad === 'media' ? "#F59E0B" : c.text, fontWeight: 600, display: "flex", justifyContent: "center", alignItems: "center", gap: 6, cursor: "pointer", transition: "0.2s" }}>
-                <Minus size={16} /> Media
-              </button>
-              <button onClick={() => setMetaForm({ ...metaForm, prioridad: 'baja' })} style={{ flex: 1, padding: "12px", borderRadius: 8, border: metaForm.prioridad === 'baja' ? "1px solid #10B981" : `1px solid ${c.border}`, background: metaForm.prioridad === 'baja' ? (isDark ? "rgba(16,185,129,0.15)" : "#ECFDF5") : c.card, color: metaForm.prioridad === 'baja' ? "#10B981" : c.text, fontWeight: 600, display: "flex", justifyContent: "center", alignItems: "center", gap: 6, cursor: "pointer", transition: "0.2s" }}>
-                <ChevronDown size={16} /> Baja
-              </button>
-            </div>
-          </div>
-
-          <div style={{ marginBottom: 24 }}>
-            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Tipo de meta</div>
-            <div style={{ background: c.card, borderRadius: 12, border: `1px solid ${c.border}`, overflow: "hidden" }}>
-              <div onClick={() => setMetaForm({ ...metaForm, tipo: 'libre' })} style={{ padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${c.border}`, cursor: "pointer", background: metaForm.tipo === 'libre' ? (isDark ? "rgba(16,185,129,0.05)" : "#F0FDF4") : "transparent" }}>
-                <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 4 }}>Ahorro libre</div>
-                  <div style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}>Tú decides cuánto ahorrar</div>
-                </div>
-                {metaForm.tipo === 'libre' ? <CheckCircle2 size={24} color="#10B981" /> : <Circle size={24} color={c.muted} />}
-              </div>
-              <div onClick={() => setMetaForm({ ...metaForm, tipo: 'obligatorio' })} style={{ padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", background: metaForm.tipo === 'obligatorio' ? (isDark ? "rgba(16,185,129,0.05)" : "#F0FDF4") : "transparent" }}>
-                <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 4 }}>Ahorro obligatorio</div>
-                  <div style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}>Aportes fijos programados</div>
-                </div>
-                {metaForm.tipo === 'obligatorio' ? <CheckCircle2 size={24} color="#10B981" /> : <Circle size={24} color={c.muted} />}
-              </div>
-            </div>
-          </div>
-
-          <div style={{ marginBottom: 40 }}>
-            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Imagen / ícono</div>
-            <div className="hide-scroll" style={{ display: "flex", gap: 16, overflowX: "auto", paddingBottom: 4 }}>
-              {METAS_ICONS.map(ico => (
-                <div key={ico} onClick={() => setMetaForm({ ...metaForm, icono: ico })} style={{ width: 56, height: 56, borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, flexShrink: 0, border: metaForm.icono === ico ? `2px solid #10B981` : "2px solid transparent", cursor: "pointer", transition: "0.2s" }}>
-                  {ico}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <button onClick={procesarNuevaMeta} style={{ ...s.btnPrimary, background: "#059669", boxShadow: "0 4px 12px rgba(5, 150, 105, 0.3)", padding: 16, fontSize: 16 }}>
-            Guardar meta
-          </button>
-        </div>
-      )}
-
-      {/* MODALES DE MENU, APARIENCIA, ETC... SE MANTIENEN INTACTOS */}
       {showMenu && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 9999, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: isClosing === 'menu' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
