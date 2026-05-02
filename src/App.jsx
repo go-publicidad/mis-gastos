@@ -5,7 +5,7 @@ import {
   ArrowDownToLine, ArrowUpFromLine, PiggyBank, Target, 
   Edit2, Trash2, X, Calendar, Mail, CheckCircle2, ChevronRight,
   UserCircle, Lock, Trophy, Palette, Download, Headphones, LogOut, AlertTriangle,
-  BarChart2, Plane, Laptop, ShieldCheck, TrendingUp, Plus, PlusCircle
+  BarChart2, Plane, Laptop, ShieldCheck, TrendingUp, Plus, PlusCircle, ArrowLeft, Clock
 } from "lucide-react";
 
 const SUPABASE_URL = "https://jboazxmcmvvcscqeerbz.supabase.co";
@@ -814,6 +814,22 @@ export default function App() {
         <>
           {/* ENCABEZADO UNIFICADO PARA TODAS LAS PESTAÑAS */}
           {(() => {
+            if (tab === "metas") {
+              return (
+                <div style={{ padding: "12px 20px 16px", background: c.bg, position: "sticky", top: 0, zIndex: 90 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <button onClick={() => setTab("hoy")} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", cursor: "pointer", padding: 0, display: "flex" }}>
+                      <ArrowLeft size={28} />
+                    </button>
+                    <h1 style={{ fontSize: 20, fontWeight: 700, color: c.text, margin: 0, fontFamily: "'Montserrat', sans-serif" }}>Mis Metas de Ahorro</h1>
+                    <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", padding: 0, color: "#FF803C", display: "flex" }}>
+                      <Plus size={28} strokeWidth={2.5} />
+                    </button>
+                  </div>
+                </div>
+              );
+            }
+
             let headTitle;
             if (tab === "hoy") { 
               headTitle = (
@@ -825,7 +841,6 @@ export default function App() {
             }
             else if (tab === "resumen") headTitle = "Reportes";
             else if (tab === "historial") headTitle = "Historial";
-            else if (tab === "metas") headTitle = "Metas"; 
 
             return (
               <div style={{ padding: "8px 20px 12px", background: c.bg, position: "sticky", top: 0, zIndex: 90 }}>
@@ -937,7 +952,7 @@ export default function App() {
                               {cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400 }}>{descAdicional}</span>}
                               {!cat && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400 }}>(Eliminado)</span>}
                             </div>
-                            <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ingresos"}</div>
+                            <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {g.tipo === "gasto" ? "Gastos" : "Ahorros"}</div>
                           </div>
                         </div>
                         <div style={{ textAlign: "right" }}>
@@ -1248,149 +1263,102 @@ export default function App() {
 
           {/* PESTAÑA METAS */}
           {tab === "metas" && (
-            <div style={s.section}>
-              <div className="hide-scroll" style={{ display: "flex", gap: 8, marginBottom: 24, overflowX: "auto", paddingBottom: 4 }}>
-                {[{ id: "hoy", label: "Hoy" }, { id: "mes", label: "Mes" }, { id: "rango", label: "Personalizado 📅" }].map(f => (
-                  <button key={f.id} style={{
-                    padding: "10px 20px", borderRadius: 24, 
-                    border: `1px solid ${filtroResumen === f.id ? (isDark ? "#FFF" : "#000") : c.border}`,
-                    background: filtroResumen === f.id ? (isDark ? "#FFF" : "#000") : c.card, 
-                    color: filtroResumen === f.id ? (isDark ? "#000" : "#FFF") : c.muted,
-                    fontSize: 14, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit"
-                  }} onClick={() => setFiltroResumen(f.id)}>
-                    {f.label}
-                  </button>
-                ))}
-              </div>
+            <div style={{ padding: "0 20px 20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column" }}>
+              <div style={{ fontSize: 14, color: c.muted, marginBottom: 20, fontWeight: 500 }}>Tus objetivos financieros</div>
 
-              {filtroResumen === "rango" && (
-                <div style={{ ...s.card, padding: 16 }}>
-                  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                    <div style={{ flex: 1, position: "relative" }}>
-                      {!filtroFechaResumenDesde && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Del</span>}
-                      <input type="date" value={filtroFechaResumenDesde} onChange={e => setFiltroFechaResumenDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenDesde ? c.text : "transparent" }} />
+              {/* Card 1 */}
+              <div style={{ ...s.card, padding: "20px", marginBottom: 16 }}>
+                <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
+                  <div style={{ width: 70, height: 70, borderRadius: "50%", background: "#A7F3D0", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <Laptop size={36} color="#333" />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: c.text, marginBottom: 6 }}>Nueva Laptop</div>
+                    <div style={{ marginBottom: 12 }}>
+                      <span style={{ fontSize: 18, fontWeight: 700, color: c.green }}>S/ 2,850.00</span>
+                      <span style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}> de S/ 4,000.00</span>
                     </div>
-                    <div style={{ flex: 1, position: "relative" }}>
-                      {!filtroFechaResumenHasta && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Al</span>}
-                      <input type="date" value={filtroFechaResumenHasta} onChange={e => setFiltroFechaResumenHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenHasta ? c.text : "transparent" }} />
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{ background: isDark ? "#333" : "#E5E7EB", borderRadius: 4, height: 8, flex: 1, overflow: "hidden" }}>
+                        <div style={{ background: c.green, height: "100%", width: "71%", borderRadius: 4 }}></div>
+                      </div>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: c.text }}>71%</span>
                     </div>
                   </div>
-                  {(filtroFechaResumenDesde || filtroFechaResumenHasta) && (
-                    <button style={{ width: "100%", fontSize: 14, fontWeight: 700, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 16, fontFamily: "inherit" }} onClick={() => { setFiltroFechaResumenDesde(""); setFiltroFechaResumenHasta(""); }}>
-                      <X size={14} style={{ marginRight: 4, verticalAlign: "middle" }} /> Limpiar fechas
-                    </button>
-                  )}
                 </div>
-              )}
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
-                <div style={{ background: isDark ? "rgba(16, 185, 129, 0.1)" : "#F0FDF4", borderRadius: 16, padding: "16px 12px", border: isDark ? "1px solid rgba(16, 185, 129, 0.2)" : "none", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div>
-                    <div style={{ fontSize: 12, color: c.muted, marginBottom: 6, fontWeight: 500 }}>Total ahorrado este mes</div>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: c.text }}>{formatMoney(ahorroR)}</div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: `1px solid ${c.border}`, paddingTop: 16 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, color: c.muted, fontSize: 13, fontWeight: 500 }}>
+                    <Calendar size={16} /> 25 dic 2025
                   </div>
-                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#4ADE80", color: "#FFF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <PiggyBank size={20} />
-                  </div>
-                </div>
-                <div style={{ background: isDark ? "rgba(239, 68, 68, 0.1)" : "#FEF2F2", borderRadius: 16, padding: "16px 12px", border: isDark ? "1px solid rgba(239, 68, 68, 0.2)" : "none", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div>
-                    <div style={{ fontSize: 12, color: c.muted, marginBottom: 6, fontWeight: 500 }}>Falta por ahorrar</div>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: c.red }}>{formatMoney(Math.max(0, metaTotalNum - ahorroR))}</div>
-                  </div>
-                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#F87171", color: "#FFF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <Target size={20} />
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, color: c.muted, fontSize: 13, fontWeight: 500 }}>
+                    <Clock size={16} /> En 145 días
                   </div>
                 </div>
               </div>
 
-              <div style={{ ...s.card, padding: "20px 16px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: c.text }}>Mis Metas</h3>
-                  <button style={{ background: "none", border: "none", color: c.muted, fontWeight: 600, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
-                    <PlusCircle size={16} color="#FF803C" /> Nueva meta
-                  </button>
-                </div>
-
-                {/* META 1 */}
-                <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24 }}>
-                  <div style={{ width: 52, height: 52, borderRadius: 26, background: "#EFF6FF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <Plane size={24} color="#3B82F6" />
+              {/* Card 2 */}
+              <div style={{ ...s.card, padding: "20px", marginBottom: 16 }}>
+                <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
+                  <div style={{ width: 70, height: 70, borderRadius: "50%", background: "#BFDBFE", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <Plane size={36} color="#333" />
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                      <span style={{ fontSize: 15, fontWeight: 600, color: c.text }}>Viaje a Cusco</span>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: c.green }}>S/ 720.00</span>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: c.text, marginBottom: 6 }}>Viaje a Cusco</div>
+                    <div style={{ marginBottom: 12 }}>
+                      <span style={{ fontSize: 18, fontWeight: 700, color: c.green }}>S/ 1,200.00</span>
+                      <span style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}> de S/ 2,500.00</span>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                      <span style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}>S/ 1,200.00</span>
-                      <span style={{ fontSize: 12, color: c.green, fontWeight: 600 }}>60%</span>
-                    </div>
-                    <div style={{ background: isDark ? "#333" : "#F3F4F6", borderRadius: 4, height: 6, width: "100%", overflow: "hidden", marginBottom: 6 }}>
-                      <div style={{ background: c.green, height: "100%", width: "60%", borderRadius: 4 }}></div>
-                    </div>
-                    <div style={{ fontSize: 12, color: c.muted, fontWeight: 500 }}>Faltan S/ 480.00</div>
-                  </div>
-                  <ChevronRight size={20} color={c.muted} />
-                </div>
-
-                {/* META 2 */}
-                <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24 }}>
-                  <div style={{ width: 52, height: 52, borderRadius: 26, background: "#FFF7ED", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <Laptop size={24} color="#4B5563" />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                      <span style={{ fontSize: 15, fontWeight: 600, color: c.text }}>Nueva Laptop</span>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: "#FF803C" }}>S/ 1,250.00</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                      <span style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}>S/ 2,500.00</span>
-                      <span style={{ fontSize: 12, color: "#FF803C", fontWeight: 600 }}>50%</span>
-                    </div>
-                    <div style={{ background: isDark ? "#333" : "#F3F4F6", borderRadius: 4, height: 6, width: "100%", overflow: "hidden", marginBottom: 6 }}>
-                      <div style={{ background: "#FF803C", height: "100%", width: "50%", borderRadius: 4 }}></div>
-                    </div>
-                    <div style={{ fontSize: 12, color: c.muted, fontWeight: 500 }}>Faltan S/ 1,250.00</div>
-                  </div>
-                  <ChevronRight size={20} color={c.muted} />
-                </div>
-
-                {/* META 3 */}
-                <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24 }}>
-                  <div style={{ width: 52, height: 52, borderRadius: 26, background: "#ECFDF5", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <ShieldCheck size={24} color="#10B981" />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                      <span style={{ fontSize: 15, fontWeight: 600, color: c.text }}>Fondo de emergencia</span>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: c.green }}>S/ 430.00</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                      <span style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}>S/ 1,000.00</span>
-                      <span style={{ fontSize: 12, color: c.green, fontWeight: 600 }}>43%</span>
-                    </div>
-                    <div style={{ background: isDark ? "#333" : "#F3F4F6", borderRadius: 4, height: 6, width: "100%", overflow: "hidden", marginBottom: 6 }}>
-                      <div style={{ background: c.green, height: "100%", width: "43%", borderRadius: 4 }}></div>
-                    </div>
-                    <div style={{ fontSize: 12, color: c.muted, fontWeight: 500 }}>Faltan S/ 570.00</div>
-                  </div>
-                  <ChevronRight size={20} color={c.muted} />
-                </div>
-
-                <div style={{ background: isDark ? "rgba(16, 185, 129, 0.1)" : "#F0FDF4", borderRadius: 12, padding: 16, display: "flex", gap: 16, alignItems: "center" }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 20, background: c.green, color: "#FFF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <TrendingUp size={20} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: c.text, marginBottom: 4 }}>¡Vas por buen camino!</div>
-                    <div style={{ fontSize: 12, color: c.muted, fontWeight: 500, lineHeight: 1.4 }}>
-                      Has ahorrado {formatMoney(ahorroR)} este mes. Sigue así para alcanzar tus metas más rápido.
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{ background: isDark ? "#333" : "#E5E7EB", borderRadius: 4, height: 8, flex: 1, overflow: "hidden" }}>
+                        <div style={{ background: c.green, height: "100%", width: "48%", borderRadius: 4 }}></div>
+                      </div>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: c.text }}>48%</span>
                     </div>
                   </div>
                 </div>
-
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: `1px solid ${c.border}`, paddingTop: 16 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, color: c.muted, fontSize: 13, fontWeight: 500 }}>
+                    <Calendar size={16} /> 15 abr 2025
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, color: c.muted, fontSize: 13, fontWeight: 500 }}>
+                    <Clock size={16} /> En 55 días
+                  </div>
+                </div>
               </div>
+
+              {/* Card 3 */}
+              <div style={{ ...s.card, padding: "20px", marginBottom: 16 }}>
+                <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
+                  <div style={{ width: 70, height: 70, borderRadius: "50%", background: "#FED7AA", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <Home size={36} color="#333" />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: c.text, marginBottom: 6 }}>Fondo de Emergencia</div>
+                    <div style={{ marginBottom: 12 }}>
+                      <span style={{ fontSize: 18, fontWeight: 700, color: c.green }}>S/ 3,200.00</span>
+                      <span style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}> de S/ 10,000.00</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{ background: isDark ? "#333" : "#E5E7EB", borderRadius: 4, height: 8, flex: 1, overflow: "hidden" }}>
+                        <div style={{ background: c.green, height: "100%", width: "32%", borderRadius: 4 }}></div>
+                      </div>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: c.text }}>32%</span>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: `1px solid ${c.border}`, paddingTop: 16 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, color: c.muted, fontSize: 13, fontWeight: 500 }}>
+                    <Calendar size={16} /> Sin fecha limite
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, color: c.green, fontSize: 12, fontWeight: 700, background: isDark ? "rgba(16, 185, 129, 0.15)" : "#D1FAE5", padding: "4px 10px", borderRadius: 12 }}>
+                    Sin prisa
+                  </div>
+                </div>
+              </div>
+
+              <button style={{ ...s.btnPrimary, background: "#059669", boxShadow: "0 4px 12px rgba(5, 150, 105, 0.3)", display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 8 }}>
+                <Plus size={20} /> Crear nueva meta
+              </button>
             </div>
           )}
 
@@ -1420,6 +1388,7 @@ export default function App() {
         </>
       )}
 
+      {/* MODALES DE MENU, APARIENCIA, ETC... SE MANTIENEN INTACTOS */}
       {showMenu && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 9999, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: isClosing === 'menu' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
