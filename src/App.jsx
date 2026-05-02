@@ -15,7 +15,13 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const CURRENCY = "S/";
 
-const CATEGORIAS_DEFAULT = [
+const INGRESOS_DEFAULT = [
+  { id: "sueldo",          label: "💰 Sueldo/Salario",    color: "#6BCB77" },
+  { id: "negocio",         label: "💼 Negocio/Ventas",    color: "#4D96FF" },
+  { id: "inversiones",     label: "📈 Inversiones",       color: "#C77DFF" },
+];
+
+const GASTOS_DEFAULT = [
   { id: "comida",          label: "🍽️ Comida",           color: "#E8845A" },
   { id: "transporte",      label: "🚌 Transporte",         color: "#5A9BE8" },
   { id: "trabajo",         label: "💼 Trabajo/Negocio",    color: "#7BE85A" },
@@ -255,8 +261,8 @@ const MenuItem = ({ icon, text, color, mutedColor, border, onClick }) => (
 
 export default function App() {
   const [gastos, setGastos] = useState([]);
-  const [categoriasBase, setCategoriasBase] = useState(CATEGORIAS_DEFAULT);
-  const [categoriasExtra, setCategoriasExtra] = useState([]);  
+  const [categoriasBase, setCategoriasBase] = useState(INGRESOS_DEFAULT);
+  const [categoriasExtra, setCategoriasExtra] = useState(GASTOS_DEFAULT);  
   
   const [tab, setTab] = useState("hoy");
   const [form, setForm] = useState({ monto: "", descripcion: "", categoria: "comida", tipo: "gasto" });
@@ -279,6 +285,12 @@ export default function App() {
   const [editando, setEditando] = useState(null);   
   const [editForm, setEditForm] = useState({});
 
+  // ESTADOS PARA NUEVA CATEGORIA DE INGRESOS (BASE)
+  const [showNuevaCatBase, setShowNuevaCatBase] = useState(false);
+  const [nuevaCatBaseLabel, setNuevaCatBaseLabel] = useState("");
+  const [nuevaCatBaseColor, setNuevaCatBaseColor] = useState(COLORES_CUSTOM[0]);
+
+  // ESTADOS PARA NUEVA CATEGORIA DE GASTOS (EXTRA)
   const [showNuevaCat, setShowNuevaCat] = useState(false);
   const [nuevaCatLabel, setNuevaCatLabel] = useState("");
   const [nuevaCatColor, setNuevaCatColor] = useState(COLORES_CUSTOM[0]);
@@ -481,6 +493,21 @@ export default function App() {
     cerrarPantalla('datos', () => setProfileScreen(null));
   };
 
+  // FUNCION PARA AGREGAR CATEGORIA DE INGRESOS
+  const agregarCategoriaBase = async () => {
+    const label = nuevaCatBaseLabel.trim();
+    if (!label) { showToast("Escribe un nombre", c.red); return; }
+    const id = "base_" + Date.now();
+    const nueva = { id, label, color: nuevaCatBaseColor };
+    const updated = [...safeBase, nueva];
+    setCategoriasBase(updated);
+    await supabase.from("config").upsert([{ key: "categoriasBase", value: JSON.stringify(updated) }], { onConflict: "key" });
+    setNuevaCatBaseLabel("");
+    setShowNuevaCatBase(false);
+    showToast(`Categoría "${label}" creada ✓`);
+  };
+
+  // FUNCION PARA AGREGAR CATEGORIA DE GASTOS
   const agregarCategoria = async () => {
     const label = nuevaCatLabel.trim();
     if (!label) { showToast("Escribe un nombre", c.red); return; }
@@ -1174,7 +1201,6 @@ export default function App() {
 
               {showFiltrosMenu && (
                 <div style={{...s.card, marginBottom: 24, animation: "slideUp 0.3s ease-out"}}>
-                  {/* ETIQUETAS DEL Y AL AÑADIDAS AQUÍ */}
                   <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                     <div style={{ flex: 1, position: "relative" }}>
                       {!filtroHistFechaDesde && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Del</span>}
@@ -1257,7 +1283,6 @@ export default function App() {
 
               {filtroResumen === "rango" && (
                 <div style={{ ...s.card, padding: 16 }}>
-                  {/* ETIQUETAS DEL Y AL AÑADIDAS AQUÍ */}
                   <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                     <div style={{ flex: 1, position: "relative" }}>
                       {!filtroFechaResumenDesde && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Del</span>}
@@ -1455,11 +1480,13 @@ export default function App() {
             
             <div style={{ ...s.label, textAlign: "center", marginBottom: 4 }}>Período de ahorro</div>
             <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
-              <div style={{ flex: 1 }}>
-                <input type="date" placeholder="Del" value={fechaInicioPlan} onChange={e => setFechaInicioPlan(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
+              <div style={{ flex: 1, position: "relative" }}>
+                {!fechaInicioPlan && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Del</span>}
+                <input type="date" value={fechaInicioPlan} onChange={e => setFechaInicioPlan(e.target.value)} style={{ ...s.input, textAlign: "center", color: fechaInicioPlan ? c.text : "transparent" }} />
               </div>
-              <div style={{ flex: 1 }}>
-                <input type="date" placeholder="Al" value={fechaFinPlan} onChange={e => setFechaFinPlan(e.target.value)} style={{ ...s.input, textAlign: "center" }} />
+              <div style={{ flex: 1, position: "relative" }}>
+                {!fechaFinPlan && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Al</span>}
+                <input type="date" value={fechaFinPlan} onChange={e => setFechaFinPlan(e.target.value)} style={{ ...s.input, textAlign: "center", color: fechaFinPlan ? c.text : "transparent" }} />
               </div>
             </div>
             
@@ -1480,13 +1507,24 @@ export default function App() {
             </div>
           )}
 
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>Categorías</h3>
-          </div>
-
           <div style={{...s.card, marginBottom: 12}}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}><div style={{...s.label, marginBottom:0}}>Categorías Base</div></div>
-            {safeBase.length === 0 ? <div style={{ color: c.muted, fontSize: 14, fontWeight: 500, textAlign: "center", padding: "12px 0" }}>No hay categorías base</div> : safeBase.map((cat, i, arr) => (
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div style={{...s.label, marginBottom:0}}>Categoría para Ingresos</div>
+              <button style={{ backgroundColor: "#FF803C", WebkitAppearance: "none", color: "#FFF", border: "none", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontWeight: 600, fontFamily: "inherit", fontSize: 13 }} onClick={() => setShowNuevaCatBase(v => !v)}>+ Nuevo</button>
+            </div>
+            
+            {showNuevaCatBase && (
+              <div style={{ background: c.input, borderRadius: 12, padding: 16, marginBottom: 16 }}>
+                <input style={{ ...s.input, marginBottom: 12 }} placeholder="Ej: 💰 Bono" value={nuevaCatBaseLabel} onChange={e => setNuevaCatBaseLabel(e.target.value)} />
+                <div style={{ ...s.label, marginBottom: 8 }}>Elige un color</div>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
+                  {COLORES_CUSTOM.map(col => <div key={col} onClick={() => setNuevaCatBaseColor(col)} style={{ width: 28, height: 28, borderRadius: "50%", background: col, cursor: "pointer", border: nuevaCatBaseColor === col ? `3px solid ${c.text}` : "3px solid transparent" }} />)}
+                </div>
+                <div style={{ display: "flex", gap: 10 }}><button style={s.btnSecondary} onClick={() => setShowNuevaCatBase(false)}>Cancelar</button><button style={s.btnPrimary} onClick={agregarCategoriaBase}>Agregar</button></div>
+              </div>
+            )}
+
+            {safeBase.length === 0 ? <div style={{ color: c.muted, fontSize: 14, fontWeight: 500, textAlign: "center", padding: "12px 0" }}>No hay categorías de ingresos</div> : safeBase.map((cat, i, arr) => (
               editandoCatBase === cat.id ? (
                 <div key={cat.id} style={{ background: c.input, borderRadius: 12, padding: 16, margin: "8px 0" }}>
                   <input style={{ ...s.input, marginBottom: 12 }} value={editCatBaseLabel} onChange={e => setEditCatBaseLabel(e.target.value)} />
@@ -1514,7 +1552,7 @@ export default function App() {
           </div>
 
           <div style={s.card}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}><div style={{...s.label, marginBottom:0}}>Categorías personalizadas</div><button style={{ backgroundColor: "#FF803C", WebkitAppearance: "none", color: "#FFF", border: "none", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontWeight: 600, fontFamily: "inherit", fontSize: 13 }} onClick={() => setShowNuevaCat(v => !v)}>+ Nueva</button></div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}><div style={{...s.label, marginBottom:0}}>Categoría para Gastos</div><button style={{ backgroundColor: "#FF803C", WebkitAppearance: "none", color: "#FFF", border: "none", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontWeight: 600, fontFamily: "inherit", fontSize: 13 }} onClick={() => setShowNuevaCat(v => !v)}>+ Nuevo</button></div>
             {showNuevaCat && (
               <div style={{ background: c.input, borderRadius: 12, padding: 16, marginBottom: 16 }}>
                 <input style={{ ...s.input, marginBottom: 12 }} placeholder="Ej: 🛍️ Compras" value={nuevaCatLabel} onChange={e => setNuevaCatLabel(e.target.value)} />
@@ -1523,7 +1561,7 @@ export default function App() {
                 <div style={{ display: "flex", gap: 10 }}><button style={s.btnSecondary} onClick={() => setShowNuevaCat(false)}>Cancelar</button><button style={s.btnPrimary} onClick={agregarCategoria}>Agregar</button></div>
               </div>
             )}
-            {safeExtra.length === 0 ? <div style={{ color: c.muted, fontSize: 14, fontWeight: 500, textAlign: "center", padding: "12px 0" }}>Aún no hay categorías</div> : safeExtra.map((cat, i, arr) => (
+            {safeExtra.length === 0 ? <div style={{ color: c.muted, fontSize: 14, fontWeight: 500, textAlign: "center", padding: "12px 0" }}>Aún no hay categorías de gastos</div> : safeExtra.map((cat, i, arr) => (
               editandoCat === cat.id ? (
                 <div key={cat.id} style={{ background: c.input, borderRadius: 12, padding: 16, margin: "8px 0" }}>
                   <input style={{ ...s.input, marginBottom: 12 }} value={editCatLabel} onChange={e => setEditCatLabel(e.target.value)} />
@@ -1759,15 +1797,15 @@ export default function App() {
             </div>
             
             <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
-              <button style={s.tipoBtn(form.tipo === "ingreso", c.green)} onClick={() => setForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
-              <button style={s.tipoBtn(form.tipo === "gasto", c.red)} onClick={() => setForm(f => ({ ...f, tipo: "gasto" }))}>− Gasto</button>
+              <button style={s.tipoBtn(form.tipo === "ingreso", c.green)} onClick={() => setForm(f => ({ ...f, tipo: "ingreso", categoria: safeBase[0]?.id || "" }))}>+ Ingreso</button>
+              <button style={s.tipoBtn(form.tipo === "gasto", c.red)} onClick={() => setForm(f => ({ ...f, tipo: "gasto", categoria: safeExtra[0]?.id || "" }))}>− Gasto</button>
             </div>
             
             <input autoFocus style={{ ...s.input, marginBottom: 16, fontSize: 32, textAlign: "center", fontWeight: 700, padding: "20px 10px", height: "auto" }} type="number" placeholder="0.00" value={form.monto} onChange={e => setForm(f => ({ ...f, monto: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
             
             <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
               <select style={{ ...s.select, flex: 1, marginBottom: 0 }} value={form.categoria} onChange={e => setForm(f => ({ ...f, categoria: e.target.value }))}>
-                {categorias.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                {(form.tipo === "ingreso" ? safeBase : safeExtra).map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
               </select>
               <input style={{ ...s.input, flex: 1, marginBottom: 0, fontSize: 15, fontWeight: 500 }} type="text" placeholder="Descripción" value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
             </div>
@@ -1785,13 +1823,13 @@ export default function App() {
               <button onClick={() => setEditando(null)} style={{ background: "none", border: "none", color: c.muted, fontSize: 24, cursor: "pointer", padding: 0 }}>×</button>
             </div>
             <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
-              <button style={s.tipoBtn(editForm.tipo === "ingreso", c.green)} onClick={() => setEditForm(f => ({ ...f, tipo: "ingreso" }))}>+ Ingreso</button>
-              <button style={s.tipoBtn(editForm.tipo === "gasto", c.red)} onClick={() => setEditForm(f => ({ ...f, tipo: "gasto" }))}>− Gasto</button>
+              <button style={s.tipoBtn(editForm.tipo === "ingreso", c.green)} onClick={() => setEditForm(f => ({ ...f, tipo: "ingreso", categoria: safeBase[0]?.id || "" }))}>+ Ingreso</button>
+              <button style={s.tipoBtn(editForm.tipo === "gasto", c.red)} onClick={() => setEditForm(f => ({ ...f, tipo: "gasto", categoria: safeExtra[0]?.id || "" }))}>− Gasto</button>
             </div>
             <input style={{ ...s.input, marginBottom: 16, fontSize: 32, textAlign: "center", fontWeight: 700, padding: "20px 10px", height: "auto" }} type="number" placeholder="0.00" value={editForm.monto} onChange={e => setEditForm(f => ({ ...f, monto: e.target.value }))} />
             <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
               <select style={{ ...s.select, flex: 1, marginBottom: 0 }} value={editForm.categoria} onChange={e => setEditForm(f => ({ ...f, categoria: e.target.value }))}>
-                {categorias.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                {(editForm.tipo === "ingreso" ? safeBase : safeExtra).map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
               </select>
               <input style={{ ...s.input, flex: 1, marginBottom: 0, fontSize: 15, fontWeight: 500 }} type="text" placeholder="Descripción" value={editForm.descripcion} onChange={e => setEditForm(f => ({ ...f, descripcion: e.target.value }))} />
             </div>
