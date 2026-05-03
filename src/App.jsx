@@ -6,7 +6,7 @@ import {
   Edit2, Trash2, X, Calendar, Mail, CheckCircle2, ChevronRight,
   UserCircle, Lock, Trophy, Palette, Download, Headphones, LogOut, AlertTriangle,
   BarChart2, Plane, Laptop, ShieldCheck, TrendingUp, Plus, PlusCircle, ArrowLeft, Clock,
-  ChevronUp, Minus, ChevronDown, Circle, MoreVertical, TrendingDown, Bell, Loader2
+  ChevronUp, Minus, ChevronDown, Circle, MoreVertical, TrendingDown, Bell, Loader2, Wallet
 } from "lucide-react";
 
 const SUPABASE_URL = "https://jboazxmcmvvcscqeerbz.supabase.co";
@@ -110,20 +110,6 @@ const getUITime = (isoStr) => {
   h = h ? h : 12; 
   m = m < 10 ? '0' + m : m;
   return `${h}:${m} ${ampm}`;
-};
-
-const formatGroupDate = (dateStr) => {
-  const todayIso = hoy();
-  const ayerDate = new Date(Date.now() - 18000000 - 86400000);
-  const ayerIso = ayerDate.toISOString().split("T")[0];
-
-  const d = new Date(dateStr + "T12:00:00Z");
-  const day = d.getDate();
-  const meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
-  
-  if (dateStr === todayIso) return `Hoy, ${day} de ${meses[d.getMonth()]}`;
-  if (dateStr === ayerIso) return `Ayer, ${day} de ${meses[d.getMonth()]}`;
-  return `${day} de ${meses[d.getMonth()]}, ${d.getFullYear()}`;
 };
 
 const getUIFechaHora = (isoStr) => {
@@ -279,20 +265,13 @@ export default function App() {
 
   const [catForm, setCatForm] = useState({ visible: false, id: null, tipo: 'ingreso', nombre: '', icono: '📌', color: COLORES_CUSTOM[0] });
 
-  const [filtroHistModo, setFiltroHistModo] = useState("general");
-  const [filtroHistMeta, setFiltroHistMeta] = useState("todas");
-  const [filtroHistTipo, setFiltroHistTipo] = useState("todos");
-  const [filtroHistCat, setFiltroHistCat] = useState("todas");
-  const [filtroHistFechaDesde, setFiltroHistFechaDesde] = useState("");
-  const [filtroHistFechaHasta, setFiltroHistFechaHasta] = useState("");
-  const [showFiltrosMenu, setShowFiltrosMenu] = useState(false);
-
   // Filtros Pestaña Reportes
   const [filtroReporteTipo, setFiltroReporteTipo] = useState("general");
   const [reporteMetaId, setReporteMetaId] = useState("");
   const [filtroReporteCat, setFiltroReporteCat] = useState(null);
+  const [showFiltrosMenu, setShowFiltrosMenu] = useState(false);
 
-  // Fechas inicializadas vacías para mostrar todo por defecto
+  // Fechas inicializadas vacías para mostrar todo por defecto en reportes
   const [filtroFechaResumenDesde, setFiltroFechaResumenDesde] = useState("");
   const [filtroFechaResumenHasta, setFiltroFechaResumenHasta] = useState("");
 
@@ -679,7 +658,7 @@ export default function App() {
   const totalGastado = gastos.filter(g => g.tipo === "gasto").reduce((a, g) => a + g.monto, 0);
   const totalIngresos = gastos.filter(g => g.tipo === "ingreso").reduce((a, g) => a + g.monto, 0);
   
-  // FUNCION ACTUALIZADA: Filtra por Rango de Fechas y Categoría
+  // FUNCION ACTUALIZADA: Filtra por Rango de Fechas y Categoría (Sin botón Hoy/Mes/Rango)
   const getFiltradosResumen = () => {
     let filtrados = gastos.filter(g => g.tipo !== "aporte");
 
@@ -745,33 +724,6 @@ export default function App() {
   const cMaxI = maxIngreso * 1.2;
   const cMaxG = maxGasto * 1.2;
 
-  const gastosFiltradosHist = gastos.filter(g => {
-    const pasaFiltroFecha = (!filtroHistFechaDesde || g.fecha >= filtroHistFechaDesde) && 
-                            (!filtroHistFechaHasta || g.fecha <= filtroHistFechaHasta);
-    if (!pasaFiltroFecha) return false;
-
-    if (filtroHistModo === "general") {
-      if (g.tipo === "aporte") return false; 
-      const pasaTipo = filtroHistTipo === "todos" || g.tipo === filtroHistTipo;
-      const pasaCat = filtroHistCat === "todas" || g.categoria === filtroHistCat;
-      return pasaTipo && pasaCat;
-    } else {
-      if (g.tipo !== "aporte") return false; 
-      if (filtroHistMeta !== "todas") {
-        const metaObj = listaMetas.find(m => m.id === filtroHistMeta);
-        if (metaObj && !g.descripcion.includes(metaObj.nombre)) return false;
-      }
-      return true;
-    }
-  });
-
-  const groupedHistorial = gastosFiltradosHist.reduce((acc, g) => {
-    if (!acc[g.fecha]) acc[g.fecha] = [];
-    acc[g.fecha].push(g);
-    return acc;
-  }, {});
-  const sortedGroupKeys = Object.keys(groupedHistorial).sort((a,b) => b.localeCompare(a));
-
   const gastosVerTodos = gastos.filter(g => (!vtFechaDesde || g.fecha >= vtFechaDesde) && (!vtFechaHasta || g.fecha <= vtFechaHasta));
 
   const s = {
@@ -799,9 +751,6 @@ export default function App() {
     editBtn:    { backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", cursor: "pointer", fontSize: 15, padding: "4px 6px" },
     
     errorCard:  { background: isDark ? "#1A0A0A" : "#FEF2F2", border: `1px solid ${c.red}`, borderRadius: 12, padding: "16px", margin: "20px", color: c.red, fontSize: 14, fontWeight: 400 },
-    
-    filterRow:  { display: "flex", gap: 6, flexWrap: "nowrap", overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" },
-    filterBtn: (a) => ({ whiteSpace: "nowrap", flexShrink: 0, padding: "8px 16px", borderRadius: 20, border: `1px solid ${a ? "#FF803C" : c.border}`, background: a ? "#FF803C" : c.card, color: a ? "#FFF" : c.muted, fontSize: 13, fontWeight: a ? 600 : 500, cursor: "pointer", fontFamily: "inherit" }),
     
     navBar: {
       position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480,
@@ -981,7 +930,7 @@ export default function App() {
               ); 
             }
             else if (tab === "resumen") headTitle = "Reportes";
-            else if (tab === "historial") headTitle = "Historial";
+            else if (tab === "presupuesto") headTitle = "Presupuesto";
 
             const isHome = tab === "hoy";
 
@@ -1268,6 +1217,103 @@ export default function App() {
               )}
             </div>
           )}
+
+          {/* PUESTAÑA PRESUPUESTO - NUEVA SECCIÓN */}
+          {tab === "presupuesto" && (() => {
+              const currentMonthPrefix = hoy().slice(0, 7); 
+              const gastosMes = gastos.filter(g => g.tipo === "gasto" && g.fecha.startsWith(currentMonthPrefix));
+              const totalGastadoMes = gastosMes.reduce((acc, g) => acc + g.monto, 0);
+              const presupuestoTotal = parseFloat(ingresoMensual) || 1500;
+              const disponible = Math.max(0, presupuestoTotal - totalGastadoMes);
+              const pctGeneral = Math.min(100, Math.round((totalGastadoMes / presupuestoTotal) * 100)) || 0;
+
+              const mesesText = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+              const mesActualNum = parseInt(currentMonthPrefix.split("-")[1], 10) - 1;
+              const añoActual = currentMonthPrefix.split("-")[0];
+              const mesActualText = `${mesesText[mesActualNum]} ${añoActual}`;
+
+              const gastosPorCat = {};
+              gastosMes.forEach(g => {
+                  if(!gastosPorCat[g.categoria]) gastosPorCat[g.categoria] = 0;
+                  gastosPorCat[g.categoria] += g.monto;
+              });
+
+              return (
+                  <div style={s.section}>
+                      {/* Tarjeta Púrpura Resumen */}
+                      <div style={{ background: "#4A3AFF", borderRadius: 20, padding: 20, color: "#FFF", marginBottom: 24, boxShadow: "0 10px 20px rgba(74, 58, 255, 0.3)" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                              <span style={{ fontSize: 16, fontWeight: 700 }}>Resumen del mes</span>
+                              <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 14, fontWeight: 600, opacity: 0.9 }}>
+                                  {mesActualText} <ChevronDown size={16} />
+                              </div>
+                          </div>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+                              <div>
+                                  <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>Presupuesto total</div>
+                                  <div style={{ fontSize: 18, fontWeight: 700 }}>S/ {formatMoney(presupuestoTotal).replace("S/ ", "")}</div>
+                              </div>
+                              <div>
+                                  <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>Gastado</div>
+                                  <div style={{ fontSize: 18, fontWeight: 700 }}>S/ {formatMoney(totalGastadoMes).replace("S/ ", "")}</div>
+                              </div>
+                              <div>
+                                  <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>Disponible</div>
+                                  <div style={{ fontSize: 18, fontWeight: 700, color: "#4ADE80" }}>S/ {formatMoney(disponible).replace("S/ ", "")}</div>
+                              </div>
+                          </div>
+                      </div>
+
+                      {/* Progreso general */}
+                      <div style={{ marginBottom: 32 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                              <span style={{ fontSize: 15, fontWeight: 700, color: c.text }}>Progreso general</span>
+                              <span style={{ fontSize: 15, fontWeight: 700, color: c.text }}>{pctGeneral}%</span>
+                          </div>
+                          <div style={{ background: isDark ? "#333" : "#E5E7EB", borderRadius: 8, height: 10, width: "100%", overflow: "hidden", marginBottom: 8 }}>
+                              <div style={{ background: "#FFB020", height: "100%", width: `${pctGeneral}%`, borderRadius: 8 }}></div>
+                          </div>
+                          <div style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}>
+                              Has gastado el {pctGeneral}% de tu presupuesto total
+                          </div>
+                      </div>
+
+                      {/* Por Categorías */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                          <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: c.text }}>Por categorías</h3>
+                          <button style={{ background: "none", border: "none", color: "#4A3AFF", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>Ver todas</button>
+                      </div>
+
+                      <div style={{ display: "flex", flexDirection: "column", gap: 24, paddingBottom: 20 }}>
+                          {categoriasExtra.map(cat => {
+                              const gastado = gastosPorCat[cat.id] || 0;
+                              const presupCat = (presupuestoTotal / categoriasExtra.length) || 200; 
+                              const pctCat = Math.min(100, Math.round((gastado / presupCat) * 100)) || 0;
+
+                              return (
+                                  <div key={cat.id} style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                                      <div style={{ width: 48, height: 48, borderRadius: "50%", background: cat.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, color: "#FFF", flexShrink: 0 }}>
+                                          {getIcono(cat.label)}
+                                      </div>
+                                      <div style={{ flex: 1 }}>
+                                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                                              <span style={{ fontSize: 15, fontWeight: 700, color: c.text }}>{getTexto(cat.label)}</span>
+                                              <span style={{ fontSize: 15, fontWeight: 700, color: c.text }}>{pctCat}%</span>
+                                          </div>
+                                          <div style={{ fontSize: 13, color: c.muted, fontWeight: 500, marginBottom: 8 }}>
+                                              S/ {formatMoney(gastado).replace("S/ ", "")} de S/ {formatMoney(presupCat).replace("S/ ", "")}
+                                          </div>
+                                          <div style={{ background: isDark ? "#333" : "#E5E7EB", borderRadius: 4, height: 6, width: "100%", overflow: "hidden" }}>
+                                              <div style={{ background: cat.color, height: "100%", width: `${pctCat}%`, borderRadius: 4 }}></div>
+                                          </div>
+                                      </div>
+                                  </div>
+                              )
+                          })}
+                      </div>
+                  </div>
+              )
+          })()}
 
           {tab === "resumen" && (
             <div style={s.section}>
@@ -1730,248 +1776,102 @@ export default function App() {
             </div>
           )}
 
-          {/* PESTAÑA HISTORIAL CON NUEVO FILTRADO */}
-          {tab === "historial" && (
-            <div style={s.section}>
-              
-              <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
-                <button
-                  onClick={() => setFiltroHistModo("general")}
-                  style={{ ...s.filterBtn(filtroHistModo === "general"), flex: 1, padding: "12px 10px", fontSize: 14 }}
-                >
-                  📊 Flujo General
-                </button>
-                <button
-                  onClick={() => setFiltroHistModo("metas")}
-                  style={{ ...s.filterBtn(filtroHistModo === "metas"), flex: 1, padding: "12px 10px", fontSize: 14 }}
-                >
-                  🎯 Mis Metas
-                </button>
-              </div>
+          {/* NUEVA PESTAÑA: PRESUPUESTO */}
+          {tab === "presupuesto" && (() => {
+              const currentMonthPrefix = hoy().slice(0, 7); 
+              const gastosMes = gastos.filter(g => g.tipo === "gasto" && g.fecha.startsWith(currentMonthPrefix));
+              const totalGastadoMes = gastosMes.reduce((acc, g) => acc + g.monto, 0);
+              const presupuestoTotal = parseFloat(ingresoMensual) || 1500;
+              const disponible = Math.max(0, presupuestoTotal - totalGastadoMes);
+              const pctGeneral = Math.min(100, Math.round((totalGastadoMes / presupuestoTotal) * 100)) || 0;
 
-              {filtroHistModo === "general" ? (
-                  <>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                      <div style={{ display: "flex", gap: 8 }}>
-                        {[{ id: "todos", label: "Total" }, { id: "ingreso", label: "Ingresos" }, { id: "gasto", label: "Gastos" }].map(opt => (
-                          <button key={opt.id} onClick={() => setFiltroHistTipo(opt.id)} style={{
-                            padding: "10px 24px", borderRadius: 24,
-                            border: `1px solid ${filtroHistTipo === opt.id ? (isDark ? "#FFF" : "#000") : c.border}`,
-                            background: filtroHistTipo === opt.id ? (isDark ? "#FFF" : "#000") : c.card,
-                            color: filtroHistTipo === opt.id ? (isDark ? "#000" : "#FFF") : c.muted,
-                            fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s"
-                          }}>
-                            {opt.label}
-                          </button>
-                        ))}
-                      </div>
-                      
-                      <button onClick={() => setShowFiltrosMenu(!showFiltrosMenu)} style={{
-                        padding: "8px 16px", borderRadius: 24, border: `1px solid ${showFiltrosMenu ? (isDark ? "#FFF" : "#000") : c.border}`,
-                        background: showFiltrosMenu ? (isDark ? "#FFF" : "#000") : c.card, display: "flex", alignItems: "center", gap: 6,
-                        cursor: "pointer", flexShrink: 0, transition: "all 0.2s"
-                      }}>
-                        <Calendar size={16} color={showFiltrosMenu ? (isDark ? "#000" : "#FFF") : c.text} />
-                        <span style={{ fontSize: 14, fontWeight: 600, color: showFiltrosMenu ? (isDark ? "#000" : "#FFF") : c.text }}>Fechas</span>
-                      </button>
-                    </div>
+              const mesesText = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+              const mesActualNum = parseInt(currentMonthPrefix.split("-")[1], 10) - 1;
+              const añoActual = currentMonthPrefix.split("-")[0];
+              const mesActualText = `${mesesText[mesActualNum]} ${añoActual}`;
 
-                    <div className="hide-scroll" style={{ ...s.filterRow, marginBottom: 24, minHeight: 36, alignItems: "center" }}>
-                      {filtroHistCat === "todas" ? (
-                        <>
-                          <button style={s.filterBtn(true)} onClick={() => setFiltroHistCat("todas")}>Todas</button>
-                          {categorias.map(c => <button key={c.id} style={s.filterBtn(false)} onClick={() => setFiltroHistCat(c.id)}>{c.label}</button>)}
-                        </>
-                      ) : (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                          <button 
-                            onClick={() => setFiltroHistCat("todas")} 
-                            style={{ width: 32, height: 32, borderRadius: '50%', background: isDark ? '#333' : '#F3F4F6', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
-                          >
-                            <X size={16} color={c.text} />
-                          </button>
-                          <div style={{ padding: "8px 16px", borderRadius: 20, border: `1px solid #E9D5FF`, background: "#F3E8FF", color: "#7E22CE", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center" }}>
-                            {categorias.find(c => c.id === filtroHistCat)?.label}
+              const gastosPorCat = {};
+              gastosMes.forEach(g => {
+                  if(!gastosPorCat[g.categoria]) gastosPorCat[g.categoria] = 0;
+                  gastosPorCat[g.categoria] += g.monto;
+              });
+
+              return (
+                  <div style={s.section}>
+                      {/* Tarjeta Púrpura Resumen */}
+                      <div style={{ background: "#4A3AFF", borderRadius: 20, padding: 20, color: "#FFF", marginBottom: 24, boxShadow: "0 10px 20px rgba(74, 58, 255, 0.3)" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                              <span style={{ fontSize: 16, fontWeight: 700 }}>Resumen del mes</span>
+                              <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 14, fontWeight: 600, opacity: 0.9 }}>
+                                  {mesActualText} <ChevronDown size={16} />
+                              </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  </>
-              ) : (
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-                     <div style={{ position: "relative", flex: 1, marginRight: 16 }}>
-                         <select 
-                             style={{ ...s.select, paddingRight: 40, fontSize: 15, fontWeight: 600 }} 
-                             value={filtroHistMeta} 
-                             onChange={(e) => setFiltroHistMeta(e.target.value)}
-                         >
-                             <option value="todas">🎯 Todas las metas</option>
-                             {listaMetas.map(m => <option key={m.id} value={m.id}>{m.icono} {m.nombre}</option>)}
-                         </select>
-                         <ChevronDown size={20} color={c.muted} style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
-                     </div>
-                     <button onClick={() => setShowFiltrosMenu(!showFiltrosMenu)} style={{
-                        padding: "8px 16px", borderRadius: 24, border: `1px solid ${showFiltrosMenu ? (isDark ? "#FFF" : "#000") : c.border}`, minHeight: 48,
-                        background: showFiltrosMenu ? (isDark ? "#FFF" : "#000") : c.card, display: "flex", alignItems: "center", gap: 6,
-                        cursor: "pointer", flexShrink: 0, transition: "all 0.2s"
-                      }}>
-                        <Calendar size={16} color={showFiltrosMenu ? (isDark ? "#000" : "#FFF") : c.text} />
-                      </button>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+                              <div>
+                                  <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>Presupuesto total</div>
+                                  <div style={{ fontSize: 18, fontWeight: 700 }}>S/ {formatMoney(presupuestoTotal).replace("S/ ", "")}</div>
+                              </div>
+                              <div>
+                                  <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>Gastado</div>
+                                  <div style={{ fontSize: 18, fontWeight: 700 }}>S/ {formatMoney(totalGastadoMes).replace("S/ ", "")}</div>
+                              </div>
+                              <div>
+                                  <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>Disponible</div>
+                                  <div style={{ fontSize: 18, fontWeight: 700, color: "#4ADE80" }}>S/ {formatMoney(disponible).replace("S/ ", "")}</div>
+                              </div>
+                          </div>
+                      </div>
+
+                      {/* Progreso general */}
+                      <div style={{ marginBottom: 32 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                              <span style={{ fontSize: 15, fontWeight: 700, color: c.text }}>Progreso general</span>
+                              <span style={{ fontSize: 15, fontWeight: 700, color: c.text }}>{pctGeneral}%</span>
+                          </div>
+                          <div style={{ background: isDark ? "#333" : "#E5E7EB", borderRadius: 8, height: 10, width: "100%", overflow: "hidden", marginBottom: 8 }}>
+                              <div style={{ background: "#FFB020", height: "100%", width: `${pctGeneral}%`, borderRadius: 8 }}></div>
+                          </div>
+                          <div style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}>
+                              Has gastado el {pctGeneral}% de tu presupuesto total
+                          </div>
+                      </div>
+
+                      {/* Por Categorías */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                          <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: c.text }}>Por categorías</h3>
+                          <button style={{ background: "none", border: "none", color: "#4A3AFF", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>Ver todas</button>
+                      </div>
+
+                      <div style={{ display: "flex", flexDirection: "column", gap: 24, paddingBottom: 20 }}>
+                          {categoriasExtra.map(cat => {
+                              const gastado = gastosPorCat[cat.id] || 0;
+                              const presupCat = (presupuestoTotal / categoriasExtra.length) || 200; 
+                              const pctCat = Math.min(100, Math.round((gastado / presupCat) * 100)) || 0;
+
+                              return (
+                                  <div key={cat.id} style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                                      <div style={{ width: 48, height: 48, borderRadius: "50%", background: cat.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, color: "#FFF", flexShrink: 0 }}>
+                                          {getIcono(cat.label)}
+                                      </div>
+                                      <div style={{ flex: 1 }}>
+                                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                                              <span style={{ fontSize: 15, fontWeight: 700, color: c.text }}>{getTexto(cat.label)}</span>
+                                              <span style={{ fontSize: 15, fontWeight: 700, color: c.text }}>{pctCat}%</span>
+                                          </div>
+                                          <div style={{ fontSize: 13, color: c.muted, fontWeight: 500, marginBottom: 8 }}>
+                                              S/ {formatMoney(gastado).replace("S/ ", "")} de S/ {formatMoney(presupCat).replace("S/ ", "")}
+                                          </div>
+                                          <div style={{ background: isDark ? "#333" : "#E5E7EB", borderRadius: 4, height: 6, width: "100%", overflow: "hidden" }}>
+                                              <div style={{ background: cat.color, height: "100%", width: `${pctCat}%`, borderRadius: 4 }}></div>
+                                          </div>
+                                      </div>
+                                  </div>
+                              )
+                          })}
+                      </div>
                   </div>
-              )}
-
-              {showFiltrosMenu && (
-                <div style={{...s.card, marginBottom: 24, animation: "slideUp 0.3s ease-out"}}>
-                  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                    <div style={{ flex: 1, position: "relative" }}>
-                      {!filtroHistFechaDesde && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Del</span>}
-                      <input type="date" value={filtroHistFechaDesde} onChange={e => setFiltroHistFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroHistFechaDesde ? c.text : "transparent" }} />
-                    </div>
-                    <div style={{ flex: 1, position: "relative" }}>
-                      {!filtroHistFechaHasta && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Al</span>}
-                      <input type="date" value={filtroHistFechaHasta} onChange={e => setFiltroFechaResumenHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroHistFechaHasta ? c.text : "transparent" }} />
-                    </div>
-                  </div>
-                  {(filtroHistFechaDesde || filtroHistFechaHasta) && <button style={{ width: "100%", fontSize: 14, fontWeight: 700, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 16, fontFamily: "inherit" }} onClick={() => { setFiltroHistFechaDesde(""); setFiltroFechaResumenHasta(""); }}>
-                    <X size={14} style={{ marginRight: 4, verticalAlign: "middle" }} /> Limpiar fechas
-                  </button>}
-                </div>
-              )}
-
-              {gastosFiltradosHist.length === 0 ? (
-                 <div style={{ ...s.card, textAlign: "center", color: c.muted, padding: "40px 20px", fontWeight: 500 }}>Sin movimientos con estos filtros</div> 
-              ) : (
-                 sortedGroupKeys.map(dateKey => (
-                   <div key={dateKey} style={{ marginBottom: 24 }}>
-                     <div style={{ fontSize: 14, fontWeight: 600, color: c.text, marginBottom: 12, paddingLeft: 4 }}>
-                       {formatGroupDate(dateKey)}
-                     </div>
-                     <div style={{ ...s.card, padding: "0 16px", marginBottom: 0 }}>
-                       {groupedHistorial[dateKey].map((g, i, arr) => {
-                         const isAporte = g.tipo === "aporte";
-                         const cat = isAporte ? null : categorias.find(c => c.id === g.categoria);
-                         const metaTarget = isAporte ? listaMetas.find(m => g.descripcion.includes(m.nombre)) : null;
-                         const descAdicional = (!isAporte && g.descripcion && cat && g.descripcion !== getTexto(cat.label)) ? g.descripcion : "";
-                         const isLast = i === arr.length - 1;
-                         
-                         let iconBg = isDark ? "rgba(255,255,255,0.05)" : "#E5E7EB"; 
-                         let montoColor = c.text;
-                         
-                         if (isAporte) {
-                             iconBg = isDark ? "rgba(16,185,129,0.15)" : "#D1FAE5"; // Verde
-                             montoColor = c.green;
-                         } else if (g.tipo === "gasto") {
-                             iconBg = isDark ? "rgba(239,68,68,0.15)" : "#FEE2E2"; // Rojo
-                             montoColor = c.red;
-                         } else if (g.tipo === "ingreso") {
-                             iconBg = isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"; // Gris/Plomo
-                             montoColor = c.text; // Negro
-                         }
-
-                         return (
-                           <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: isLast ? "none" : `1px solid ${c.border}` }}>
-                             <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12 }}>
-                               <div style={{ width: 40, height: 40, borderRadius: 12, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, color: cat ? "inherit" : c.muted, fontWeight: cat ? "normal" : 600 }}>
-                                 {isAporte ? (metaTarget ? metaTarget.icono : "🎯") : (cat ? getIcono(cat.label) : (g.descripcion || "?").charAt(0).toUpperCase())}
-                               </div>
-                               <div style={{ minWidth: 0 }}>
-                                 <div style={{ fontSize: 15, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2, textDecoration: (!cat && !isAporte) ? "line-through" : "none" }}>
-                                    {isAporte ? g.descripcion : (cat ? getTexto(cat.label) : g.descripcion)}
-                                    {cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 500, textDecoration: "none" }}>{descAdicional}</span>}
-                                    {!cat && !isAporte && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 500, textDecoration: "none" }}>(Eliminado)</span>}
-                                 </div>
-                                 <div style={{ fontSize: 12, fontWeight: 500, color: c.muted }}>{getUITime(g.created_at)}</div>
-                               </div>
-                             </div>
-                             <div style={{ textAlign: "right", display: "flex", alignItems: "center", gap: 12 }}>
-                               <span style={{ fontSize: 16, fontWeight: 700, color: montoColor }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
-                             </div>
-                           </div>
-                         );
-                       })}
-                     </div>
-                   </div>
-                 ))
-              )}
-            </div>
-          )}
-
-          {/* PESTAÑA METAS DINÁMICA */}
-          {tab === "metas" && (
-            <div style={{ padding: "calc(76px + env(safe-area-inset-top, 0px)) 20px 20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", paddingBottom: 140 }}>
-              <div style={{ fontSize: 14, color: c.muted, marginBottom: 20, fontWeight: 500 }}>Tus objetivos financieros</div>
-
-              {listaMetas.length === 0 ? (
-                <div style={{ ...s.card, textAlign: "center", padding: "40px 20px", color: c.muted, fontWeight: 500 }}>
-                  Aún no tienes metas creadas. ¡Anímate a crear una!
-                </div>
-              ) : (
-                listaMetas.map((meta, index) => {
-                  const obj = parseFloat(meta.montoObjetivo) || 1;
-                  const ahorrado = parseFloat(meta.aporteInicial) || 0;
-                  const faltan = Math.max(0, obj - ahorrado);
-                  const pct = Math.min(100, Math.round((ahorrado / obj) * 100));
-
-                  let fechaStr = "Sin fecha límite";
-                  let diasStr = "Sin prisa";
-                  let diasRestantes = 0;
-                  
-                  if (meta.fechaLimite) {
-                    const mesesAbv = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-                    const [y, m, d] = meta.fechaLimite.split("-");
-                    fechaStr = `${parseInt(d)} ${mesesAbv[parseInt(m)-1]} ${y}`;
-
-                    diasRestantes = diffDias(hoy(), meta.fechaLimite);
-                    if (diasRestantes < 0) diasStr = "Vencida";
-                    else if (diasRestantes === 0) diasStr = "¡Hoy!";
-                    else diasStr = `En ${diasRestantes} días`;
-                  }
-
-                  const bgIconColor = PASTEL_COLORS[index % PASTEL_COLORS.length];
-
-                  return (
-                    <div key={meta.id} onClick={() => setMetaSeleccionada({ ...meta, indexColor: index })} style={{ ...s.card, padding: "20px", marginBottom: 16, cursor: "pointer" }}>
-                      <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
-                        <div style={{ width: 70, height: 70, borderRadius: "50%", background: bgIconColor, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 32 }}>
-                          {meta.icono}
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: 16, fontWeight: 700, color: c.text, marginBottom: 6 }}>{meta.nombre}</div>
-                          <div style={{ marginBottom: 12 }}>
-                            <span style={{ fontSize: 18, fontWeight: 700, color: c.green }}>S/ {formatMoney(ahorrado).replace("S/ ", "")}</span>
-                            <span style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}> de S/ {formatMoney(obj).replace("S/ ", "")}</span>
-                          </div>
-                          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                            <div style={{ background: isDark ? "#333" : "#E5E7EB", borderRadius: 4, height: 8, flex: 1, overflow: "hidden" }}>
-                              <div style={{ background: c.green, height: "100%", width: `${pct}%`, borderRadius: 4 }}></div>
-                            </div>
-                            <span style={{ fontSize: 13, fontWeight: 700, color: c.text }}>{pct}%</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: `1px solid ${c.border}`, paddingTop: 16 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, color: c.muted, fontSize: 13, fontWeight: 500 }}>
-                          <Calendar size={16} /> {fechaStr}
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, color: (!meta.fechaLimite || diasRestantes > 0) ? c.muted : c.red, fontSize: 13, fontWeight: 500 }}>
-                          <Clock size={16} /> {diasStr}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-              
-              <button onClick={() => {
-                setIsEditingMetaObj(false);
-                setMetaForm({ id: "", nombre: "", montoObjetivo: "", aporteInicial: "", fechaLimite: "", prioridad: "alta", tipo: "libre", icono: "💻" });
-                setShowCrearMeta(true);
-              }} style={{ width: "100%", padding: 16, background: "#059669", color: "#FFF", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", justifyContent: "center", alignItems: "center", gap: 8, boxShadow: "0 4px 12px rgba(5, 150, 105, 0.3)", marginTop: 8 }}>
-                <Plus size={20} /> Crear nueva meta
-              </button>
-              
-            </div>
-          )}
+              )
+          })()}
 
           <div style={s.navBar}>
             {[{ id: "hoy", icon: <Home size={24} strokeWidth={2.5} />, label: "Inicio" }, 
@@ -1987,7 +1887,7 @@ export default function App() {
               <button style={s.fabCircle} onClick={() => setShowAddModal(true)}><Plus size={36} strokeWidth={2.5} color="#FFF" /></button>
             </div>
 
-            {[{ id: "historial", icon: <FileText size={24} strokeWidth={2.5} />, label: "Historial" }, 
+            {[{ id: "presupuesto", icon: <Wallet size={24} strokeWidth={2.5} />, label: "Presupuesto" }, 
               { id: "metas", icon: <Target size={24} strokeWidth={2.5} />, label: "Metas" }].map(n => (
               <button key={n.id} style={s.navBtn(tab === n.id)} onClick={() => setTab(n.id)}>
                 {tab === n.id && <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 44, height: 3, background: "#FF803C", borderRadius: "0 0 4px 4px" }} />}
