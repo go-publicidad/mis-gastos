@@ -112,6 +112,20 @@ const getUITime = (isoStr) => {
   return `${h}:${m} ${ampm}`;
 };
 
+const formatGroupDate = (dateStr) => {
+  const todayIso = hoy();
+  const ayerDate = new Date(Date.now() - 18000000 - 86400000);
+  const ayerIso = ayerDate.toISOString().split("T")[0];
+
+  const d = new Date(dateStr + "T12:00:00Z");
+  const day = d.getDate();
+  const meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+  
+  if (dateStr === todayIso) return `Hoy, ${day} de ${meses[d.getMonth()]}`;
+  if (dateStr === ayerIso) return `Ayer, ${day} de ${meses[d.getMonth()]}`;
+  return `${day} de ${meses[d.getMonth()]}, ${d.getFullYear()}`;
+};
+
 const getUIFechaHora = (isoStr) => {
   if (!isoStr) return "";
   const validIsoStr = isoStr.includes('Z') || isoStr.includes('+') ? isoStr : `${isoStr}Z`;
@@ -658,7 +672,6 @@ export default function App() {
   const totalGastado = gastos.filter(g => g.tipo === "gasto").reduce((a, g) => a + g.monto, 0);
   const totalIngresos = gastos.filter(g => g.tipo === "ingreso").reduce((a, g) => a + g.monto, 0);
   
-  // FUNCION ACTUALIZADA: Filtra por Rango de Fechas y Categoría (Sin botón Hoy/Mes/Rango)
   const getFiltradosResumen = () => {
     let filtrados = gastos.filter(g => g.tipo !== "aporte");
 
@@ -751,6 +764,9 @@ export default function App() {
     editBtn:    { backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", cursor: "pointer", fontSize: 15, padding: "4px 6px" },
     
     errorCard:  { background: isDark ? "#1A0A0A" : "#FEF2F2", border: `1px solid ${c.red}`, borderRadius: 12, padding: "16px", margin: "20px", color: c.red, fontSize: 14, fontWeight: 400 },
+    
+    filterRow:  { display: "flex", gap: 6, flexWrap: "nowrap", overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" },
+    filterBtn: (a) => ({ whiteSpace: "nowrap", flexShrink: 0, padding: "8px 16px", borderRadius: 20, border: `1px solid ${a ? "#FF803C" : c.border}`, background: a ? "#FF803C" : c.card, color: a ? "#FFF" : c.muted, fontSize: 13, fontWeight: a ? 600 : 500, cursor: "pointer", fontFamily: "inherit" }),
     
     navBar: {
       position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480,
@@ -1218,7 +1234,7 @@ export default function App() {
             </div>
           )}
 
-          {/* PUESTAÑA PRESUPUESTO - NUEVA SECCIÓN */}
+          {/* PESTAÑA PRESUPUESTO - NUEVA SECCIÓN */}
           {tab === "presupuesto" && (() => {
               const currentMonthPrefix = hoy().slice(0, 7); 
               const gastosMes = gastos.filter(g => g.tipo === "gasto" && g.fecha.startsWith(currentMonthPrefix));
@@ -1687,7 +1703,7 @@ export default function App() {
                             </div>
                             <div style={{ background: isDark ? "rgba(245, 158, 11, 0.1)" : "#FFFBEB", borderRadius: 16, padding: 16, border: isDark ? "1px solid rgba(245, 158, 11, 0.2)" : "none" }}>
                                 <div style={{ fontSize: 13, color: c.muted, marginBottom: 6, fontWeight: 500 }}>Te falta</div>
-                                <div style={{ fontSize: 20, fontWeight: 700, color: "#F59E0B" }}>{formatMoney(faltanHistorico)}</div>
+                                <div style={{ fontSize: 20, fontWeight: 700, color: "#F59E0B" }}>{formatMoney(Math.max(0, metaSelec.montoObjetivo - metaSelec.aporteInicial))}</div>
                             </div>
                         </div>
                         
@@ -1775,103 +1791,6 @@ export default function App() {
 
             </div>
           )}
-
-          {/* NUEVA PESTAÑA: PRESUPUESTO */}
-          {tab === "presupuesto" && (() => {
-              const currentMonthPrefix = hoy().slice(0, 7); 
-              const gastosMes = gastos.filter(g => g.tipo === "gasto" && g.fecha.startsWith(currentMonthPrefix));
-              const totalGastadoMes = gastosMes.reduce((acc, g) => acc + g.monto, 0);
-              const presupuestoTotal = parseFloat(ingresoMensual) || 1500;
-              const disponible = Math.max(0, presupuestoTotal - totalGastadoMes);
-              const pctGeneral = Math.min(100, Math.round((totalGastadoMes / presupuestoTotal) * 100)) || 0;
-
-              const mesesText = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-              const mesActualNum = parseInt(currentMonthPrefix.split("-")[1], 10) - 1;
-              const añoActual = currentMonthPrefix.split("-")[0];
-              const mesActualText = `${mesesText[mesActualNum]} ${añoActual}`;
-
-              const gastosPorCat = {};
-              gastosMes.forEach(g => {
-                  if(!gastosPorCat[g.categoria]) gastosPorCat[g.categoria] = 0;
-                  gastosPorCat[g.categoria] += g.monto;
-              });
-
-              return (
-                  <div style={s.section}>
-                      {/* Tarjeta Púrpura Resumen */}
-                      <div style={{ background: "#4A3AFF", borderRadius: 20, padding: 20, color: "#FFF", marginBottom: 24, boxShadow: "0 10px 20px rgba(74, 58, 255, 0.3)" }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-                              <span style={{ fontSize: 16, fontWeight: 700 }}>Resumen del mes</span>
-                              <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 14, fontWeight: 600, opacity: 0.9 }}>
-                                  {mesActualText} <ChevronDown size={16} />
-                              </div>
-                          </div>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-                              <div>
-                                  <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>Presupuesto total</div>
-                                  <div style={{ fontSize: 18, fontWeight: 700 }}>S/ {formatMoney(presupuestoTotal).replace("S/ ", "")}</div>
-                              </div>
-                              <div>
-                                  <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>Gastado</div>
-                                  <div style={{ fontSize: 18, fontWeight: 700 }}>S/ {formatMoney(totalGastadoMes).replace("S/ ", "")}</div>
-                              </div>
-                              <div>
-                                  <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>Disponible</div>
-                                  <div style={{ fontSize: 18, fontWeight: 700, color: "#4ADE80" }}>S/ {formatMoney(disponible).replace("S/ ", "")}</div>
-                              </div>
-                          </div>
-                      </div>
-
-                      {/* Progreso general */}
-                      <div style={{ marginBottom: 32 }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                              <span style={{ fontSize: 15, fontWeight: 700, color: c.text }}>Progreso general</span>
-                              <span style={{ fontSize: 15, fontWeight: 700, color: c.text }}>{pctGeneral}%</span>
-                          </div>
-                          <div style={{ background: isDark ? "#333" : "#E5E7EB", borderRadius: 8, height: 10, width: "100%", overflow: "hidden", marginBottom: 8 }}>
-                              <div style={{ background: "#FFB020", height: "100%", width: `${pctGeneral}%`, borderRadius: 8 }}></div>
-                          </div>
-                          <div style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}>
-                              Has gastado el {pctGeneral}% de tu presupuesto total
-                          </div>
-                      </div>
-
-                      {/* Por Categorías */}
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                          <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: c.text }}>Por categorías</h3>
-                          <button style={{ background: "none", border: "none", color: "#4A3AFF", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>Ver todas</button>
-                      </div>
-
-                      <div style={{ display: "flex", flexDirection: "column", gap: 24, paddingBottom: 20 }}>
-                          {categoriasExtra.map(cat => {
-                              const gastado = gastosPorCat[cat.id] || 0;
-                              const presupCat = (presupuestoTotal / categoriasExtra.length) || 200; 
-                              const pctCat = Math.min(100, Math.round((gastado / presupCat) * 100)) || 0;
-
-                              return (
-                                  <div key={cat.id} style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                                      <div style={{ width: 48, height: 48, borderRadius: "50%", background: cat.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, color: "#FFF", flexShrink: 0 }}>
-                                          {getIcono(cat.label)}
-                                      </div>
-                                      <div style={{ flex: 1 }}>
-                                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                                              <span style={{ fontSize: 15, fontWeight: 700, color: c.text }}>{getTexto(cat.label)}</span>
-                                              <span style={{ fontSize: 15, fontWeight: 700, color: c.text }}>{pctCat}%</span>
-                                          </div>
-                                          <div style={{ fontSize: 13, color: c.muted, fontWeight: 500, marginBottom: 8 }}>
-                                              S/ {formatMoney(gastado).replace("S/ ", "")} de S/ {formatMoney(presupCat).replace("S/ ", "")}
-                                          </div>
-                                          <div style={{ background: isDark ? "#333" : "#E5E7EB", borderRadius: 4, height: 6, width: "100%", overflow: "hidden" }}>
-                                              <div style={{ background: cat.color, height: "100%", width: `${pctCat}%`, borderRadius: 4 }}></div>
-                                          </div>
-                                      </div>
-                                  </div>
-                              )
-                          })}
-                      </div>
-                  </div>
-              )
-          })()}
 
           <div style={s.navBar}>
             {[{ id: "hoy", icon: <Home size={24} strokeWidth={2.5} />, label: "Inicio" }, 
