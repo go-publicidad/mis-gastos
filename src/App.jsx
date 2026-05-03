@@ -105,34 +105,6 @@ const getUITime = (isoStr) => {
   h = h % 12;
   h = h ? h : 12; 
   m = m < 10 ? '0' + m : m;
-  return `${h}:${m} ${ampm}`;
-};
-
-const formatGroupDate = (dateStr) => {
-  const todayIso = hoy();
-  const ayerDate = new Date(Date.now() - 18000000 - 86400000);
-  const ayerIso = ayerDate.toISOString().split("T")[0];
-
-  const d = new Date(dateStr + "T12:00:00Z");
-  const day = d.getDate();
-  const meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
-  
-  if (dateStr === todayIso) return `Hoy, ${day} de ${meses[d.getMonth()]}`;
-  if (dateStr === ayerIso) return `Ayer, ${day} de ${meses[d.getMonth()]}`;
-  return `${day} de ${meses[d.getMonth()]}, ${d.getFullYear()}`;
-};
-
-const getUIFechaHora = (isoStr) => {
-  if (!isoStr) return "";
-  const validIsoStr = isoStr.includes('Z') || isoStr.includes('+') ? isoStr : `${isoStr}Z`;
-  const dt = new Date(validIsoStr);
-  const limaDate = new Date(dt.getTime() - 18000000);
-  let h = limaDate.getUTCHours();
-  let m = limaDate.getUTCMinutes();
-  const ampm = h >= 12 ? 'p.m.' : 'a.m.';
-  h = h % 12;
-  h = h ? h : 12; 
-  m = m < 10 ? '0' + m : m;
   const strTime = `${h}:${m} ${ampm}`;
 
   const isoDate = limaDate.toISOString().split("T")[0];
@@ -367,7 +339,8 @@ export default function App() {
     setTimeout(() => { action(); setIsClosing(""); setShowMetaMenu(false); }, 280);
   };
 
-  const loadData = async () => {
+  // NUEVO: Agregado parámetro 'isManual' para mostrar confirmación tras pull-to-refresh
+  const loadData = async (isManual = false) => {
     try {
       const { data: movimientos, error: err1 } = await supabase.from("gastos").select("*").order("created_at", { ascending: false });
       if (err1) throw err1;
@@ -389,6 +362,9 @@ export default function App() {
         if (getVal("listaMetas")) { try { const p = JSON.parse(getVal("listaMetas")); if(Array.isArray(p)) setListaMetas(p); } catch(_) {} }
       }
       setError(null);
+      if (isManual) {
+         showToast("Datos actualizados ✓", c.green);
+      }
     } catch (e) { setError("No se pudo conectar. Verifica tu configuración."); }
     setLoaded(true);
   };
@@ -409,7 +385,7 @@ export default function App() {
 
   const handleTouchStart = (e) => {
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
-    if (scrollTop <= 0) {
+    if (scrollTop <= 5) { // Aumentado a 5 para celulares que no llegan al 0 perfecto
       setStartY(e.touches[0].clientY);
     } else {
       setStartY(0);
@@ -422,18 +398,18 @@ export default function App() {
     const diff = currentY - startY;
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
     
-    if (diff > 0 && scrollTop <= 0) {
+    if (diff > 0 && scrollTop <= 5) {
       setPullDistance(Math.min(diff * 0.4, 80)); 
     }
   };
 
   const handleTouchEnd = async () => {
-    if (pullDistance > 50) {
+    if (pullDistance > 40) { // Reducido a 40 para que sea más fácil activarlo
       setIsRefreshing(true);
       setPullDistance(60); 
       
-      const delay = new Promise(resolve => setTimeout(resolve, 800));
-      await Promise.all([loadData(), delay]);
+      const delay = new Promise(resolve => setTimeout(resolve, 800)); // Mínimo 800ms visual
+      await Promise.all([loadData(true), delay]);
       
       setIsRefreshing(false);
     }
@@ -758,7 +734,7 @@ export default function App() {
 
   const s = {
     app: { minHeight: "100vh", fontFamily: "'Montserrat', sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: "calc(110px + env(safe-area-inset-bottom, 0px))", width: "100%", userSelect: "none", WebkitUserSelect: "none" },
-    section:    { padding: "calc(76px + env(safe-area-inset-top, 0px)) 20px 20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "stretch" },
+    section:    { padding: "calc(60px + env(safe-area-inset-top, 0px)) 20px 20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "stretch" },
     card:       { width: "100%", background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: "16px", marginBottom: 24, overflow: "hidden", boxSizing: "border-box", boxShadow: c.shadow },
     
     sliderContainer: { display: "flex", overflowX: "auto", scrollSnapType: "x mandatory", gap: 16, paddingBottom: 8, marginTop: 4, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" },
@@ -900,8 +876,20 @@ export default function App() {
                 const cat = isAporte ? null : categorias.find(c => c.id === g.categoria);
                 const descAdicional = (!isAporte && g.descripcion && cat && g.descripcion !== getTexto(cat.label)) ? g.descripcion : "";
                 
-                const iconBg = isAporte ? (isDark ? "rgba(16,185,129,0.15)" : "#D1FAE5") : (g.tipo === "gasto" ? (isDark ? "rgba(239,68,68,0.15)" : "#FEE2E2") : (isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6"));
-                const montoColor = isAporte ? c.green : (g.tipo === "gasto" ? c.red : c.text);
+                // AJUSTE DE COLORES SEGÚN TIPO (APORTE, GASTO, INGRESO)
+                let iconBg = isDark ? "rgba(255,255,255,0.05)" : "#E5E7EB"; // Default gris
+                let montoColor = c.text;
+                
+                if (isAporte) {
+                    iconBg = isDark ? "rgba(16,185,129,0.15)" : "#D1FAE5"; // Verde
+                    montoColor = c.green;
+                } else if (g.tipo === "gasto") {
+                    iconBg = isDark ? "rgba(239,68,68,0.15)" : "#FEE2E2"; // Rojo
+                    montoColor = c.red;
+                } else if (g.tipo === "ingreso") {
+                    iconBg = isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"; // Gris/Plomo
+                    montoColor = c.text; // Negro (o blanco roto en oscuro)
+                }
 
                 return (
                   <div key={g.id} style={{ ...s.card, padding: "12px 16px", marginBottom: 8 }}>
@@ -994,18 +982,21 @@ export default function App() {
           {tab === "hoy" && (
             <div style={{
               position: "fixed",
-              top: "calc(76px + env(safe-area-inset-top, 0px))",
+              top: "calc(52px + env(safe-area-inset-top, 0px))", // Subido para quedar pegado al header
               left: "50%",
               transform: "translateX(-50%)",
               width: "100%",
               maxWidth: 480,
-              height: 80,
+              height: 60,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
               zIndex: 10,
-              color: "#10B981"
+              color: "#10B981",
+              opacity: (isRefreshing || pullDistance > 0) ? 1 : 0,
+              visibility: (isRefreshing || pullDistance > 0) ? "visible" : "hidden",
+              pointerEvents: "none"
             }}>
               <Loader2 
                 size={24} 
@@ -1193,8 +1184,20 @@ export default function App() {
                     const descAdicional = (!isAporte && g.descripcion && cat && g.descripcion !== getTexto(cat.label)) ? g.descripcion : "";
                     const isLast = i === arr.length - 1;
                     
-                    const iconBg = isAporte ? (isDark ? "rgba(16,185,129,0.15)" : "#D1FAE5") : (g.tipo === "gasto" ? (isDark ? "rgba(239,68,68,0.15)" : "#FEE2E2") : (isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6"));
-                    const montoColor = isAporte ? c.green : (g.tipo === "gasto" ? c.red : c.text);
+                    // AJUSTE DE COLORES SEGÚN TIPO (APORTE, GASTO, INGRESO)
+                    let iconBg = isDark ? "rgba(255,255,255,0.05)" : "#E5E7EB"; 
+                    let montoColor = c.text;
+                    
+                    if (isAporte) {
+                        iconBg = isDark ? "rgba(16,185,129,0.15)" : "#D1FAE5"; // Verde
+                        montoColor = c.green;
+                    } else if (g.tipo === "gasto") {
+                        iconBg = isDark ? "rgba(239,68,68,0.15)" : "#FEE2E2"; // Rojo
+                        montoColor = c.red;
+                    } else if (g.tipo === "ingreso") {
+                        iconBg = isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"; // Gris/Plomo
+                        montoColor = c.text; // Negro
+                    }
 
                     return (
                       <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: isLast ? "none" : `1px solid ${c.border}` }}>
@@ -1541,14 +1544,14 @@ export default function App() {
                                                     {metaSelec.icono}
                                                 </div>
                                                 <div style={{ minWidth: 0 }}>
-                                                    <div style={{ fontSize: 15, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text }}>
+                                                    <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text }}>
                                                         Aporte realizado
                                                     </div>
-                                                    <div style={{ fontSize: 12, fontWeight: 500, color: c.muted }}>{getUIFechaHora(g.created_at)}</div>
+                                                    <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)}</div>
                                                 </div>
                                             </div>
                                             <div style={{ textAlign: "right" }}>
-                                                <span style={{ fontSize: 16, fontWeight: 700, color: c.green }}>+{formatMoney(g.monto)}</span>
+                                                <span style={{ fontSize: 16, fontWeight: 600, color: c.green }}>+{formatMoney(g.monto)}</span>
                                             </div>
                                         </div>
                                     );
@@ -1689,8 +1692,20 @@ export default function App() {
                          const descAdicional = (!isAporte && g.descripcion && cat && g.descripcion !== getTexto(cat.label)) ? g.descripcion : "";
                          const isLast = i === arr.length - 1;
                          
-                         const iconBg = isAporte ? (isDark ? "rgba(16,185,129,0.15)" : "#D1FAE5") : (g.tipo === "gasto" ? (isDark ? "rgba(239,68,68,0.15)" : "#FEE2E2") : (isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6"));
-                         const montoColor = isAporte ? c.green : (g.tipo === "gasto" ? c.red : c.text);
+                         // AJUSTE DE COLORES SEGÚN TIPO (APORTE, GASTO, INGRESO)
+                         let iconBg = isDark ? "rgba(255,255,255,0.05)" : "#E5E7EB"; 
+                         let montoColor = c.text;
+                         
+                         if (isAporte) {
+                             iconBg = isDark ? "rgba(16,185,129,0.15)" : "#D1FAE5"; // Verde
+                             montoColor = c.green;
+                         } else if (g.tipo === "gasto") {
+                             iconBg = isDark ? "rgba(239,68,68,0.15)" : "#FEE2E2"; // Rojo
+                             montoColor = c.red;
+                         } else if (g.tipo === "ingreso") {
+                             iconBg = isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"; // Gris/Plomo
+                             montoColor = c.text; // Negro
+                         }
 
                          return (
                            <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: isLast ? "none" : `1px solid ${c.border}` }}>
