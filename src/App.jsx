@@ -348,8 +348,8 @@ export default function App() {
     green: isDark ? "#5AE88A" : "#10B981",
     red: isDark ? "#E85A5A" : "#EF4444",
     shadow: isDark ? "none" : "0 4px 12px rgba(0,0,0,0.04)",
-    iconBgGreen: isDark ? "rgba(90, 232, 138, 0.15)" : "#E6F4EA",
-    iconBgRed: isDark ? "rgba(232, 90, 90, 0.15)" : "#FEE2E2",
+    iconBgGreen: isDark ? "rgba(16, 185, 129, 0.15)" : "#D1FAE5",
+    iconBgRed: isDark ? "rgba(239, 68, 68, 0.15)" : "#FEE2E2",
     iconBgOrange: isDark ? "rgba(255, 128, 60, 0.15)" : "#FFEDD5",
     iconBgPurple: isDark ? "rgba(168, 85, 247, 0.15)" : "#F3E8FF",
     iconTextPurple: isDark ? "#D8B4FE" : "#A855F7"
@@ -432,7 +432,6 @@ export default function App() {
       setIsRefreshing(true);
       setPullDistance(60); 
       
-      // Mínimo 800ms de animación de carga visual
       const delay = new Promise(resolve => setTimeout(resolve, 800));
       await Promise.all([loadData(), delay]);
       
@@ -901,24 +900,27 @@ export default function App() {
                 const cat = isAporte ? null : categorias.find(c => c.id === g.categoria);
                 const descAdicional = (!isAporte && g.descripcion && cat && g.descripcion !== getTexto(cat.label)) ? g.descripcion : "";
                 
+                const iconBg = isAporte ? (isDark ? "rgba(16,185,129,0.15)" : "#D1FAE5") : (g.tipo === "gasto" ? (isDark ? "rgba(239,68,68,0.15)" : "#FEE2E2") : (isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6"));
+                const montoColor = isAporte ? c.green : (g.tipo === "gasto" ? c.red : c.text);
+
                 return (
                   <div key={g.id} style={{ ...s.card, padding: "12px 16px", marginBottom: 8 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12 }}>
-                        <div style={{ width: 40, height: 40, borderRadius: 12, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, color: cat ? "inherit" : c.muted, fontWeight: cat ? "normal" : 600 }}>
+                        <div style={{ width: 40, height: 40, borderRadius: 12, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, color: cat ? "inherit" : c.muted, fontWeight: cat ? "normal" : 600 }}>
                           {isAporte ? "🎯" : (cat ? getIcono(cat.label) : (g.descripcion || "?").charAt(0).toUpperCase())}
                         </div>
                         <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2, color: c.text }}>
+                          <div style={{ fontSize: 15, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2, color: c.text, textDecoration: (!cat && !isAporte) ? "line-through" : "none" }}>
                             {isAporte ? g.descripcion : (cat ? getTexto(cat.label) : g.descripcion)}
-                            {cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400 }}>{descAdicional}</span>}
-                            {!cat && !isAporte && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400 }}>(Eliminado)</span>}
+                            {cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 500, textDecoration: "none" }}>{descAdicional}</span>}
+                            {!cat && !isAporte && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 500, textDecoration: "none" }}>(Eliminado)</span>}
                           </div>
-                          <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {isAporte ? "Aportes" : (g.tipo === "gasto" ? "Gastos" : "Ingresos")}</div>
+                          <div style={{ fontSize: 12, fontWeight: 500, color: c.muted }}>{getUIFechaHora(g.created_at)} · {isAporte ? "Aportes" : (g.tipo === "gasto" ? "Gastos" : "Ingresos")}</div>
                         </div>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <span style={{ fontSize: 16, fontWeight: 500, color: g.tipo === "gasto" ? c.text : c.green, marginRight: 4 }}>
+                        <span style={{ fontSize: 16, fontWeight: 700, color: montoColor, marginRight: 4 }}>
                           {g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}
                         </span>
                         {!isAporte && (
@@ -997,16 +999,13 @@ export default function App() {
               transform: "translateX(-50%)",
               width: "100%",
               maxWidth: 480,
-              height: 60,
+              height: 80,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
               zIndex: 10,
-              color: "#10B981",
-              opacity: (isRefreshing || pullDistance > 0) ? 1 : 0,
-              visibility: (isRefreshing || pullDistance > 0) ? "visible" : "hidden",
-              pointerEvents: "none"
+              color: "#10B981"
             }}>
               <Loader2 
                 size={24} 
@@ -1026,6 +1025,7 @@ export default function App() {
             <div 
               style={{
                 ...s.section,
+                background: "transparent", // Se hizo transparente para revelar el ícono trasero
                 minHeight: "100vh",
                 position: "relative",
                 zIndex: 20,
@@ -1141,7 +1141,7 @@ export default function App() {
               )}
 
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, marginTop: listaMetas.length <= 1 ? 8 : 0 }}>
-                <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>Resumen de hoy</h3>
+                <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0, color: c.text }}>Resumen de hoy</h3>
               </div>
 
               <div style={s.grid2}>
@@ -1179,7 +1179,7 @@ export default function App() {
               </div>
 
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 0, marginBottom: 12 }}>
-                <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>Últimos movimientos</h3>
+                <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0, color: c.text }}>Últimos movimientos</h3>
                 <button onClick={() => { setViewAll(true); window.scrollTo(0, 0); }} style={{ background: "none", border: "none", color: c.muted, fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>
                   Ver todos
                 </button>
@@ -1193,24 +1193,27 @@ export default function App() {
                     const descAdicional = (!isAporte && g.descripcion && cat && g.descripcion !== getTexto(cat.label)) ? g.descripcion : "";
                     const isLast = i === arr.length - 1;
                     
+                    const iconBg = isAporte ? (isDark ? "rgba(16,185,129,0.15)" : "#D1FAE5") : (g.tipo === "gasto" ? (isDark ? "rgba(239,68,68,0.15)" : "#FEE2E2") : (isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6"));
+                    const montoColor = isAporte ? c.green : (g.tipo === "gasto" ? c.red : c.text);
+
                     return (
                       <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: isLast ? "none" : `1px solid ${c.border}` }}>
                         <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 14 }}>
-                          <div style={{ width: 44, height: 44, borderRadius: 14, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0, color: cat ? "inherit" : c.muted, fontWeight: cat ? "normal" : 600 }}>
+                          <div style={{ width: 44, height: 44, borderRadius: 14, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0, color: cat ? "inherit" : c.muted, fontWeight: cat ? "normal" : 600 }}>
                             {isAporte ? "🎯" : (cat ? getIcono(cat.label) : (g.descripcion || "?").charAt(0).toUpperCase())}
                           </div>
                           <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text, textDecoration: (!cat && !isAporte) ? "line-through" : "none" }}>
+                            <div style={{ fontSize: 15, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text, textDecoration: (!cat && !isAporte) ? "line-through" : "none" }}>
                               {isAporte ? g.descripcion : (cat ? getTexto(cat.label) : g.descripcion)}
-                              {cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400, textDecoration: "none" }}>{descAdicional}</span>}
-                              {!cat && !isAporte && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400, textDecoration: "none" }}>(Eliminado)</span>}
+                              {cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 500, textDecoration: "none" }}>{descAdicional}</span>}
+                              {!cat && !isAporte && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 500, textDecoration: "none" }}>(Eliminado)</span>}
                             </div>
-                            <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)} · {isAporte ? "Aportes" : (g.tipo === "gasto" ? "Gastos" : "Ingresos")}</div>
+                            <div style={{ fontSize: 12, fontWeight: 500, color: c.muted }}>{getUIFechaHora(g.created_at)} · {isAporte ? "Aportes" : (g.tipo === "gasto" ? "Gastos" : "Ingresos")}</div>
                           </div>
                         </div>
                         <div style={{ textAlign: "right" }}>
-                           <span style={{ fontSize: 16, fontWeight: 500, color: (g.tipo === "gasto" && !isAporte) ? c.text : c.green }}>
-                            {(g.tipo === "gasto" && !isAporte) ? "-" : "+"}{formatMoney(g.monto)}
+                           <span style={{ fontSize: 16, fontWeight: 700, color: montoColor }}>
+                            {g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}
                           </span>
                         </div>
                       </div>
@@ -1538,14 +1541,14 @@ export default function App() {
                                                     {metaSelec.icono}
                                                 </div>
                                                 <div style={{ minWidth: 0 }}>
-                                                    <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text }}>
+                                                    <div style={{ fontSize: 15, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text }}>
                                                         Aporte realizado
                                                     </div>
-                                                    <div style={{ fontSize: 12, fontWeight: 400, color: c.muted }}>{getUIFechaHora(g.created_at)}</div>
+                                                    <div style={{ fontSize: 12, fontWeight: 500, color: c.muted }}>{getUIFechaHora(g.created_at)}</div>
                                                 </div>
                                             </div>
                                             <div style={{ textAlign: "right" }}>
-                                                <span style={{ fontSize: 16, fontWeight: 600, color: c.green }}>+{formatMoney(g.monto)}</span>
+                                                <span style={{ fontSize: 16, fontWeight: 700, color: c.green }}>+{formatMoney(g.monto)}</span>
                                             </div>
                                         </div>
                                     );
@@ -1686,23 +1689,26 @@ export default function App() {
                          const descAdicional = (!isAporte && g.descripcion && cat && g.descripcion !== getTexto(cat.label)) ? g.descripcion : "";
                          const isLast = i === arr.length - 1;
                          
+                         const iconBg = isAporte ? (isDark ? "rgba(16,185,129,0.15)" : "#D1FAE5") : (g.tipo === "gasto" ? (isDark ? "rgba(239,68,68,0.15)" : "#FEE2E2") : (isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6"));
+                         const montoColor = isAporte ? c.green : (g.tipo === "gasto" ? c.red : c.text);
+
                          return (
                            <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: isLast ? "none" : `1px solid ${c.border}` }}>
                              <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12 }}>
-                               <div style={{ width: 40, height: 40, borderRadius: 12, background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, color: cat ? "inherit" : c.muted, fontWeight: cat ? "normal" : 600 }}>
+                               <div style={{ width: 40, height: 40, borderRadius: 12, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, color: cat ? "inherit" : c.muted, fontWeight: cat ? "normal" : 600 }}>
                                  {isAporte ? (metaTarget ? metaTarget.icono : "🎯") : (cat ? getIcono(cat.label) : (g.descripcion || "?").charAt(0).toUpperCase())}
                                </div>
                                <div style={{ minWidth: 0 }}>
-                                 <div style={{ fontSize: 15, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2, textDecoration: (!cat && !isAporte) ? "line-through" : "none" }}>
+                                 <div style={{ fontSize: 15, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2, textDecoration: (!cat && !isAporte) ? "line-through" : "none" }}>
                                     {isAporte ? g.descripcion : (cat ? getTexto(cat.label) : g.descripcion)}
-                                    {cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400, textDecoration: "none" }}>{descAdicional}</span>}
-                                    {!cat && !isAporte && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 400, textDecoration: "none" }}>(Eliminado)</span>}
+                                    {cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 500, textDecoration: "none" }}>{descAdicional}</span>}
+                                    {!cat && !isAporte && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 500, textDecoration: "none" }}>(Eliminado)</span>}
                                  </div>
                                  <div style={{ fontSize: 12, fontWeight: 500, color: c.muted }}>{getUITime(g.created_at)}</div>
                                </div>
                              </div>
                              <div style={{ textAlign: "right", display: "flex", alignItems: "center", gap: 12 }}>
-                               <span style={{ fontSize: 16, fontWeight: 500, color: (g.tipo === "gasto" && !isAporte) ? c.text : c.green }}>{(g.tipo === "gasto" && !isAporte) ? "-" : "+"}{formatMoney(g.monto)}</span>
+                               <span style={{ fontSize: 16, fontWeight: 700, color: montoColor }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
                              </div>
                            </div>
                          );
