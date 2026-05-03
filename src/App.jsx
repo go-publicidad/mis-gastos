@@ -283,6 +283,7 @@ export default function App() {
   const [filtroHistFechaHasta, setFiltroHistFechaHasta] = useState("");
   const [showFiltrosMenu, setShowFiltrosMenu] = useState(false);
 
+  // ESTADO MODIFICADO: Este controla el nuevo Combobox de la pestaña Reportes
   const [filtroReporteTipo, setFiltroReporteTipo] = useState("general");
   const [reporteMetaId, setReporteMetaId] = useState("");
 
@@ -1256,19 +1257,30 @@ export default function App() {
           {tab === "resumen" && (
             <div style={s.section}>
               
-              <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
-                <button
-                  onClick={() => setFiltroReporteTipo("general")}
-                  style={{ ...s.filterBtn(filtroReporteTipo === "general"), flex: 1, padding: "12px 10px", fontSize: 14 }}
-                >
-                  📊 Flujo General
-                </button>
-                <button
-                  onClick={() => setFiltroReporteTipo("metas")}
-                  style={{ ...s.filterBtn(filtroReporteTipo === "metas"), flex: 1, padding: "12px 10px", fontSize: 14 }}
-                >
-                  🎯 Mis Metas
-                </button>
+              {/* REEMPLAZO DE BOTONES POR COMBOBOX DESPLEGABLE */}
+              <div style={{ marginBottom: 24 }}>
+                <div style={{ position: "relative" }}>
+                    <select 
+                        style={{ 
+                            ...s.select, 
+                            paddingRight: 40, 
+                            fontSize: 16, 
+                            fontWeight: 700, 
+                            color: filtroReporteTipo === "general" ? c.text : "#10B981", 
+                            borderColor: filtroReporteTipo === "general" ? (isDark ? "#555" : "#000") : "#10B981",
+                            borderWidth: 2,
+                            appearance: "none",
+                            WebkitAppearance: "none",
+                            backgroundColor: "transparent"
+                        }} 
+                        value={filtroReporteTipo} 
+                        onChange={(e) => setFiltroReporteTipo(e.target.value)}
+                    >
+                        <option value="general">📊 Ingresos y Gastos</option>
+                        <option value="metas">🎯 Metas de ahorro</option>
+                    </select>
+                    <ChevronDown size={20} color={filtroReporteTipo === "general" ? c.text : "#10B981"} style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
+                </div>
               </div>
 
               {filtroReporteTipo === "general" && (
@@ -1465,6 +1477,12 @@ export default function App() {
                  const metaSelecId = reporteMetaId || listaMetas[0].id;
                  const metaSelec = listaMetas.find(m => m.id === metaSelecId) || listaMetas[0];
                  
+                 // Variables para el Progreso Histórico de la Meta (Gráfico Circular y de Barras)
+                 const objHistorico = parseFloat(metaSelec.montoObjetivo) || 1;
+                 const ahorradoHistorico = parseFloat(metaSelec.aporteInicial) || 0;
+                 const faltanHistorico = Math.max(0, objHistorico - ahorradoHistorico);
+                 const pctHistorico = Math.min(100, Math.round((ahorradoHistorico / objHistorico) * 100));
+
                  // Filtrar los aportes si se seleccionan fechas en el calendario
                  const aportesDeMeta = gastos.filter(g => {
                      if (g.tipo !== "aporte" || !g.descripcion.includes(metaSelec.nombre)) return false;
@@ -1539,6 +1557,46 @@ export default function App() {
                             </div>
                         )}
 
+                        {/* NUEVO GRÁFICO DE PROGRESO DE LA META (CIRCULAR Y BARRAS) */}
+                        <div style={{ ...s.card, padding: "20px" }}>
+                            <h3 style={{ margin: "0 0 20px 0", fontSize: 16, fontWeight: 600, color: c.text }}>Progreso de la Meta</h3>
+                            <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
+                                <div style={{ width: "50%", display: "flex", justifyContent: "center" }}>
+                                    <div style={{ width: 130, height: 130, borderRadius: "50%", background: `conic-gradient(${c.green} ${pctHistorico * 3.6}deg, ${isDark ? "#333" : "#E5E7EB"} ${pctHistorico * 3.6}deg 360deg)`, position: "relative", flexShrink: 0 }}>
+                                        <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 70, height: 70, background: c.card, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                            <span style={{ fontSize: 18, fontWeight: 700, color: c.text }}>{pctHistorico}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style={{ width: "50%", display: "flex", flexDirection: "column", gap: 12, paddingLeft: 10 }}>
+                                    <div style={{ display: "flex", alignItems: "center" }}>
+                                        <div style={{ width: 12, height: 12, borderRadius: "50%", background: c.green, marginRight: 8, flexShrink: 0 }}></div>
+                                        <div>
+                                            <div style={{ fontSize: 13, fontWeight: 600, color: c.text }}>Ahorrado</div>
+                                            <div style={{ fontSize: 12, color: c.muted, fontWeight: 500 }}>{formatMoney(ahorradoHistorico)}</div>
+                                        </div>
+                                    </div>
+                                    <div style={{ display: "flex", alignItems: "center" }}>
+                                        <div style={{ width: 12, height: 12, borderRadius: "50%", background: isDark ? "#333" : "#E5E7EB", marginRight: 8, flexShrink: 0 }}></div>
+                                        <div>
+                                            <div style={{ fontSize: 13, fontWeight: 600, color: c.text }}>Te falta</div>
+                                            <div style={{ fontSize: 12, color: c.muted, fontWeight: 500 }}>{formatMoney(faltanHistorico)}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style={{ marginTop: 24 }}>
+                               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 12, fontWeight: 600 }}>
+                                 <span style={{ color: c.green }}>{pctHistorico}% Ahorrado</span>
+                                 <span style={{ color: c.muted }}>{formatMoney(objHistorico)} Total</span>
+                               </div>
+                               <div style={{ background: isDark ? "#333" : "#E5E7EB", borderRadius: 8, height: 12, width: "100%", overflow: "hidden" }}>
+                                 <div style={{ background: c.green, height: "100%", width: `${pctHistorico}%`, borderRadius: 8 }}></div>
+                               </div>
+                            </div>
+                        </div>
+
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
                             <div style={{ background: isDark ? "rgba(16, 185, 129, 0.1)" : "#F0FDF4", borderRadius: 16, padding: 16, border: isDark ? "1px solid rgba(16, 185, 129, 0.2)" : "none" }}>
                                 <div style={{ fontSize: 13, color: c.muted, marginBottom: 6, fontWeight: 500 }}>
@@ -1548,7 +1606,7 @@ export default function App() {
                             </div>
                             <div style={{ background: isDark ? "rgba(245, 158, 11, 0.1)" : "#FFFBEB", borderRadius: 16, padding: 16, border: isDark ? "1px solid rgba(245, 158, 11, 0.2)" : "none" }}>
                                 <div style={{ fontSize: 13, color: c.muted, marginBottom: 6, fontWeight: 500 }}>Te falta</div>
-                                <div style={{ fontSize: 20, fontWeight: 700, color: "#F59E0B" }}>{formatMoney(Math.max(0, metaSelec.montoObjetivo - metaSelec.aporteInicial))}</div>
+                                <div style={{ fontSize: 20, fontWeight: 700, color: "#F59E0B" }}>{formatMoney(faltanHistorico)}</div>
                             </div>
                         </div>
                         
