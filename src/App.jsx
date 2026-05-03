@@ -12,7 +12,6 @@ import {
 const SUPABASE_URL = "https://jboazxmcmvvcscqeerbz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impib2F6eG1jbXZ2Y3NjcWVlcmJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNTMxMjksImV4cCI6MjA5MjcyOTEyOX0.zFKEHscM7-PaXqoSgbk7ra8JFZ3Hh69JJKktm7N4IwY";
 
-// SOLUCIÓN: Obligamos a Supabase a NUNCA usar la caché del celular
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   global: {
     fetch: (url, options) => fetch(url, { ...options, cache: "no-store" })
@@ -288,12 +287,14 @@ export default function App() {
   const [filtroHistFechaHasta, setFiltroHistFechaHasta] = useState("");
   const [showFiltrosMenu, setShowFiltrosMenu] = useState(false);
 
+  // Filtros Pestaña Reportes
   const [filtroReporteTipo, setFiltroReporteTipo] = useState("general");
   const [reporteMetaId, setReporteMetaId] = useState("");
+  const [filtroReporteCat, setFiltroReporteCat] = useState(null);
 
-  const [filtroResumen, setFiltroResumen] = useState("mes");
-  const [filtroFechaResumenDesde, setFiltroFechaResumenDesde] = useState(hoy());
-  const [filtroFechaResumenHasta, setFiltroFechaResumenHasta] = useState(hoy());
+  // Fechas inicializadas vacías para mostrar todo por defecto
+  const [filtroFechaResumenDesde, setFiltroFechaResumenDesde] = useState("");
+  const [filtroFechaResumenHasta, setFiltroFechaResumenHasta] = useState("");
 
   const [tipoGraficoIngresos, setTipoGraficoIngresos] = useState("bar"); 
   const [tipoGraficoGastos, setTipoGraficoGastos] = useState("bar"); 
@@ -678,11 +679,21 @@ export default function App() {
   const totalGastado = gastos.filter(g => g.tipo === "gasto").reduce((a, g) => a + g.monto, 0);
   const totalIngresos = gastos.filter(g => g.tipo === "ingreso").reduce((a, g) => a + g.monto, 0);
   
+  // FUNCION ACTUALIZADA: Filtra por Rango de Fechas y Categoría
   const getFiltradosResumen = () => {
-    if (filtroResumen === "hoy") return gastos.filter(g => g.fecha === hoy() && g.tipo !== "aporte");
-    if (filtroResumen === "mes") return gastos.filter(g => g.fecha.startsWith(hoy().slice(0, 7)) && g.tipo !== "aporte");
-    if (filtroResumen === "rango") return gastos.filter(g => (!filtroFechaResumenDesde || g.fecha >= filtroFechaResumenDesde) && (!filtroFechaResumenHasta || g.fecha <= filtroFechaResumenHasta) && g.tipo !== "aporte");
-    return gastos.filter(g => g.tipo !== "aporte");
+    let filtrados = gastos.filter(g => g.tipo !== "aporte");
+
+    if (filtroFechaResumenDesde) {
+        filtrados = filtrados.filter(g => g.fecha >= filtroFechaResumenDesde);
+    }
+    if (filtroFechaResumenHasta) {
+        filtrados = filtrados.filter(g => g.fecha <= filtroFechaResumenHasta);
+    }
+    if (filtroReporteCat) {
+      filtrados = filtrados.filter(g => g.categoria === filtroReporteCat);
+    }
+
+    return filtrados;
   };
   
   const gastosFiltradosResumen = getFiltradosResumen();
@@ -1289,38 +1300,58 @@ export default function App() {
 
               {filtroReporteTipo === "general" && (
                 <>
-                  <div className="hide-scroll" style={{ display: "flex", gap: 8, marginBottom: 24, overflowX: "auto", paddingBottom: 4 }}>
-                    {[{ id: "hoy", label: "Hoy" }, { id: "mes", label: "Mes" }, { id: "rango", label: "Personalizado 📅" }].map(f => (
-                      <button key={f.id} style={{
-                        padding: "10px 20px", borderRadius: 24, 
-                        border: `1px solid ${filtroResumen === f.id ? (isDark ? "#FFF" : "#000") : c.border}`,
-                        background: filtroResumen === f.id ? (isDark ? "#FFF" : "#000") : c.card, 
-                        color: filtroResumen === f.id ? (isDark ? "#000" : "#FFF") : c.muted,
-                        fontSize: 14, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit"
-                      }} onClick={() => setFiltroResumen(f.id)}>
-                        {f.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  {filtroResumen === "rango" && (
-                    <div style={{ ...s.card, padding: 16 }}>
-                      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                        <div style={{ flex: 1, position: "relative" }}>
-                          {!filtroFechaResumenDesde && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Del</span>}
-                          <input type="date" value={filtroFechaResumenDesde} onChange={e => setFiltroFechaResumenDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenDesde ? c.text : "transparent" }} />
+                  <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: showFiltrosMenu ? 16 : 24 }}>
+                    {/* Categorias scrollables estilo burbuja */}
+                    <div className="hide-scroll" style={{ flex: 1, display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, alignItems: "center" }}>
+                      {!filtroReporteCat ? (
+                        <>
+                          {categoriasBase.map(c => (
+                            <button key={c.id} onClick={() => setFiltroReporteCat(c.id)} style={{ whiteSpace: "nowrap", flexShrink: 0, padding: "8px 16px", borderRadius: 20, border: `1px solid ${isDark ? "#888" : "#000"}`, background: c.card, color: c.text, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                              {c.label}
+                            </button>
+                          ))}
+                          {categoriasExtra.map(catExtra => (
+                            <button key={catExtra.id} onClick={() => setFiltroReporteCat(catExtra.id)} style={{ whiteSpace: "nowrap", flexShrink: 0, padding: "8px 16px", borderRadius: 20, border: `1px solid ${c.red}`, background: c.card, color: c.text, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                              {catExtra.label}
+                            </button>
+                          ))}
+                        </>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <button onClick={() => setFiltroReporteCat(null)} style={{ width: 32, height: 32, borderRadius: '50%', background: isDark ? '#333' : '#F3F4F6', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                            <X size={16} color={c.text} />
+                          </button>
+                          <div style={{ padding: "8px 16px", borderRadius: 20, border: `1px solid #E9D5FF`, background: "#F3E8FF", color: "#7E22CE", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center" }}>
+                            {categorias.find(cat => cat.id === filtroReporteCat)?.label}
+                          </div>
                         </div>
-                        <div style={{ flex: 1, position: "relative" }}>
-                          {!filtroFechaResumenHasta && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Al</span>}
-                          <input type="date" value={filtroFechaResumenHasta} onChange={e => setFiltroFechaResumenHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenHasta ? c.text : "transparent" }} />
-                        </div>
-                      </div>
-                      {(filtroFechaResumenDesde || filtroFechaResumenHasta) && (
-                        <button style={{ width: "100%", fontSize: 14, fontWeight: 700, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 16, fontFamily: "inherit" }} onClick={() => { setFiltroFechaResumenDesde(""); setFiltroFechaResumenHasta(""); }}>
-                          <X size={14} style={{ marginRight: 4, verticalAlign: "middle" }} /> Limpiar fechas
-                        </button>
                       )}
                     </div>
+                    
+                    {/* Botón Calendario unificado */}
+                    <button onClick={() => setShowFiltrosMenu(!showFiltrosMenu)} style={{ width: 48, height: 48, borderRadius: "50%", border: `1.5px solid ${c.text}`, background: c.input, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, transition: "all 0.2s" }}>
+                        <Calendar size={22} color={c.text} />
+                    </button>
+                  </div>
+
+                  {showFiltrosMenu && (
+                      <div style={{...s.card, marginBottom: 24, animation: "slideDown 0.3s ease-out"}}>
+                          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                              <div style={{ flex: 1, position: "relative" }}>
+                                  {!filtroFechaResumenDesde && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Del</span>}
+                                  <input type="date" value={filtroFechaResumenDesde} onChange={e => setFiltroFechaResumenDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenDesde ? c.text : "transparent" }} />
+                              </div>
+                              <div style={{ flex: 1, position: "relative" }}>
+                                  {!filtroFechaResumenHasta && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Al</span>}
+                                  <input type="date" value={filtroFechaResumenHasta} onChange={e => setFiltroFechaResumenHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenHasta ? c.text : "transparent" }} />
+                              </div>
+                          </div>
+                          {(filtroFechaResumenDesde || filtroFechaResumenHasta) && (
+                              <button style={{ width: "100%", fontSize: 14, fontWeight: 700, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 16, fontFamily: "inherit" }} onClick={() => { setFiltroFechaResumenDesde(""); setFiltroFechaResumenHasta(""); }}>
+                                  <X size={14} style={{ marginRight: 4, verticalAlign: "middle" }} /> Limpiar fechas
+                              </button>
+                          )}
+                      </div>
                   )}
 
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
@@ -1529,7 +1560,7 @@ export default function App() {
                                     <ChevronDown size={20} color="#10B981" style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
                                 </div>
                                 
-                                {/* NUEVO BOTÓN DE CALENDARIO AQUÍ */}
+                                {/* BOTÓN DE CALENDARIO METAS */}
                                 <button onClick={() => setShowFiltrosMenu(!showFiltrosMenu)} style={{
                                     width: 48, height: 48, borderRadius: "50%", border: `1.5px solid ${c.text}`,
                                     background: c.input, display: "flex", alignItems: "center", justifyContent: "center",
