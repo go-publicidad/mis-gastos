@@ -1452,7 +1452,7 @@ export default function App() {
                 </>
               )}
 
-              {/* VISTA 2: METAS INDIVIDUALES */}
+              {/* VISTA 2: METAS INDIVIDUALES CON FILTRO DE CALENDARIO INTEGRADO */}
               {filtroReporteTipo === "metas" && (() => {
                  if (listaMetas.length === 0) {
                      return (
@@ -1464,9 +1464,20 @@ export default function App() {
 
                  const metaSelecId = reporteMetaId || listaMetas[0].id;
                  const metaSelec = listaMetas.find(m => m.id === metaSelecId) || listaMetas[0];
-                 const aportesDeMeta = gastos.filter(g => g.tipo === "aporte" && g.descripcion.includes(metaSelec.nombre));
                  
+                 // Filtrar los aportes si se seleccionan fechas en el calendario
+                 const aportesDeMeta = gastos.filter(g => {
+                     if (g.tipo !== "aporte" || !g.descripcion.includes(metaSelec.nombre)) return false;
+                     if (showFiltrosMenu) {
+                         if (filtroFechaResumenDesde && g.fecha < filtroFechaResumenDesde) return false;
+                         if (filtroFechaResumenHasta && g.fecha > filtroFechaResumenHasta) return false;
+                     }
+                     return true;
+                 });
+                 
+                 const totalAportadoRango = aportesDeMeta.reduce((acc, g) => acc + g.monto, 0);
                  const mayorAporte = aportesDeMeta.length > 0 ? Math.max(...aportesDeMeta.map(a => a.monto)) : 0;
+                 
                  const aportesPorFecha = aportesDeMeta.reduce((acc, g) => {
                      acc[g.fecha] = (acc[g.fecha] || 0) + g.monto;
                      return acc;
@@ -1482,24 +1493,58 @@ export default function App() {
 
                  return (
                     <div>
-                        <div style={{ marginBottom: 24 }}>
+                        <div style={{ marginBottom: showFiltrosMenu ? 16 : 24 }}>
                             <div style={{ ...s.label, marginBottom: 8 }}>Selecciona una meta a analizar:</div>
-                            <div style={{ position: "relative" }}>
-                                <select 
-                                    style={{ ...s.select, paddingRight: 40, fontSize: 16, fontWeight: 700, color: "#10B981", borderColor: "#10B981" }} 
-                                    value={metaSelecId} 
-                                    onChange={(e) => setReporteMetaId(e.target.value)}
-                                >
-                                    {listaMetas.map(m => <option key={m.id} value={m.id}>{m.icono} {m.nombre}</option>)}
-                                </select>
-                                <ChevronDown size={20} color="#10B981" style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
+                            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                                <div style={{ position: "relative", flex: 1 }}>
+                                    <select 
+                                        style={{ ...s.select, paddingRight: 40, fontSize: 16, fontWeight: 700, color: "#10B981", borderColor: "#10B981", marginBottom: 0 }} 
+                                        value={metaSelecId} 
+                                        onChange={(e) => setReporteMetaId(e.target.value)}
+                                    >
+                                        {listaMetas.map(m => <option key={m.id} value={m.id}>{m.icono} {m.nombre}</option>)}
+                                    </select>
+                                    <ChevronDown size={20} color="#10B981" style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
+                                </div>
+                                
+                                {/* NUEVO BOTÓN DE CALENDARIO AQUÍ */}
+                                <button onClick={() => setShowFiltrosMenu(!showFiltrosMenu)} style={{
+                                    width: 48, height: 48, borderRadius: "50%", border: `1.5px solid ${c.text}`,
+                                    background: c.input, display: "flex", alignItems: "center", justifyContent: "center",
+                                    cursor: "pointer", flexShrink: 0, transition: "all 0.2s"
+                                }}>
+                                    <Calendar size={22} color={c.text} />
+                                </button>
                             </div>
                         </div>
 
+                        {/* PANEL DESPLEGABLE DE FECHAS */}
+                        {showFiltrosMenu && (
+                            <div style={{...s.card, marginBottom: 24, animation: "slideDown 0.3s ease-out"}}>
+                                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                                    <div style={{ flex: 1, position: "relative" }}>
+                                        {!filtroFechaResumenDesde && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Del</span>}
+                                        <input type="date" value={filtroFechaResumenDesde} onChange={e => setFiltroFechaResumenDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenDesde ? c.text : "transparent" }} />
+                                    </div>
+                                    <div style={{ flex: 1, position: "relative" }}>
+                                        {!filtroFechaResumenHasta && <span style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontWeight: 600, fontSize: 14 }}>Al</span>}
+                                        <input type="date" value={filtroFechaResumenHasta} onChange={e => setFiltroFechaResumenHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenHasta ? c.text : "transparent" }} />
+                                    </div>
+                                </div>
+                                {(filtroFechaResumenDesde || filtroFechaResumenHasta) && (
+                                    <button style={{ width: "100%", fontSize: 14, fontWeight: 700, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 16, fontFamily: "inherit" }} onClick={() => { setFiltroFechaResumenDesde(""); setFiltroFechaResumenHasta(""); }}>
+                                        <X size={14} style={{ marginRight: 4, verticalAlign: "middle" }} /> Limpiar fechas
+                                    </button>
+                                )}
+                            </div>
+                        )}
+
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
                             <div style={{ background: isDark ? "rgba(16, 185, 129, 0.1)" : "#F0FDF4", borderRadius: 16, padding: 16, border: isDark ? "1px solid rgba(16, 185, 129, 0.2)" : "none" }}>
-                                <div style={{ fontSize: 13, color: c.muted, marginBottom: 6, fontWeight: 500 }}>Total Aportado</div>
-                                <div style={{ fontSize: 20, fontWeight: 700, color: c.green }}>{formatMoney(metaSelec.aporteInicial)}</div>
+                                <div style={{ fontSize: 13, color: c.muted, marginBottom: 6, fontWeight: 500 }}>
+                                    {showFiltrosMenu && (filtroFechaResumenDesde || filtroFechaResumenHasta) ? "Aportado en rango" : "Total Aportado"}
+                                </div>
+                                <div style={{ fontSize: 20, fontWeight: 700, color: c.green }}>{formatMoney(totalAportadoRango)}</div>
                             </div>
                             <div style={{ background: isDark ? "rgba(245, 158, 11, 0.1)" : "#FFFBEB", borderRadius: 16, padding: 16, border: isDark ? "1px solid rgba(245, 158, 11, 0.2)" : "none" }}>
                                 <div style={{ fontSize: 13, color: c.muted, marginBottom: 6, fontWeight: 500 }}>Te falta</div>
@@ -1720,14 +1765,14 @@ export default function App() {
                          let montoColor = c.text;
                          
                          if (isAporte) {
-                             iconBg = isDark ? "rgba(16,185,129,0.15)" : "#D1FAE5";
+                             iconBg = isDark ? "rgba(16,185,129,0.15)" : "#D1FAE5"; // Verde
                              montoColor = c.green;
                          } else if (g.tipo === "gasto") {
-                             iconBg = isDark ? "rgba(239,68,68,0.15)" : "#FEE2E2";
+                             iconBg = isDark ? "rgba(239,68,68,0.15)" : "#FEE2E2"; // Rojo
                              montoColor = c.red;
                          } else if (g.tipo === "ingreso") {
-                             iconBg = isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB";
-                             montoColor = c.text;
+                             iconBg = isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"; // Gris/Plomo
+                             montoColor = c.text; // Negro
                          }
 
                          return (
