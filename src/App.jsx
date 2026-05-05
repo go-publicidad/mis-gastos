@@ -13,6 +13,10 @@ import { supabase } from "./supabaseClient";
 import Auth from "./Auth";
 import MenuPrincipal from "./components/MenuPrincipal";
 import Novedades from "./components/Novedades";
+import ExportarReportes from "./components/ExportarReportes";
+import ConfigCategorias from "./components/ConfigCategorias";
+import MisLogros from "./components/MisLogros";
+
 import {
   INGRESOS_DEFAULT, GASTOS_DEFAULT, METAS_INICIALES,
   COLORES_CUSTOM, PASTEL_COLORS, METAS_ICONS, CAT_ICONS
@@ -172,7 +176,7 @@ export default function App() {
         
         if (getVal("themePref")) {
             setTheme(getVal("themePref"));
-            localStorage.setItem("themePref", getVal("themePref"));
+            localStorage.setItem("themePref", getVal("themePref")); // Lo guardamos en disco duro local
         }
         if (getVal("useBoldPref")) setUseBold(getVal("useBoldPref") === "true");
         if (getVal("userName")) setUserName(getVal("userName"));
@@ -1360,7 +1364,6 @@ export default function App() {
         />
       )}
 
-      {/* AQUÍ SE REEMPLAZÓ EL CÓDIGO VIEJO POR EL COMPONENTE MENU PRINCIPAL */}
       {showMenu && !profileScreen && (
         <MenuPrincipal 
           c={c} 
@@ -1374,72 +1377,52 @@ export default function App() {
       )}
 
       {showMenu && profileScreen === "exportar" && (
-        <div className="hide-scroll" style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'exportar' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
-            <button onClick={() => cerrarPantalla('exportar', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
-            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Exportar Reportes</h2>
-          </div>
-          <div style={{ ...s.card, padding: 20, marginBottom: 24 }}>
-            <div style={{ ...s.label, marginBottom: 16 }}>1. Selecciona el rango de fechas</div>
-            <div style={{ display: "flex", gap: 12, marginBottom: 8 }}>
-              <div style={{ flex: 1, position: "relative" }}><input type="date" value={exportFechaDesde} onChange={e => setExportFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: exportFechaDesde ? c.text : "transparent" }} /></div>
-              <div style={{ flex: 1, position: "relative" }}><input type="date" value={exportFechaHasta} onChange={e => setExportFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: exportFechaHasta ? c.text : "transparent" }} /></div>
-            </div>
-            {(exportFechaDesde || exportFechaHasta) && <button style={{ width: "100%", fontSize: 14, fontWeight: 700, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 8, fontFamily: "inherit" }} onClick={() => { setExportFechaDesde(""); setExportFechaHasta(""); }}><X size={14} style={{ marginRight: 4, verticalAlign: "middle" }} /> Limpiar fechas</button>}
-          </div>
-          <div style={{ ...s.card, padding: 20, marginBottom: 24 }}>
-            <div style={{ ...s.label, marginBottom: 16 }}>2. Descargar archivo</div>
-            <div style={{ display: "flex", gap: 12 }}>
-              <button style={{...s.btnSecondary, background: c.bg, border: `1px solid ${c.border}`, flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, padding: 16}} onClick={() => { const filtrados = gastos.filter(g => (!exportFechaDesde || g.fecha >= exportFechaDesde) && (!exportFechaHasta || g.fecha <= exportFechaHasta)); exportarCSV(filtrados, categorias); }}><span style={{fontSize: 24}}>📊</span> Excel</button>
-              <button style={{...s.btnSecondary, background: c.bg, border: `1px solid ${c.border}`, flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, padding: 16}} onClick={() => { const filtrados = gastos.filter(g => (!exportFechaDesde || g.fecha >= exportFechaDesde) && (!exportFechaHasta || g.fecha <= exportFechaHasta)); exportarPDF(filtrados, categorias); }}><span style={{fontSize: 24}}>📄</span> PDF</button>
-            </div>
-          </div>
-          <div style={{ ...s.card, padding: 20, marginBottom: 24 }}>
-            <div style={{ ...s.label, marginBottom: 8 }}>3. O enviar por correo</div>
-            <p style={{ margin: "0 0 16px", fontSize: 13, color: c.muted, fontWeight: 500 }}>Recibirás un resumen en tu bandeja de entrada.</p>
-            <input style={{ ...s.input, marginBottom: 16 }} type="email" placeholder="correo@ejemplo.com" value={exportEmail} onChange={e => setExportEmail(e.target.value)} />
-            <button style={{ ...s.btnPrimary, background: "#4D96FF", boxShadow: "0 4px 12px rgba(77, 150, 255, 0.3)" }} onClick={() => { if(!exportEmail) return showToast("Ingresa un correo", c.red); showToast("Reporte enviado con éxito", c.green); setExportEmail(""); }}>Enviar Reporte</button>
-          </div>
-        </div>
+        <ExportarReportes 
+          c={c} 
+          s={s} 
+          isClosing={isClosing} 
+          cerrarPantalla={cerrarPantalla} 
+          setProfileScreen={setProfileScreen} 
+          exportFechaDesde={exportFechaDesde} 
+          setExportFechaDesde={setExportFechaDesde} 
+          exportFechaHasta={exportFechaHasta} 
+          setExportFechaHasta={setExportFechaHasta} 
+          exportEmail={exportEmail} 
+          setExportEmail={setExportEmail} 
+          gastos={gastos} 
+          categorias={categorias} 
+          showToast={showToast} 
+        />
       )}
 
       {showMenu && profileScreen === "categorias" && (
-        <div className="hide-scroll" style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'categorias' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
-            <button onClick={() => cerrarPantalla('categorias', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
-            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Configuración de categorías</h2>
-          </div>
-          <div style={{ marginBottom: 32 }}>
-            <div style={{ ...s.label, fontSize: 16, color: c.green, marginBottom: 12 }}>Categorías para Ingresos</div>
-            <div style={{ ...s.card, padding: 8, marginBottom: 12 }}>
-                {safeBase.length === 0 ? <div style={{ color: c.muted, fontSize: 14, fontWeight: 500, textAlign: "center", padding: "16px 0" }}>No hay categorías creadas</div> : 
-                  safeBase.map((cat, i, arr) => (
-                    <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 8px", borderBottom: i === arr.length - 1 ? "none" : `1px solid ${c.border}` }}>
-                      {/* AQUÍ ESTÁ LA SOLUCIÓN 3: El color de fondo del ícono usa cat.color */}
-                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}><div style={{ width: 38, height: 38, borderRadius: "50%", background: cat.color || (isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6"), display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, color: "#FFF" }}>{getIcono(cat.label)}</div><span style={{ fontSize: 15, fontWeight: 600 }}>{getTexto(cat.label)}</span></div>
-                      <div style={{ display: "flex", gap: 4 }}><button style={s.editBtn} onClick={() => abrirEditarCat(cat, 'ingreso')}><Edit2 size={18}/></button><button style={s.deleteBtn} onClick={() => eliminarCat(cat.id, 'ingreso')}><Trash2 size={18}/></button></div>
-                    </div>
-                  ))
-                }
-            </div>
-            <button onClick={() => abrirCrearCat('ingreso')} style={{ width: "100%", padding: 14, background: "#059669", color: "#FFF", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: 8, boxShadow: "0 4px 12px rgba(5, 150, 105, 0.2)" }}><Plus size={18} /> Crear categoría</button>
-          </div>
-          <div style={{ marginBottom: 32 }}>
-            <div style={{ ...s.label, fontSize: 16, color: c.red, marginBottom: 12 }}>Categorías para Gastos</div>
-            <div style={{ ...s.card, padding: 8, marginBottom: 12 }}>
-                {safeExtra.length === 0 ? <div style={{ color: c.muted, fontSize: 14, fontWeight: 500, textAlign: "center", padding: "16px 0" }}>No hay categorías creadas</div> : 
-                  safeExtra.map((cat, i, arr) => (
-                    <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 8px", borderBottom: i === arr.length - 1 ? "none" : `1px solid ${c.border}` }}>
-                      {/* AQUÍ ESTÁ LA SOLUCIÓN 3: El color de fondo del ícono usa cat.color */}
-                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}><div style={{ width: 38, height: 38, borderRadius: "50%", background: cat.color || (isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6"), display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, color: "#FFF" }}>{getIcono(cat.label)}</div><span style={{ fontSize: 15, fontWeight: 600 }}>{getTexto(cat.label)}</span></div>
-                      <div style={{ display: "flex", gap: 4 }}><button style={s.editBtn} onClick={() => abrirEditarCat(cat, 'gasto')}><Edit2 size={18}/></button><button style={s.deleteBtn} onClick={() => eliminarCat(cat.id, 'gasto')}><Trash2 size={18}/></button></div>
-                    </div>
-                  ))
-                }
-            </div>
-            <button onClick={() => abrirCrearCat('gasto')} style={{ width: "100%", padding: 14, background: "#059669", color: "#FFF", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: 8, boxShadow: "0 4px 12px rgba(5, 150, 105, 0.2)" }}><Plus size={18} /> Crear categoría</button>
-          </div>
-        </div>
+        <ConfigCategorias 
+          c={c} 
+          s={s} 
+          isDark={isDark} 
+          isClosing={isClosing} 
+          cerrarPantalla={cerrarPantalla} 
+          setProfileScreen={setProfileScreen} 
+          safeBase={safeBase} 
+          safeExtra={safeExtra} 
+          abrirEditarCat={abrirEditarCat} 
+          eliminarCat={eliminarCat} 
+          abrirCrearCat={abrirCrearCat} 
+        />
+      )}
+
+      {showMenu && profileScreen === "logros" && (
+        <MisLogros 
+          c={c} 
+          s={s} 
+          isDark={isDark} 
+          isClosing={isClosing} 
+          cerrarPantalla={cerrarPantalla} 
+          setProfileScreen={setProfileScreen} 
+          listaMetas={listaMetas} 
+          filtroLogros={filtroLogros} 
+          setFiltroLogros={setFiltroLogros} 
+        />
       )}
 
       {showMenu && profileScreen === "datos" && (
@@ -1464,61 +1447,6 @@ export default function App() {
           <button style={s.btnPrimary} onClick={() => { showToast("Clave actualizada ✓", c.green); cerrarPantalla('clave', () => setProfileScreen(null)); }}>Actualizar clave</button>
         </div>
       )}
-
-      {showMenu && profileScreen === "logros" && (() => {
-        const hasMetas = listaMetas.length > 0;
-        let fechaPrimerPaso = "Pendiente";
-        if (hasMetas) {
-          const oldestMeta = listaMetas[listaMetas.length - 1]; 
-          if (oldestMeta.id.startsWith("meta_")) {
-              const d = new Date(parseInt(oldestMeta.id.replace("meta_", "")));
-              fechaPrimerPaso = `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth()+1).toString().padStart(2, '0')}/${d.getFullYear()}`;
-          } else { fechaPrimerPaso = "12/04/2025"; }
-        }
-
-        const achievements = [
-          { id: 1, title: "Primer paso", desc: "Registra tu primera meta", unlocked: hasMetas, date: hasMetas ? `Obtenido el ${fechaPrimerPaso}` : "", icon: "🔰", bg: isDark ? "rgba(16,185,129,0.15)" : "#D1FAE5" },
-          { id: 2, title: "Ahorrador constante", desc: "Ahorra 7 días seguidos", unlocked: true, date: "Obtenido el 20/04/2025", icon: "🪙", bg: isDark ? "rgba(59,130,246,0.15)" : "#DBEAFE" },
-          { id: 3, title: "Meta en marcha", desc: "Completa el 50% de una meta", unlocked: true, date: "Obtenido el 25/04/2025", icon: "🚀", bg: isDark ? "rgba(168,85,247,0.15)" : "#F3E8FF" },
-          { id: 4, title: "Gran ahorrador", desc: "Completa el 100% de una meta", unlocked: false, progress: 62, icon: <Lock size={20} color={c.muted} />, bg: isDark ? "#333" : "#F3F4F6" },
-          { id: 5, title: "Experto financiero", desc: "Usa la app por 30 días seguidos", unlocked: false, progress: 20, icon: <Lock size={20} color={c.muted} />, bg: isDark ? "#333" : "#F3F4F6" }
-        ];
-
-        const filteredAchievements = achievements.filter(a => filtroLogros === "desbloqueados" ? a.unlocked : filtroLogros === "bloqueados" ? !a.unlocked : true);
-
-        return (
-          <div className="hide-scroll" style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'logros' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
-            <div style={{ display: "flex", alignItems: "center", marginBottom: 24, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
-              <button onClick={() => cerrarPantalla('logros', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
-              <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Mis logros / Insignias</h2>
-            </div>
-            <div style={{ background: isDark ? "#1E120A" : "#FFF5EB", borderRadius: 16, padding: "20px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-              <div><div style={{ fontSize: 18, fontWeight: 800, color: c.text, marginBottom: 4 }}>¡Vas increíble!</div><div style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}>Sigue así para desbloquear<br/>más logros 🤞</div></div>
-              <div style={{ fontSize: 48 }}>🏆</div>
-            </div>
-            <div className="hide-scroll" style={{ display: "flex", gap: 12, marginBottom: 24, overflowX: "auto" }}>
-              {['Todos', 'Desbloqueados', 'Bloqueados'].map(t => {
-                  const val = t.toLowerCase(); const act = filtroLogros === val;
-                  return (<button key={val} onClick={() => setFiltroLogros(val)} style={{ padding: "8px 16px", borderRadius: 20, fontSize: 14, fontWeight: act ? 700 : 600, background: "transparent", border: act ? `1px solid #FF803C` : `1px solid transparent`, color: act ? "#FF803C" : c.muted, cursor: "pointer", fontFamily: "inherit", transition: "0.2s" }}>{t}</button>)
-              })}
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {filteredAchievements.map(ach => (
-                <div key={ach.id} style={{ ...s.card, padding: 16, display: "flex", alignItems: "center", gap: 16, marginBottom: 0, opacity: ach.unlocked ? 1 : 0.6 }}>
-                    <div style={{ width: 48, height: 48, borderRadius: "50%", background: ach.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0 }}>{ach.icon}</div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 4 }}>{ach.title}</div>
-                      <div style={{ fontSize: 13, color: c.muted, fontWeight: 500, marginBottom: 2 }}>{ach.desc}</div>
-                      {ach.unlocked && <div style={{ fontSize: 12, color: c.muted, fontWeight: 400 }}>{ach.date}</div>}
-                      {!ach.unlocked && (<div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}><div style={{ background: isDark ? "#333" : "#E5E7EB", borderRadius: 4, height: 6, flex: 1, overflow: "hidden" }}><div style={{ background: "#9CA3AF", height: "100%", width: `${ach.progress}%`, borderRadius: 4 }}></div></div></div>)}
-                    </div>
-                    <div>{ach.unlocked ? <CheckCircle2 size={24} color="#10B981" /> : <span style={{ fontSize: 13, fontWeight: 700, color: c.muted }}>{ach.progress}%</span>}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-      })()}
 
       {showMenu && profileScreen === "ayuda" && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'ayuda' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
