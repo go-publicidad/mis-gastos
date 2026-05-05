@@ -64,7 +64,8 @@ export default function App() {
   const [activeSlide, setActiveSlide] = useState(0); 
   const [tab, setTab] = useState("hoy");
   const [form, setForm] = useState({ monto: "", descripcion: "", categoria: "comida", tipo: "gasto" });
-  const [userName, setUserName] = useState("Paul Flores");
+  // CAMBIO 1: Nombre hardcodeado cambiado a "Usuario"
+  const [userName, setUserName] = useState("Usuario");
   
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -168,10 +169,11 @@ export default function App() {
       if (err1) throw err1;
       setGastos((movimientos || []).map(m => ({ ...m, fecha: getFechaLocal(m.created_at) })));
 
+      // CAMBIO 2: Uso de eq("user_id", usuario.id) para RLS
       const { data: cfg, error: err2 } = await supabase
         .from("config")
         .select("*")
-        .like("key", `${usuario.id}_%`);
+        .eq("user_id", usuario.id);
       
       if (err2) throw err2;
       
@@ -290,11 +292,12 @@ export default function App() {
 
   const guardarConfig = async () => {
     setSaving(true);
+    // CAMBIO 3: Inyectar user_id
     const upserts = [
-      { key: `${usuario.id}_themePref`, value: theme },
-      { key: `${usuario.id}_useBoldPref`, value: useBold.toString() },
-      { key: `${usuario.id}_categoriasCustom`, value: JSON.stringify(safeExtra) },
-      { key: `${usuario.id}_categoriasBase`, value: JSON.stringify(safeBase) }
+      { user_id: usuario.id, key: `${usuario.id}_themePref`, value: theme },
+      { user_id: usuario.id, key: `${usuario.id}_useBoldPref`, value: useBold.toString() },
+      { user_id: usuario.id, key: `${usuario.id}_categoriasCustom`, value: JSON.stringify(safeExtra) },
+      { user_id: usuario.id, key: `${usuario.id}_categoriasBase`, value: JSON.stringify(safeBase) }
     ];
     await supabase.from("config").upsert(upserts, { onConflict: "key" });
     setSaving(false);
@@ -303,7 +306,8 @@ export default function App() {
 
   const guardarPerfil = async () => {
     setSaving(true);
-    await supabase.from("config").upsert([{ key: `${usuario.id}_userName`, value: userName }], { onConflict: "key" });
+    // CAMBIO 4: Inyectar user_id
+    await supabase.from("config").upsert([{ user_id: usuario.id, key: `${usuario.id}_userName`, value: userName }], { onConflict: "key" });
     setSaving(false);
     showToast("Datos actualizados ✓", c.green);
     cerrarPantalla('datos', () => setProfileScreen(null));
@@ -327,7 +331,8 @@ export default function App() {
     if (esIngreso) setCategoriasBase(nuevoArray); else setCategoriasExtra(nuevoArray);
 
     setSaving(true);
-    await supabase.from("config").upsert([{ key, value: JSON.stringify(nuevoArray) }], { onConflict: "key" });
+    // CAMBIO 5: Inyectar user_id
+    await supabase.from("config").upsert([{ user_id: usuario.id, key, value: JSON.stringify(nuevoArray) }], { onConflict: "key" });
     setSaving(false);
     showToast(catForm.id ? "Categoría actualizada ✓" : "Categoría creada ✓", c.green);
     setCatForm({ ...catForm, visible: false });
@@ -343,7 +348,8 @@ export default function App() {
     if (esIngreso) setCategoriasBase(nuevoArray); else setCategoriasExtra(nuevoArray);
 
     setSaving(true);
-    await supabase.from("config").upsert([{ key, value: JSON.stringify(nuevoArray) }], { onConflict: "key" });
+    // CAMBIO 6: Inyectar user_id
+    await supabase.from("config").upsert([{ user_id: usuario.id, key, value: JSON.stringify(nuevoArray) }], { onConflict: "key" });
     setSaving(false);
     showToast("Categoría eliminada", c.muted);
   };
@@ -359,7 +365,8 @@ export default function App() {
     };
     
     setPresupuestosMensuales(nuevosPresupuestos);
-    await supabase.from("config").upsert([{ key: `${usuario.id}_presupuestosMensuales`, value: JSON.stringify(nuevosPresupuestos) }], { onConflict: "key" });
+    // CAMBIO 7: Inyectar user_id
+    await supabase.from("config").upsert([{ user_id: usuario.id, key: `${usuario.id}_presupuestosMensuales`, value: JSON.stringify(nuevosPresupuestos) }], { onConflict: "key" });
     
     setSaving(false);
     showToast("Presupuesto guardado ✓", c.green);
@@ -391,7 +398,8 @@ export default function App() {
 
     setListaMetas(nuevasMetas);
     setSaving(true);
-    await supabase.from("config").upsert([{ key: `${usuario.id}_listaMetas`, value: JSON.stringify(nuevasMetas) }], { onConflict: "key" });
+    // CAMBIO 8: Inyectar user_id
+    await supabase.from("config").upsert([{ user_id: usuario.id, key: `${usuario.id}_listaMetas`, value: JSON.stringify(nuevasMetas) }], { onConflict: "key" });
     setSaving(false);
 
     cerrarPantalla('crearMeta', () => {
@@ -405,7 +413,8 @@ export default function App() {
     const nuevasMetas = listaMetas.filter(m => m.id !== id);
     setListaMetas(nuevasMetas);
     setSaving(true);
-    await supabase.from("config").upsert([{ key: `${usuario.id}_listaMetas`, value: JSON.stringify(nuevasMetas) }], { onConflict: "key" });
+    // CAMBIO 9: Inyectar user_id
+    await supabase.from("config").upsert([{ user_id: usuario.id, key: `${usuario.id}_listaMetas`, value: JSON.stringify(nuevasMetas) }], { onConflict: "key" });
     setSaving(false);
     showToast("Meta eliminada con éxito", c.muted);
     setShowMetaMenu(false);
@@ -432,7 +441,8 @@ export default function App() {
 
     const nuevasMetas = listaMetas.map(m => m.id === aporteMetaId ? { ...m, aporteInicial: m.aporteInicial + monto } : m);
     setListaMetas(nuevasMetas);
-    await supabase.from("config").upsert([{ key: `${usuario.id}_listaMetas`, value: JSON.stringify(nuevasMetas) }], { onConflict: "key" });
+    // CAMBIO 10: Inyectar user_id
+    await supabase.from("config").upsert([{ user_id: usuario.id, key: `${usuario.id}_listaMetas`, value: JSON.stringify(nuevasMetas) }], { onConflict: "key" });
 
     showToast(`¡S/ ${monto} aportados a tu meta! 🎉`, c.green);
     setSaving(false);
@@ -510,7 +520,8 @@ export default function App() {
   const gastosVerTodos = gastos.filter(g => (!vtFechaDesde || g.fecha >= vtFechaDesde) && (!vtFechaHasta || g.fecha <= vtFechaHasta));
 
   const s = {
-    app: { minHeight: "100vh", fontFamily: "'Montserrat', sans-serif", maxWidth: 480, margin: "0 auto", paddingBottom: "calc(110px + env(safe-area-inset-bottom, 0px))", width: "100%", userSelect: "none", WebkitUserSelect: "none" },
+    // CAMBIO 11: Estilos para laptop aplicados
+    app: { minHeight: "100vh", fontFamily: "'Montserrat', sans-serif", maxWidth: "480px", margin: "0 auto", position: "relative", boxShadow: isDark ? "0 0 40px rgba(0,0,0,0.6)" : "0 0 40px rgba(0,0,0,0.1)", background: c.bg, paddingBottom: "calc(110px + env(safe-area-inset-bottom, 0px))", width: "100%", userSelect: "none", WebkitUserSelect: "none" },
     section:    { padding: "calc(60px + env(safe-area-inset-top, 0px)) 20px 20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "stretch" },
     card:       { width: "100%", background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: "16px", marginBottom: 24, overflow: "hidden", boxSizing: "border-box", boxShadow: c.shadow },
     sliderContainer: { display: "flex", overflowX: "auto", scrollSnapType: "x mandatory", gap: 16, paddingBottom: 8, marginTop: 4, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" },
@@ -566,7 +577,8 @@ export default function App() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
         * { box-sizing: border-box; } 
-        html, body { background: ${c.bg} !important; color: ${c.text}; margin: 0; padding: 0; width: 100vw; max-width: 100%; overflow-x: hidden; overflow-y: ${isModalOpen ? 'hidden' : 'auto'} !important; font-family: 'Montserrat', sans-serif; transition: background 0.3s ease, color 0.3s ease; user-select: none; -webkit-user-select: none; overscroll-behavior-y: none; }
+        /* CAMBIO 12: Estilos del body modificados para contraste en laptop */
+        html, body { background: ${isDark ? "#000000" : "#E5E7EB"} !important; color: ${c.text}; margin: 0; padding: 0; width: 100vw; max-width: 100%; overflow-x: hidden; overflow-y: ${isModalOpen ? 'hidden' : 'auto'} !important; font-family: 'Montserrat', sans-serif; transition: background 0.3s ease, color 0.3s ease; user-select: none; -webkit-user-select: none; overscroll-behavior-y: none; }
         body * { font-weight: ${useBold ? '700' : 'inherit'}; }
         #root { background: ${c.bg}; min-height: 100vh; width: 100%; max-width: 100%; overflow-x: hidden; overflow-y: ${isModalOpen ? 'hidden' : 'auto'}; }
         .hide-scroll::-webkit-scrollbar { display: none; }
