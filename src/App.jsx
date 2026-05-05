@@ -55,10 +55,8 @@ export default function App() {
   const [gastos, setGastos] = useState([]);
   const [categoriasBase, setCategoriasBase] = useState(INGRESOS_DEFAULT);
   const [categoriasExtra, setCategoriasExtra] = useState(GASTOS_DEFAULT);  
-  
   const [listaMetas, setListaMetas] = useState(METAS_INICIALES);
   
-  // NUEVOS ESTADOS DE PRESUPUESTO
   const [presupuestosMensuales, setPresupuestosMensuales] = useState({});
   const [showCrearPresupuesto, setShowCrearPresupuesto] = useState(false);
   const [presupForm, setPresupForm] = useState({ periodo: hoy().slice(0, 7), categorias: {} });
@@ -116,7 +114,8 @@ export default function App() {
   const [metaSeleccionada, setMetaSeleccionada] = useState(null);
   const [showMetaMenu, setShowMetaMenu] = useState(false);
 
-  const [theme, setTheme] = useState("dark");
+  // SOLUCIÓN TEMA 4: Lee del disco duro (localStorage) primero para evitar el flash.
+  const [theme, setTheme] = useState(localStorage.getItem("themePref") || "dark");
   const [useBold, setUseBold] = useState(false);
   const [isClosing, setIsClosing] = useState("");
 
@@ -142,7 +141,7 @@ export default function App() {
     iconBgOrange: isDark ? "rgba(255, 128, 60, 0.15)" : "#FFEDD5",
     iconBgPurple: isDark ? "rgba(168, 85, 247, 0.15)" : "#F3E8FF",
     iconTextPurple: isDark ? "#D8B4FE" : "#A855F7",
-    brandBlue: "#4A3AFF" // El azul de tu diseño
+    brandBlue: "#4A3AFF"
   };
 
   const menuGroupHeader = { fontSize: 13, color: c.muted, textTransform: "uppercase", letterSpacing: "1px", fontWeight: 700, padding: "16px 20px 8px", margin: 0 };
@@ -158,16 +157,31 @@ export default function App() {
   };
 
   const loadData = async (isManual = false) => {
+    if (!usuario?.id) return;
     try {
-      const { data: movimientos, error: err1 } = await supabase.from("gastos").select("*").order("created_at", { ascending: false });
+      const { data: movimientos, error: err1 } = await supabase
+        .from("gastos")
+        .select("*")
+        .eq("user_id", usuario.id)
+        .order("created_at", { ascending: false });
+      
       if (err1) throw err1;
       setGastos((movimientos || []).map(m => ({ ...m, fecha: getFechaLocal(m.created_at) })));
 
-      const { data: cfg, error: err2 } = await supabase.from("config").select("*");
+      const { data: cfg, error: err2 } = await supabase
+        .from("config")
+        .select("*")
+        .like("key", `${usuario.id}_%`);
+      
       if (err2) throw err2;
+      
       if (cfg) {
-        const getVal = (k) => cfg.find(item => item.key === k)?.value;
-        if (getVal("themePref")) setTheme(getVal("themePref"));
+        const getVal = (k) => cfg.find(item => item.key === `${usuario.id}_${k}`)?.value;
+        
+        if (getVal("themePref")) {
+            setTheme(getVal("themePref"));
+            localStorage.setItem("themePref", getVal("themePref")); // Lo guardamos en disco duro local
+        }
         if (getVal("useBoldPref")) setUseBold(getVal("useBoldPref") === "true");
         if (getVal("userName")) setUserName(getVal("userName"));
         if (getVal("categoriasCustom")) { try { const p = JSON.parse(getVal("categoriasCustom")); if(Array.isArray(p)) setCategoriasExtra(p); } catch(_) {} }
@@ -189,8 +203,13 @@ export default function App() {
       document.head.appendChild(viewportMeta);
     }
     viewportMeta.setAttribute("content", "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0");
-    loadData();
   }, []);
+
+  useEffect(() => {
+    if (usuario) {
+      loadData();
+    }
+  }, [usuario]);
 
   useEffect(() => { window.scrollTo(0, 0); }, [tab]);
 
@@ -232,7 +251,9 @@ export default function App() {
     setSaving(true);
     const catObj = categorias.find(cat => cat.id === form.categoria);
     const defaultDesc = catObj ? getTexto(catObj.label) : "Movimiento";
-    const nuevo = { fecha: hoy(), monto, descripcion: form.descripcion || defaultDesc, categoria: form.categoria, tipo: form.tipo };
+    
+    const nuevo = { user_id: usuario.id, fecha: hoy(), monto, descripcion: form.descripcion || defaultDesc, categoria: form.categoria, tipo: form.tipo };
+    
     const { data, error: err } = await supabase.from("gastos").insert([nuevo]).select();
     if (err) { showToast("Error al guardar", c.red); setSaving(false); return; }
     setGastos(prev => [{ ...data[0], fecha: getFechaLocal(data[0].created_at) }, ...prev]);
@@ -270,10 +291,10 @@ export default function App() {
   const guardarConfig = async () => {
     setSaving(true);
     const upserts = [
-      { key: "themePref", value: theme },
-      { key: "useBoldPref", value: useBold.toString() },
-      { key: "categoriasCustom", value: JSON.stringify(safeExtra) },
-      { key: "categoriasBase", value: JSON.stringify(safeBase) }
+      { key: `${usuario.id}_themePref`, value: theme },
+      { key: `${usuario.id}_useBoldPref`, value: useBold.toString() },
+      { key: `${usuario.id}_categoriasCustom`, value: JSON.stringify(safeExtra) },
+      { key: `${usuario.id}_categoriasBase`, value: JSON.stringify(safeBase) }
     ];
     await supabase.from("config").upsert(upserts, { onConflict: "key" });
     setSaving(false);
@@ -282,13 +303,51 @@ export default function App() {
 
   const guardarPerfil = async () => {
     setSaving(true);
-    await supabase.from("config").upsert([{ key: "userName", value: userName }], { onConflict: "key" });
+    await supabase.from("config").upsert([{ key: `${usuario.id}_userName`, value: userName }], { onConflict: "key" });
     setSaving(false);
     showToast("Datos actualizados ✓", c.green);
     cerrarPantalla('datos', () => setProfileScreen(null));
   };
 
-  // --- LÓGICA DE PRESUPUESTOS (NUEVA FASE 1) ---
+  const abrirCrearCat = (tipo) => setCatForm({ visible: true, id: null, tipo, nombre: "", icono: "📌", color: COLORES_CUSTOM[0] });
+  const abrirEditarCat = (cat, tipo) => setCatForm({ visible: true, id: cat.id, tipo, nombre: getTexto(cat.label), icono: getIcono(cat.label), color: cat.color || COLORES_CUSTOM[0] });
+
+  const guardarCatForm = async () => {
+    const nombre = catForm.nombre.trim();
+    if (!nombre) return showToast("Escribe un nombre", c.red);
+    const labelFinal = `${catForm.icono} ${nombre}`;
+    const esIngreso = catForm.tipo === 'ingreso';
+    const arrayActual = esIngreso ? safeBase : safeExtra;
+    const key = esIngreso ? `${usuario.id}_categoriasBase` : `${usuario.id}_categoriasCustom`;
+
+    let nuevoArray = catForm.id 
+      ? arrayActual.map(c => c.id === catForm.id ? { ...c, label: labelFinal, color: catForm.color } : c)
+      : [...arrayActual, { id: (esIngreso ? "base_" : "custom_") + Date.now(), label: labelFinal, color: catForm.color }];
+
+    if (esIngreso) setCategoriasBase(nuevoArray); else setCategoriasExtra(nuevoArray);
+
+    setSaving(true);
+    await supabase.from("config").upsert([{ key, value: JSON.stringify(nuevoArray) }], { onConflict: "key" });
+    setSaving(false);
+    showToast(catForm.id ? "Categoría actualizada ✓" : "Categoría creada ✓", c.green);
+    setCatForm({ ...catForm, visible: false });
+  };
+
+  const eliminarCat = async (id, tipo) => {
+    if (!window.confirm("¿Seguro que deseas eliminar esta categoría?")) return;
+    const esIngreso = tipo === 'ingreso';
+    const arrayActual = esIngreso ? safeBase : safeExtra;
+    const key = esIngreso ? `${usuario.id}_categoriasBase` : `${usuario.id}_categoriasCustom`;
+    const nuevoArray = arrayActual.filter(c => c.id !== id);
+    
+    if (esIngreso) setCategoriasBase(nuevoArray); else setCategoriasExtra(nuevoArray);
+
+    setSaving(true);
+    await supabase.from("config").upsert([{ key, value: JSON.stringify(nuevoArray) }], { onConflict: "key" });
+    setSaving(false);
+    showToast("Categoría eliminada", c.muted);
+  };
+
   const guardarPresupuesto = async () => {
     const totalAsignado = Object.values(presupForm.categorias).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
     if (totalAsignado <= 0) return showToast("Asigna un monto a al menos una categoría", c.red);
@@ -300,13 +359,12 @@ export default function App() {
     };
     
     setPresupuestosMensuales(nuevosPresupuestos);
-    await supabase.from("config").upsert([{ key: "presupuestosMensuales", value: JSON.stringify(nuevosPresupuestos) }], { onConflict: "key" });
+    await supabase.from("config").upsert([{ key: `${usuario.id}_presupuestosMensuales`, value: JSON.stringify(nuevosPresupuestos) }], { onConflict: "key" });
     
     setSaving(false);
     showToast("Presupuesto guardado ✓", c.green);
     cerrarPantalla('crearPresupuesto', () => setShowCrearPresupuesto(false));
   };
-  // ---------------------------------------------
 
   const procesarNuevaMeta = async () => {
     if (!metaForm.nombre.trim()) return showToast("⚠️ Ingresa el nombre de la meta", c.red);
@@ -324,7 +382,7 @@ export default function App() {
       nuevasMetas = [nuevaMeta, ...listaMetas];
 
       if (aporteInicialVal > 0) {
-        const nuevoAporte = { fecha: hoy(), monto: aporteInicialVal, descripcion: `Aporte inicial a ${nuevaMeta.nombre}`, categoria: "meta_aporte", tipo: "aporte" };
+        const nuevoAporte = { user_id: usuario.id, fecha: hoy(), monto: aporteInicialVal, descripcion: `Aporte inicial a ${nuevaMeta.nombre}`, categoria: "meta_aporte", tipo: "aporte" };
         const { data: dataAporte } = await supabase.from("gastos").insert([nuevoAporte]).select();
         if (dataAporte) setGastos(prev => [{ ...dataAporte[0], fecha: getFechaLocal(dataAporte[0].created_at) }, ...prev]);
       }
@@ -333,7 +391,7 @@ export default function App() {
 
     setListaMetas(nuevasMetas);
     setSaving(true);
-    await supabase.from("config").upsert([{ key: "listaMetas", value: JSON.stringify(nuevasMetas) }], { onConflict: "key" });
+    await supabase.from("config").upsert([{ key: `${usuario.id}_listaMetas`, value: JSON.stringify(nuevasMetas) }], { onConflict: "key" });
     setSaving(false);
 
     cerrarPantalla('crearMeta', () => {
@@ -347,7 +405,7 @@ export default function App() {
     const nuevasMetas = listaMetas.filter(m => m.id !== id);
     setListaMetas(nuevasMetas);
     setSaving(true);
-    await supabase.from("config").upsert([{ key: "listaMetas", value: JSON.stringify(nuevasMetas) }], { onConflict: "key" });
+    await supabase.from("config").upsert([{ key: `${usuario.id}_listaMetas`, value: JSON.stringify(nuevasMetas) }], { onConflict: "key" });
     setSaving(false);
     showToast("Meta eliminada con éxito", c.muted);
     setShowMetaMenu(false);
@@ -366,7 +424,7 @@ export default function App() {
     setSaving(true);
 
     const metaDestino = listaMetas.find(m => m.id === aporteMetaId);
-    const nuevo = { fecha: hoy(), monto, descripcion: `Aporte a ${metaDestino.nombre}`, categoria: "meta_aporte", tipo: "aporte" };
+    const nuevo = { user_id: usuario.id, fecha: hoy(), monto, descripcion: `Aporte a ${metaDestino.nombre}`, categoria: "meta_aporte", tipo: "aporte" };
     const { data, error: err } = await supabase.from("gastos").insert([nuevo]).select();
     if (err) { showToast("Error al guardar", c.red); setSaving(false); return; }
     
@@ -374,7 +432,7 @@ export default function App() {
 
     const nuevasMetas = listaMetas.map(m => m.id === aporteMetaId ? { ...m, aporteInicial: m.aporteInicial + monto } : m);
     setListaMetas(nuevasMetas);
-    await supabase.from("config").upsert([{ key: "listaMetas", value: JSON.stringify(nuevasMetas) }], { onConflict: "key" });
+    await supabase.from("config").upsert([{ key: `${usuario.id}_listaMetas`, value: JSON.stringify(nuevasMetas) }], { onConflict: "key" });
 
     showToast(`¡S/ ${monto} aportados a tu meta! 🎉`, c.green);
     setSaving(false);
@@ -383,7 +441,6 @@ export default function App() {
     setAporteMetaId(null);
   };
 
-  // --- CÁLCULO DINÁMICO DE "LÍMITE POR DÍA" BASADO EN PRESUPUESTO MENSUAL ---
   const fechaHoy = hoy();
   const mesActualStr = fechaHoy.slice(0, 7);
   const presupuestoDelMes = presupuestosMensuales[mesActualStr]?.total || 0;
@@ -392,7 +449,6 @@ export default function App() {
   const diaActual = parseInt(fechaHoy.split('-')[2]);
   const diasRestantesMes = Math.max(1, diasEnMes - diaActual + 1);
   const presupuestoDiario = presupuestoDelMes > 0 ? Math.max(0, (presupuestoDelMes - gastosDelMesHoy) / diasRestantesMes) : 0;
-  // --------------------------------------------------------------------------
 
   const movimientosHoy = gastos.filter(g => g.fecha === fechaHoy);
   const totalGastadoHoy = movimientosHoy.filter(g => g.tipo === "gasto").reduce((a, g) => a + g.monto, 0);
@@ -1162,8 +1218,9 @@ export default function App() {
             </div>
 
             <div style={{ ...s.label, marginBottom: 16, fontSize: 15 }}>Asignar por categorías</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 40 }}>
-               {categoriasExtra.map(cat => (
+            <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 24 }}>
+               {/* Aquí nos aseguramos de mapear SOLO safeExtra (Gastos) */}
+               {safeExtra.map(cat => (
                    <div key={cat.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                          <div style={{ width: 44, height: 44, borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, color: c.text }}>{getIcono(cat.label)}</div>
@@ -1178,6 +1235,13 @@ export default function App() {
                       </div>
                    </div>
                ))}
+            </div>
+
+            {/* NUEVO TEXTO DE AYUDA (UX) */}
+            <div style={{ textAlign: "center", marginBottom: 32 }}>
+               <p style={{ fontSize: 13, color: c.muted, margin: 0, fontWeight: 500 }}>
+                  ¿Falta alguna? Administra tus categorías desde la <button onClick={() => { setShowCrearPresupuesto(false); setProfileScreen("categorias"); setShowMenu(true); }} style={{ background: "none", border: "none", color: c.brandBlue, fontWeight: 700, cursor: "pointer", padding: 0, textDecoration: "underline", fontFamily: "inherit" }}>Configuración</button>.
+               </p>
             </div>
 
             <button onClick={guardarPresupuesto} disabled={saving} style={{ ...s.btnPrimary, background: c.brandBlue, boxShadow: "0 8px 24px rgba(74, 58, 255, 0.3)", padding: 16, fontSize: 16, borderRadius: 16 }}>
@@ -1391,7 +1455,8 @@ export default function App() {
                 {safeBase.length === 0 ? <div style={{ color: c.muted, fontSize: 14, fontWeight: 500, textAlign: "center", padding: "16px 0" }}>No hay categorías creadas</div> : 
                   safeBase.map((cat, i, arr) => (
                     <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 8px", borderBottom: i === arr.length - 1 ? "none" : `1px solid ${c.border}` }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}><div style={{ width: 38, height: 38, borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>{getIcono(cat.label)}</div><span style={{ fontSize: 15, fontWeight: 600 }}>{getTexto(cat.label)}</span></div>
+                      {/* AQUÍ ESTÁ LA SOLUCIÓN 3: El color de fondo del ícono usa cat.color */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}><div style={{ width: 38, height: 38, borderRadius: "50%", background: cat.color || (isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6"), display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, color: "#FFF" }}>{getIcono(cat.label)}</div><span style={{ fontSize: 15, fontWeight: 600 }}>{getTexto(cat.label)}</span></div>
                       <div style={{ display: "flex", gap: 4 }}><button style={s.editBtn} onClick={() => abrirEditarCat(cat, 'ingreso')}><Edit2 size={18}/></button><button style={s.deleteBtn} onClick={() => eliminarCat(cat.id, 'ingreso')}><Trash2 size={18}/></button></div>
                     </div>
                   ))
@@ -1405,7 +1470,8 @@ export default function App() {
                 {safeExtra.length === 0 ? <div style={{ color: c.muted, fontSize: 14, fontWeight: 500, textAlign: "center", padding: "16px 0" }}>No hay categorías creadas</div> : 
                   safeExtra.map((cat, i, arr) => (
                     <div key={cat.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 8px", borderBottom: i === arr.length - 1 ? "none" : `1px solid ${c.border}` }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}><div style={{ width: 38, height: 38, borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>{getIcono(cat.label)}</div><span style={{ fontSize: 15, fontWeight: 600 }}>{getTexto(cat.label)}</span></div>
+                      {/* AQUÍ ESTÁ LA SOLUCIÓN 3: El color de fondo del ícono usa cat.color */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}><div style={{ width: 38, height: 38, borderRadius: "50%", background: cat.color || (isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6"), display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, color: "#FFF" }}>{getIcono(cat.label)}</div><span style={{ fontSize: 15, fontWeight: 600 }}>{getTexto(cat.label)}</span></div>
                       <div style={{ display: "flex", gap: 4 }}><button style={s.editBtn} onClick={() => abrirEditarCat(cat, 'gasto')}><Edit2 size={18}/></button><button style={s.deleteBtn} onClick={() => eliminarCat(cat.id, 'gasto')}><Trash2 size={18}/></button></div>
                     </div>
                   ))
@@ -1521,8 +1587,8 @@ export default function App() {
           <div style={{ fontSize: 14, color: c.muted, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 12, fontWeight: 700 }}>Aspecto</div>
           <div style={{ background: c.card, borderRadius: 16, padding: "20px 20px 0", marginBottom: 24, border: `1px solid ${c.border}`, boxShadow: c.shadow }}>
             <div style={{ display: "flex", justifyContent: "space-around", paddingBottom: 24 }}>
-              <div onClick={() => { setTheme("light"); showToast("Tema Claro activado"); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer" }}><div style={{ width: 66, height: 130, borderRadius: 12, background: "#FFF", border: theme === "light" ? "3px solid #34C759" : "1px solid #CCC", position: "relative", overflow: "hidden" }}><div style={{ position: "absolute", top: 12, left: 6, right: 6, height: 24, background: "#E5E5E5", borderRadius: 4 }} /><div style={{ position: "absolute", top: 44, left: 6, right: 6, height: 18, background: "#E5E5E5", borderRadius: 4 }} /></div><span style={{ fontSize: 16, fontWeight: 600 }}>Claro</span><div style={{ width: 22, height: 22, borderRadius: "50%", border: theme === "light" ? "none" : `1px solid ${c.muted}`, background: theme === "light" ? "#34C759" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>{theme === "light" && <span style={{ color: "#FFF", fontSize: 14 }}>✓</span>}</div></div>
-              <div onClick={() => { setTheme("dark"); showToast("Tema Oscuro activado"); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer" }}><div style={{ width: 66, height: 130, borderRadius: 12, background: "#111", border: theme === "dark" ? "3px solid #34C759" : "1px solid #444", position: "relative", overflow: "hidden" }}><div style={{ position: "absolute", top: 12, left: 6, right: 6, height: 24, background: "#333", borderRadius: 4 }} /><div style={{ position: "absolute", top: 44, left: 6, right: 6, height: 18, background: "#333", borderRadius: 4 }} /></div><span style={{ fontSize: 16, fontWeight: 600 }}>Oscuro</span><div style={{ width: 22, height: 22, borderRadius: "50%", border: theme === "dark" ? "none" : `1px solid ${c.muted}`, background: theme === "dark" ? "#34C759" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>{theme === "dark" && <span style={{ color: "#FFF", fontSize: 14 }}>✓</span>}</div></div>
+              <div onClick={() => { setTheme("light"); localStorage.setItem("themePref", "light"); showToast("Tema Claro activado"); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer" }}><div style={{ width: 66, height: 130, borderRadius: 12, background: "#FFF", border: theme === "light" ? "3px solid #34C759" : "1px solid #CCC", position: "relative", overflow: "hidden" }}><div style={{ position: "absolute", top: 12, left: 6, right: 6, height: 24, background: "#E5E5E5", borderRadius: 4 }} /><div style={{ position: "absolute", top: 44, left: 6, right: 6, height: 18, background: "#E5E5E5", borderRadius: 4 }} /></div><span style={{ fontSize: 16, fontWeight: 600 }}>Claro</span><div style={{ width: 22, height: 22, borderRadius: "50%", border: theme === "light" ? "none" : `1px solid ${c.muted}`, background: theme === "light" ? "#34C759" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>{theme === "light" && <span style={{ color: "#FFF", fontSize: 14 }}>✓</span>}</div></div>
+              <div onClick={() => { setTheme("dark"); localStorage.setItem("themePref", "dark"); showToast("Tema Oscuro activado"); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer" }}><div style={{ width: 66, height: 130, borderRadius: 12, background: "#111", border: theme === "dark" ? "3px solid #34C759" : "1px solid #444", position: "relative", overflow: "hidden" }}><div style={{ position: "absolute", top: 12, left: 6, right: 6, height: 24, background: "#333", borderRadius: 4 }} /><div style={{ position: "absolute", top: 44, left: 6, right: 6, height: 18, background: "#333", borderRadius: 4 }} /></div><span style={{ fontSize: 16, fontWeight: 600 }}>Oscuro</span><div style={{ width: 22, height: 22, borderRadius: "50%", border: theme === "dark" ? "none" : `1px solid ${c.muted}`, background: theme === "dark" ? "#34C759" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>{theme === "dark" && <span style={{ color: "#FFF", fontSize: 14 }}>✓</span>}</div></div>
             </div>
           </div>
           <button style={{ ...s.btnPrimary, marginTop: 30 }} onClick={() => { guardarConfig(); cerrarPantalla('apariencia', () => setShowApariencia(false)); }}>Guardar Preferencias</button>
