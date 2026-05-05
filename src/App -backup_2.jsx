@@ -10,7 +10,6 @@ import {
 
 // ── Importaciones desde archivos separados ─────────────────────────────────
 import { supabase } from "./supabaseClient";
-import Auth from "./Auth";
 import {
   INGRESOS_DEFAULT, GASTOS_DEFAULT, METAS_INICIALES,
   COLORES_CUSTOM, PASTEL_COLORS, METAS_ICONS, CAT_ICONS
@@ -30,28 +29,6 @@ const MenuItem = ({ icon, text, color, bgColor, border, showArrow = true, onClic
 );
 
 export default function App() {
-  // --- ESTADOS DE SESIÓN (LOGIN) ---
-  const [usuario, setUsuario] = useState(null);
-  const [verificandoSesion, setVerificandoSesion] = useState(true);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUsuario(session?.user ?? null);
-      setVerificandoSesion(false);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUsuario(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const cerrarSesion = async () => {
-    await supabase.auth.signOut();
-  };
-  // ---------------------------------
-
   const [gastos, setGastos] = useState([]);
   const [categoriasBase, setCategoriasBase] = useState(INGRESOS_DEFAULT);
   const [categoriasExtra, setCategoriasExtra] = useState(GASTOS_DEFAULT);  
@@ -511,23 +488,12 @@ export default function App() {
 
   const userInitials = userName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'PF';
 
-  // --- COMPROBACIONES DE AUTH Y CARGA ---
-  if (verificandoSesion) return (
-    <div style={{ background: "#0A0A0A", height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
-      <div style={{ width: 32, height: 32, border: "2px solid #1E1E1E", borderTop: "2px solid #FF803C", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-    </div>
-  );
-
-  if (!usuario) return <Auth />;
-
   if (!loaded) return (
     <div style={{ background: c.bg, height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
       <div style={{ width: 32, height: 32, border: `2px solid ${c.border}`, borderTop: "2px solid #FF803C", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-      <span style={{ color: c.muted, fontSize: 14, fontFamily: "'Montserrat', sans-serif" }}>Cargando datos...</span>
+      <span style={{ color: c.muted, fontSize: 14, fontFamily: "'Montserrat', sans-serif" }}>Conectando...</span>
     </div>
   );
-  // --------------------------------------
 
   return (
     <div style={s.app}>
@@ -1341,7 +1307,7 @@ export default function App() {
           </div>
           <div style={{ marginTop: "auto", paddingTop: 32, paddingBottom: 20 }}>
             <div style={{ borderTop: `1px solid ${c.border}`, borderBottom: `1px solid ${c.border}` }}>
-              <MenuItem bgColor={c.card} icon={<LogOut size={20}/>} text="Cerrar sesión" color={c.red} border={c.border} showArrow={false} onClick={cerrarSesion} />
+              <MenuItem bgColor={c.card} icon={<LogOut size={20}/>} text="Cerrar sesión" color={c.red} border={c.border} showArrow={false} />
               <MenuItem bgColor={c.card} icon={<Trash2 size={20}/>} text="Eliminar mi cuenta" color={c.red} border={"transparent"} showArrow={false} />
             </div>
           </div>
@@ -1423,7 +1389,7 @@ export default function App() {
           </div>
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 32 }}><div style={{ width: 80, height: 80, borderRadius: "50%", background: "#FF803C", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, fontWeight: 700, color: "#FFF" }}>{userInitials}</div></div>
           <div style={{ marginBottom: 20 }}><div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Nombre completo</div><input style={s.input} value={userName} onChange={e => setUserName(e.target.value)} placeholder="Ej. Paul Flores" /></div>
-          <div style={{ marginBottom: 32 }}><div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Correo electrónico</div><input style={{ ...s.input, opacity: 0.6 }} value={usuario?.email || "Cargando..."} disabled /><div style={{ fontSize: 12, color: c.muted, marginTop: 8, fontWeight: 400 }}>El correo está enlazado a tu cuenta de acceso.</div></div>
+          <div style={{ marginBottom: 32 }}><div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Correo electrónico</div><input style={{ ...s.input, opacity: 0.6 }} value="paul@ejemplo.com" disabled /><div style={{ fontSize: 12, color: c.muted, marginTop: 8, fontWeight: 400 }}>El correo no se puede cambiar por ahora.</div></div>
           <button style={s.btnPrimary} onClick={guardarPerfil} disabled={saving}>{saving ? "Guardando..." : "Guardar cambios"}</button>
         </div>
       )}

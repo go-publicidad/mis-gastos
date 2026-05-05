@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
 import { 
   Home, PieChart, FileText, Settings, Menu, RefreshCw, 
   ArrowDownToLine, ArrowUpFromLine, PiggyBank, Target, 
@@ -8,18 +9,104 @@ import {
   ChevronUp, Minus, ChevronDown, Circle, MoreVertical, TrendingDown, Bell, Loader2, Wallet
 } from "lucide-react";
 
-// ── Importaciones desde archivos separados ─────────────────────────────────
-import { supabase } from "./supabaseClient";
-import Auth from "./Auth";
-import {
-  INGRESOS_DEFAULT, GASTOS_DEFAULT, METAS_INICIALES,
-  COLORES_CUSTOM, PASTEL_COLORS, METAS_ICONS, CAT_ICONS
-} from "./constants";
-import {
-  hoy, calcularFechaFutura, getFechaLocal,
-  formatMoney, getIcono, getTexto, formatCatName,
-  formatFecha, getUIFechaHora, diffDias
-} from "./utils";
+const SUPABASE_URL = "https://jboazxmcmvvcscqeerbz.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impib2F6eG1jbXZ2Y3NjcWVlcmJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNTMxMjksImV4cCI6MjA5MjcyOTEyOX0.zFKEHscM7-PaXqoSgbk7ra8JFZ3Hh69JJKktm7N4IwY";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  global: { fetch: (url, options) => fetch(url, { ...options, cache: "no-store" }) }
+});
+
+const CURRENCY = "S/";
+
+const INGRESOS_DEFAULT = [
+  { id: "sueldo", label: "💰 Sueldo/Salario", color: "#6BCB77" },
+  { id: "negocio", label: "💼 Negocio/Ventas", color: "#4D96FF" },
+  { id: "inversiones", label: "📈 Inversiones", color: "#C77DFF" },
+];
+
+const GASTOS_DEFAULT = [
+  { id: "comida", label: "🍽️ Comida", color: "#E8845A" },
+  { id: "transporte", label: "🚌 Transporte", color: "#5A9BE8" },
+  { id: "trabajo", label: "💼 Trabajo/Negocio", color: "#7BE85A" },
+  { id: "salud", label: "❤️ Salud", color: "#E85A8A" },
+  { id: "hogar", label: "🏠 Hogar", color: "#C05AE8" },
+  { id: "entretenimiento", label: "🎮 Entretenimiento", color: "#E8D85A" },
+  { id: "otros", label: "📦 Otros", color: "#8A9BA8" },
+];
+
+const METAS_INICIALES = []; 
+
+const COLORES_CUSTOM = ["#FF6B6B","#FF803C","#6BCB77","#4D96FF","#C77DFF","#FF9F1C","#2EC4B6","#E71D36","#F72585","#B5E48C"];
+const PASTEL_COLORS = ["#A7F3D0", "#BFDBFE", "#FED7AA", "#E9D5FF", "#FECACA", "#FDE047"];
+const METAS_ICONS = ["💻", "✈️", "🏠", "🚗", "🛍️", "🎓", "📱"];
+const CAT_ICONS = ["💰", "💼", "📈", "🍽️", "🚌", "❤️", "🏠", "🎮", "📦", "🛒", "✈️", "📱", "🍔", "🍺", "🎬", "🏥", "💡", "💧", "👗", "🐕", "📚", "⛽", "🎟️", "🎁", "🏃"];
+
+const getLimaTime = () => new Date(Date.now() - 18000000);
+const hoy = () => getLimaTime().toISOString().split("T")[0];
+const calcularFechaFutura = (dias) => new Date(Date.now() - 18000000 + dias * 86400000).toISOString().split("T")[0];
+
+const getFechaLocal = (isoStr) => {
+  if (!isoStr) return hoy();
+  const dt = new Date(isoStr.includes('Z') || isoStr.includes('+') ? isoStr : `${isoStr}Z`);
+  return new Date(dt.getTime() - 18000000).toISOString().split("T")[0];
+};
+
+const formatMoney = (n) => `${CURRENCY} ${Number(n || 0).toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+const getIcono = (label) => {
+  if (!label || !label.trim()) return "📌";
+  const arr = label.trim().split(" ");
+  if (arr.length > 1 && !/[a-zA-Z0-9]/.test(arr[0])) return arr[0];
+  const firstChar = Array.from(label.trim())[0];
+  return firstChar ? firstChar.toUpperCase() : "📌";
+};
+
+const getTexto = (label) => {
+  if (!label || !label.trim()) return "Sin nombre";
+  const arr = label.trim().split(" ");
+  if (arr.length > 1 && !/[a-zA-Z0-9]/.test(arr[0])) return arr.slice(1).join(" ");
+  const firstChar = Array.from(label.trim())[0];
+  if (firstChar && !/[a-zA-Z0-9]/.test(firstChar)) return Array.from(label.trim()).slice(1).join("").trim() || label.trim();
+  return label.trim();
+};
+
+const formatCatName = (label) => {
+  const clean = getTexto(label);
+  return clean.length > 8 ? clean.substring(0, 8) + "..." : clean;
+};
+
+const formatFecha = (fechaStr) => {
+  if (!fechaStr) return "";
+  const mesesAbv = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+  const [y, m, d] = fechaStr.split("-");
+  return `${parseInt(d)} ${mesesAbv[parseInt(m)-1]} ${y}`;
+};
+
+const getUIFechaHora = (isoStr) => {
+  if (!isoStr) return "";
+  const dt = new Date(isoStr.includes('Z') || isoStr.includes('+') ? isoStr : `${isoStr}Z`);
+  const limaDate = new Date(dt.getTime() - 18000000);
+  let h = limaDate.getUTCHours();
+  let m = limaDate.getUTCMinutes();
+  const ampm = h >= 12 ? 'p.m.' : 'a.m.';
+  h = h % 12; h = h ? h : 12; 
+  m = m < 10 ? '0' + m : m;
+  const strTime = `${h}:${m} ${ampm}`;
+  const isoDate = limaDate.toISOString().split("T")[0];
+  const todayIso = hoy();
+  const ayerIso = new Date(Date.now() - 18000000 - 86400000).toISOString().split("T")[0];
+  if (isoDate === todayIso) return `Hoy ${strTime}`;
+  if (isoDate === ayerIso) return `Ayer ${strTime}`;
+  const meses = ["Ene.", "Feb.", "Mar.", "Abr.", "May.", "Jun.", "Jul.", "Ago.", "Sep.", "Oct.", "Nov.", "Dic."];
+  return `${limaDate.getUTCDate()} ${meses[limaDate.getUTCMonth()]} ${limaDate.getUTCFullYear()} - ${strTime}`;
+};
+
+const diffDias = (d1Str, d2Str) => {
+  if (!d1Str || !d2Str) return 0;
+  const [y1, m1, day1] = d1Str.split("-");
+  const [y2, m2, day2] = d2Str.split("-");
+  return Math.round((Date.UTC(y2, m2 - 1, day2) - Date.UTC(y1, m1 - 1, day1)) / 86400000);
+};
 
 const MenuItem = ({ icon, text, color, bgColor, border, showArrow = true, onClick }) => (
   <button onClick={onClick} style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, backgroundColor: bgColor || "transparent", WebkitAppearance: "none", border: "none", padding: "16px 20px", cursor: "pointer", color: color, fontSize: 14, fontWeight: 600, borderBottom: `1px solid ${border}`, textAlign: "left", fontFamily: "inherit", transition: "background-color 0.2s" }}>
@@ -30,28 +117,6 @@ const MenuItem = ({ icon, text, color, bgColor, border, showArrow = true, onClic
 );
 
 export default function App() {
-  // --- ESTADOS DE SESIÓN (LOGIN) ---
-  const [usuario, setUsuario] = useState(null);
-  const [verificandoSesion, setVerificandoSesion] = useState(true);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUsuario(session?.user ?? null);
-      setVerificandoSesion(false);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUsuario(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const cerrarSesion = async () => {
-    await supabase.auth.signOut();
-  };
-  // ---------------------------------
-
   const [gastos, setGastos] = useState([]);
   const [categoriasBase, setCategoriasBase] = useState(INGRESOS_DEFAULT);
   const [categoriasExtra, setCategoriasExtra] = useState(GASTOS_DEFAULT);  
@@ -511,23 +576,12 @@ export default function App() {
 
   const userInitials = userName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'PF';
 
-  // --- COMPROBACIONES DE AUTH Y CARGA ---
-  if (verificandoSesion) return (
-    <div style={{ background: "#0A0A0A", height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
-      <div style={{ width: 32, height: 32, border: "2px solid #1E1E1E", borderTop: "2px solid #FF803C", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-    </div>
-  );
-
-  if (!usuario) return <Auth />;
-
   if (!loaded) return (
     <div style={{ background: c.bg, height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
       <div style={{ width: 32, height: 32, border: `2px solid ${c.border}`, borderTop: "2px solid #FF803C", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-      <span style={{ color: c.muted, fontSize: 14, fontFamily: "'Montserrat', sans-serif" }}>Cargando datos...</span>
+      <span style={{ color: c.muted, fontSize: 14, fontFamily: "'Montserrat', sans-serif" }}>Conectando...</span>
     </div>
   );
-  // --------------------------------------
 
   return (
     <div style={s.app}>
@@ -1341,7 +1395,7 @@ export default function App() {
           </div>
           <div style={{ marginTop: "auto", paddingTop: 32, paddingBottom: 20 }}>
             <div style={{ borderTop: `1px solid ${c.border}`, borderBottom: `1px solid ${c.border}` }}>
-              <MenuItem bgColor={c.card} icon={<LogOut size={20}/>} text="Cerrar sesión" color={c.red} border={c.border} showArrow={false} onClick={cerrarSesion} />
+              <MenuItem bgColor={c.card} icon={<LogOut size={20}/>} text="Cerrar sesión" color={c.red} border={c.border} showArrow={false} />
               <MenuItem bgColor={c.card} icon={<Trash2 size={20}/>} text="Eliminar mi cuenta" color={c.red} border={"transparent"} showArrow={false} />
             </div>
           </div>
@@ -1423,7 +1477,7 @@ export default function App() {
           </div>
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 32 }}><div style={{ width: 80, height: 80, borderRadius: "50%", background: "#FF803C", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, fontWeight: 700, color: "#FFF" }}>{userInitials}</div></div>
           <div style={{ marginBottom: 20 }}><div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Nombre completo</div><input style={s.input} value={userName} onChange={e => setUserName(e.target.value)} placeholder="Ej. Paul Flores" /></div>
-          <div style={{ marginBottom: 32 }}><div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Correo electrónico</div><input style={{ ...s.input, opacity: 0.6 }} value={usuario?.email || "Cargando..."} disabled /><div style={{ fontSize: 12, color: c.muted, marginTop: 8, fontWeight: 400 }}>El correo está enlazado a tu cuenta de acceso.</div></div>
+          <div style={{ marginBottom: 32 }}><div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Correo electrónico</div><input style={{ ...s.input, opacity: 0.6 }} value="paul@ejemplo.com" disabled /><div style={{ fontSize: 12, color: c.muted, marginTop: 8, fontWeight: 400 }}>El correo no se puede cambiar por ahora.</div></div>
           <button style={s.btnPrimary} onClick={guardarPerfil} disabled={saving}>{saving ? "Guardando..." : "Guardar cambios"}</button>
         </div>
       )}
