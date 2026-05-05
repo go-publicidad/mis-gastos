@@ -11,6 +11,8 @@ import {
 // ── Importaciones desde archivos separados ─────────────────────────────────
 import { supabase } from "./supabaseClient";
 import Auth from "./Auth";
+import MenuPrincipal from "./components/MenuPrincipal";
+import Novedades from "./components/Novedades";
 import {
   INGRESOS_DEFAULT, GASTOS_DEFAULT, METAS_INICIALES,
   COLORES_CUSTOM, PASTEL_COLORS, METAS_ICONS, CAT_ICONS
@@ -20,14 +22,6 @@ import {
   formatMoney, getIcono, getTexto, formatCatName,
   formatFecha, getUIFechaHora, diffDias
 } from "./utils";
-
-const MenuItem = ({ icon, text, color, bgColor, border, showArrow = true, onClick }) => (
-  <button onClick={onClick} style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, backgroundColor: bgColor || "transparent", WebkitAppearance: "none", border: "none", padding: "16px 20px", cursor: "pointer", color: color, fontSize: 14, fontWeight: 600, borderBottom: `1px solid ${border}`, textAlign: "left", fontFamily: "inherit", transition: "background-color 0.2s" }}>
-    <span style={{ display: "flex", alignItems: "center", color: color }}>{icon}</span>
-    <span style={{ flex: 1 }}>{text}</span>
-    {showArrow && <span style={{ color: "#FF803C", display: "flex", alignItems: "center" }}><ChevronRight size={18} /></span>}
-  </button>
-);
 
 export default function App() {
   // --- ESTADOS DE SESIÓN (LOGIN) ---
@@ -64,7 +58,6 @@ export default function App() {
   const [activeSlide, setActiveSlide] = useState(0); 
   const [tab, setTab] = useState("hoy");
   const [form, setForm] = useState({ monto: "", descripcion: "", categoria: "comida", tipo: "gasto" });
-  // CAMBIO 1: Nombre hardcodeado cambiado a "Usuario"
   const [userName, setUserName] = useState("Usuario");
   
   const [loaded, setLoaded] = useState(false);
@@ -145,8 +138,6 @@ export default function App() {
     brandBlue: "#4A3AFF"
   };
 
-  const menuGroupHeader = { fontSize: 13, color: c.muted, textTransform: "uppercase", letterSpacing: "1px", fontWeight: 700, padding: "16px 20px 8px", margin: 0 };
-
   const showToast = (msg, color = "#FF803C") => {
     setToast({ msg, color });
     setTimeout(() => setToast(null), 2500);
@@ -169,7 +160,6 @@ export default function App() {
       if (err1) throw err1;
       setGastos((movimientos || []).map(m => ({ ...m, fecha: getFechaLocal(m.created_at) })));
 
-      // CAMBIO 2: Uso de eq("user_id", usuario.id) para RLS
       const { data: cfg, error: err2 } = await supabase
         .from("config")
         .select("*")
@@ -182,7 +172,7 @@ export default function App() {
         
         if (getVal("themePref")) {
             setTheme(getVal("themePref"));
-            localStorage.setItem("themePref", getVal("themePref")); // Lo guardamos en disco duro local
+            localStorage.setItem("themePref", getVal("themePref"));
         }
         if (getVal("useBoldPref")) setUseBold(getVal("useBoldPref") === "true");
         if (getVal("userName")) setUserName(getVal("userName"));
@@ -292,7 +282,6 @@ export default function App() {
 
   const guardarConfig = async () => {
     setSaving(true);
-    // CAMBIO 3: Inyectar user_id
     const upserts = [
       { user_id: usuario.id, key: `${usuario.id}_themePref`, value: theme },
       { user_id: usuario.id, key: `${usuario.id}_useBoldPref`, value: useBold.toString() },
@@ -306,7 +295,6 @@ export default function App() {
 
   const guardarPerfil = async () => {
     setSaving(true);
-    // CAMBIO 4: Inyectar user_id
     await supabase.from("config").upsert([{ user_id: usuario.id, key: `${usuario.id}_userName`, value: userName }], { onConflict: "key" });
     setSaving(false);
     showToast("Datos actualizados ✓", c.green);
@@ -331,7 +319,6 @@ export default function App() {
     if (esIngreso) setCategoriasBase(nuevoArray); else setCategoriasExtra(nuevoArray);
 
     setSaving(true);
-    // CAMBIO 5: Inyectar user_id
     await supabase.from("config").upsert([{ user_id: usuario.id, key, value: JSON.stringify(nuevoArray) }], { onConflict: "key" });
     setSaving(false);
     showToast(catForm.id ? "Categoría actualizada ✓" : "Categoría creada ✓", c.green);
@@ -348,7 +335,6 @@ export default function App() {
     if (esIngreso) setCategoriasBase(nuevoArray); else setCategoriasExtra(nuevoArray);
 
     setSaving(true);
-    // CAMBIO 6: Inyectar user_id
     await supabase.from("config").upsert([{ user_id: usuario.id, key, value: JSON.stringify(nuevoArray) }], { onConflict: "key" });
     setSaving(false);
     showToast("Categoría eliminada", c.muted);
@@ -365,7 +351,6 @@ export default function App() {
     };
     
     setPresupuestosMensuales(nuevosPresupuestos);
-    // CAMBIO 7: Inyectar user_id
     await supabase.from("config").upsert([{ user_id: usuario.id, key: `${usuario.id}_presupuestosMensuales`, value: JSON.stringify(nuevosPresupuestos) }], { onConflict: "key" });
     
     setSaving(false);
@@ -398,7 +383,6 @@ export default function App() {
 
     setListaMetas(nuevasMetas);
     setSaving(true);
-    // CAMBIO 8: Inyectar user_id
     await supabase.from("config").upsert([{ user_id: usuario.id, key: `${usuario.id}_listaMetas`, value: JSON.stringify(nuevasMetas) }], { onConflict: "key" });
     setSaving(false);
 
@@ -413,7 +397,6 @@ export default function App() {
     const nuevasMetas = listaMetas.filter(m => m.id !== id);
     setListaMetas(nuevasMetas);
     setSaving(true);
-    // CAMBIO 9: Inyectar user_id
     await supabase.from("config").upsert([{ user_id: usuario.id, key: `${usuario.id}_listaMetas`, value: JSON.stringify(nuevasMetas) }], { onConflict: "key" });
     setSaving(false);
     showToast("Meta eliminada con éxito", c.muted);
@@ -441,7 +424,6 @@ export default function App() {
 
     const nuevasMetas = listaMetas.map(m => m.id === aporteMetaId ? { ...m, aporteInicial: m.aporteInicial + monto } : m);
     setListaMetas(nuevasMetas);
-    // CAMBIO 10: Inyectar user_id
     await supabase.from("config").upsert([{ user_id: usuario.id, key: `${usuario.id}_listaMetas`, value: JSON.stringify(nuevasMetas) }], { onConflict: "key" });
 
     showToast(`¡S/ ${monto} aportados a tu meta! 🎉`, c.green);
@@ -520,7 +502,6 @@ export default function App() {
   const gastosVerTodos = gastos.filter(g => (!vtFechaDesde || g.fecha >= vtFechaDesde) && (!vtFechaHasta || g.fecha <= vtFechaHasta));
 
   const s = {
-    // CAMBIO 11: Estilos para laptop aplicados
     app: { minHeight: "100vh", fontFamily: "'Montserrat', sans-serif", maxWidth: "480px", margin: "0 auto", position: "relative", boxShadow: isDark ? "0 0 40px rgba(0,0,0,0.6)" : "0 0 40px rgba(0,0,0,0.1)", background: c.bg, paddingBottom: "calc(110px + env(safe-area-inset-bottom, 0px))", width: "100%", userSelect: "none", WebkitUserSelect: "none" },
     section:    { padding: "calc(60px + env(safe-area-inset-top, 0px)) 20px 20px", width: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "stretch" },
     card:       { width: "100%", background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: "16px", marginBottom: 24, overflow: "hidden", boxSizing: "border-box", boxShadow: c.shadow },
@@ -577,7 +558,6 @@ export default function App() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
         * { box-sizing: border-box; } 
-        /* CAMBIO 12: Estilos del body modificados para contraste en laptop */
         html, body { background: ${isDark ? "#000000" : "#E5E7EB"} !important; color: ${c.text}; margin: 0; padding: 0; width: 100vw; max-width: 100%; overflow-x: hidden; overflow-y: ${isModalOpen ? 'hidden' : 'auto'} !important; font-family: 'Montserrat', sans-serif; transition: background 0.3s ease, color 0.3s ease; user-select: none; -webkit-user-select: none; overscroll-behavior-y: none; }
         body * { font-weight: ${useBold ? '700' : 'inherit'}; }
         #root { background: ${c.bg}; min-height: 100vh; width: 100%; max-width: 100%; overflow-x: hidden; overflow-y: ${isModalOpen ? 'hidden' : 'auto'}; }
@@ -1371,58 +1351,26 @@ export default function App() {
       )}
 
       {showNovedades && (
-        <div className="hide-scroll" style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'novedades' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: 24, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
-            <button onClick={() => cerrarPantalla('novedades', () => setShowNovedades(false))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
-            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Novedades</h2>
-          </div>
-          <div style={{ background: isDark ? "rgba(255, 128, 60, 0.15)" : "#FFF5EB", borderRadius: 16, padding: "24px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32, border: `1px solid ${isDark ? "rgba(255, 128, 60, 0.3)" : "transparent"}` }}>
-             <div><div style={{ fontSize: 22, fontWeight: 800, color: c.text, marginBottom: 8, lineHeight: 1.2 }}>¡Descubre<br/><span style={{color: "#FF803C"}}>novedades!</span></div><div style={{ fontSize: 14, color: "#FF803C", fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>Para ti <ChevronRight size={16}/></div></div><div style={{ fontSize: 64 }}>🚀</div>
-          </div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: c.text, marginBottom: 16 }}>Lo nuevo del App</div>
-          <div className="hide-scroll" style={{ display: "flex", gap: 16, overflowX: "auto", paddingBottom: 16, marginBottom: 24, scrollSnapType: "x mandatory" }}>
-              <div style={{ minWidth: 160, scrollSnapAlign: "start", background: isDark ? "rgba(16, 185, 129, 0.15)" : "#ECFDF5", borderRadius: 16, padding: 16, display: "flex", flexDirection: "column", gap: 12, border: isDark ? "1px solid rgba(16, 185, 129, 0.3)" : "none" }}><div style={{ fontSize: 14, fontWeight: 700, color: isDark ? c.text : "#065F46" }}>Gestión de metas individuales</div><div style={{ fontSize: 32, alignSelf: "flex-end", marginTop: "auto" }}>🎯</div></div>
-              <div style={{ minWidth: 160, scrollSnapAlign: "start", background: isDark ? "rgba(77, 150, 255, 0.15)" : "#EFF6FF", borderRadius: 16, padding: 16, display: "flex", flexDirection: "column", gap: 12, border: isDark ? "1px solid rgba(77, 150, 255, 0.3)" : "none" }}><div style={{ fontSize: 14, fontWeight: 700, color: isDark ? c.text : "#1E3A8A" }}>Nuevo historial separado</div><div style={{ fontSize: 32, alignSelf: "flex-end", marginTop: "auto" }}>📋</div></div>
-              <div style={{ minWidth: 160, scrollSnapAlign: "start", background: isDark ? "rgba(168, 85, 247, 0.15)" : "#F5F3FF", borderRadius: 16, padding: 16, display: "flex", flexDirection: "column", gap: 12, border: isDark ? "1px solid rgba(168, 85, 247, 0.3)" : "none" }}><div style={{ fontSize: 14, fontWeight: 700, color: isDark ? c.text : "#4C1D95" }}>Pull-to-refresh en Inicio</div><div style={{ fontSize: 32, alignSelf: "flex-end", marginTop: "auto" }}>👇</div></div>
-          </div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: c.text, marginBottom: 16 }}>Consejos para tu app</div>
-          <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 16, scrollSnapType: "x mandatory" }} className="hide-scroll">
-              <div style={{ minWidth: 200, scrollSnapAlign: "start", background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: 16, display: "flex", alignItems: "center", gap: 16 }}><div style={{ fontSize: 28 }}>📊</div><div style={{ fontSize: 13, fontWeight: 600, color: c.text, lineHeight: 1.4 }}>¡Exporta tus datos en Excel o PDF!</div></div>
-              <div style={{ minWidth: 200, scrollSnapAlign: "start", background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: 16, display: "flex", alignItems: "center", gap: 16 }}><div style={{ fontSize: 28 }}>🎨</div><div style={{ fontSize: 13, fontWeight: 600, color: c.text, lineHeight: 1.4 }}>¡Personaliza tus propias categorías!</div></div>
-          </div>
-        </div>
+        <Novedades 
+          c={c} 
+          isDark={isDark} 
+          isClosing={isClosing} 
+          cerrarPantalla={cerrarPantalla} 
+          setShowNovedades={setShowNovedades} 
+        />
       )}
 
+      {/* AQUÍ SE REEMPLAZÓ EL CÓDIGO VIEJO POR EL COMPONENTE MENU PRINCIPAL */}
       {showMenu && !profileScreen && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 9999, padding: "env(safe-area-inset-top, 20px) 0 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: isClosing === 'menu' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: 0, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16, paddingLeft: 20, paddingRight: 20 }}>
-            <button onClick={() => cerrarPantalla('menu', () => setShowMenu(false))} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
-            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Menú Principal</h2>
-          </div>
-          <div style={{ marginBottom: 24 }}>
-            <div style={menuGroupHeader}>MI CUENTA</div>
-            <div style={{ borderTop: `1px solid ${c.border}`, borderBottom: `1px solid ${c.border}` }}>
-              <MenuItem bgColor={c.card} icon={<UserCircle size={20} color="#FF803C" />} text="Mis datos" color={c.text} border={c.border} onClick={() => setProfileScreen("datos")} />
-              <MenuItem bgColor={c.card} icon={<Lock size={20} color="#FF803C" />} text="Cambiar mi clave" color={c.text} border={c.border} onClick={() => setProfileScreen("clave")} />
-              <MenuItem bgColor={c.card} icon={<Trophy size={20} color="#FF803C" />} text="Mis logros / Insignias" color={c.text} border={"transparent"} onClick={() => setProfileScreen("logros")} />
-            </div>
-          </div>
-          <div style={{ marginBottom: 24 }}>
-            <div style={menuGroupHeader}>AJUSTES</div>
-            <div style={{ borderTop: `1px solid ${c.border}`, borderBottom: `1px solid ${c.border}` }}>
-              <MenuItem bgColor={c.card} icon={<Settings size={20} color="#FF803C" />} text="Configuración de categorías" color={c.text} border={c.border} onClick={() => setProfileScreen("categorias")} />
-              <MenuItem bgColor={c.card} icon={<Palette size={20} color="#FF803C" />} text="Apariencia (Tema Claro/Oscuro)" color={c.text} border={c.border} onClick={() => { setShowApariencia(true); setShowMenu(false); }} />
-              <MenuItem bgColor={c.card} icon={<Download size={20} color="#FF803C" />} text="Exportar Reportes" color={c.text} border={c.border} onClick={() => setProfileScreen("exportar")} />
-              <MenuItem bgColor={c.card} icon={<Headphones size={20} color="#FF803C" />} text="Centro de ayuda" color={c.text} border={"transparent"} onClick={() => setProfileScreen("ayuda")} />
-            </div>
-          </div>
-          <div style={{ marginTop: "auto", paddingTop: 32, paddingBottom: 20 }}>
-            <div style={{ borderTop: `1px solid ${c.border}`, borderBottom: `1px solid ${c.border}` }}>
-              <MenuItem bgColor={c.card} icon={<LogOut size={20}/>} text="Cerrar sesión" color={c.red} border={c.border} showArrow={false} onClick={cerrarSesion} />
-              <MenuItem bgColor={c.card} icon={<Trash2 size={20}/>} text="Eliminar mi cuenta" color={c.red} border={"transparent"} showArrow={false} />
-            </div>
-          </div>
-        </div>
+        <MenuPrincipal 
+          c={c} 
+          isClosing={isClosing} 
+          cerrarPantalla={cerrarPantalla} 
+          setShowMenu={setShowMenu} 
+          setProfileScreen={setProfileScreen} 
+          setShowApariencia={setShowApariencia} 
+          cerrarSesion={cerrarSesion} 
+        />
       )}
 
       {showMenu && profileScreen === "exportar" && (
