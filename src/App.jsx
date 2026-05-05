@@ -57,15 +57,15 @@ export default function App() {
   const [categoriasExtra, setCategoriasExtra] = useState(GASTOS_DEFAULT);  
   
   const [listaMetas, setListaMetas] = useState(METAS_INICIALES);
-  const [activeSlide, setActiveSlide] = useState(0); 
   
+  // NUEVOS ESTADOS DE PRESUPUESTO
+  const [presupuestosMensuales, setPresupuestosMensuales] = useState({});
+  const [showCrearPresupuesto, setShowCrearPresupuesto] = useState(false);
+  const [presupForm, setPresupForm] = useState({ periodo: hoy().slice(0, 7), categorias: {} });
+
+  const [activeSlide, setActiveSlide] = useState(0); 
   const [tab, setTab] = useState("hoy");
   const [form, setForm] = useState({ monto: "", descripcion: "", categoria: "comida", tipo: "gasto" });
-  
-  const [metaAhorro, setMetaAhorro] = useState("100000");
-  const [fechaInicioPlan, setFechaInicioPlan] = useState(hoy());
-  const [fechaFinPlan, setFechaFinPlan] = useState(calcularFechaFutura(150));
-  const [ingresoMensual, setIngresoMensual] = useState("");
   const [userName, setUserName] = useState("Paul Flores");
   
   const [loaded, setLoaded] = useState(false);
@@ -117,7 +117,6 @@ export default function App() {
   const [showMetaMenu, setShowMetaMenu] = useState(false);
 
   const [theme, setTheme] = useState("dark");
-  const [isAutoTheme, setIsAutoTheme] = useState(false);
   const [useBold, setUseBold] = useState(false);
   const [isClosing, setIsClosing] = useState("");
 
@@ -125,7 +124,7 @@ export default function App() {
   const safeExtra = categoriasExtra || [];
   const categorias = [...safeBase, ...safeExtra];
   const isDark = theme === "dark";
-  const isModalOpen = showAddModal || !!editando || showCrearMeta || !!metaSeleccionada || showAporteModal || catForm.visible || showNovedades;
+  const isModalOpen = showAddModal || !!editando || showCrearMeta || !!metaSeleccionada || showAporteModal || catForm.visible || showNovedades || showCrearPresupuesto;
 
   const c = {
     bg: isDark ? "#0A0A0A" : "#F4F5F7",
@@ -142,7 +141,8 @@ export default function App() {
     iconBgRed: isDark ? "rgba(239, 68, 68, 0.15)" : "#FEE2E2",
     iconBgOrange: isDark ? "rgba(255, 128, 60, 0.15)" : "#FFEDD5",
     iconBgPurple: isDark ? "rgba(168, 85, 247, 0.15)" : "#F3E8FF",
-    iconTextPurple: isDark ? "#D8B4FE" : "#A855F7"
+    iconTextPurple: isDark ? "#D8B4FE" : "#A855F7",
+    brandBlue: "#4A3AFF" // El azul de tu diseño
   };
 
   const menuGroupHeader = { fontSize: 13, color: c.muted, textTransform: "uppercase", letterSpacing: "1px", fontWeight: 700, padding: "16px 20px 8px", margin: 0 };
@@ -167,20 +167,17 @@ export default function App() {
       if (err2) throw err2;
       if (cfg) {
         const getVal = (k) => cfg.find(item => item.key === k)?.value;
-        if (getVal("metaAhorro")) setMetaAhorro(getVal("metaAhorro"));
-        if (getVal("fechaInicio")) setFechaInicioPlan(getVal("fechaInicio"));
-        if (getVal("fechaFin")) setFechaFinPlan(getVal("fechaFin"));
-        if (getVal("ingresoMensual")) setIngresoMensual(getVal("ingresoMensual"));
         if (getVal("themePref")) setTheme(getVal("themePref"));
         if (getVal("useBoldPref")) setUseBold(getVal("useBoldPref") === "true");
         if (getVal("userName")) setUserName(getVal("userName"));
         if (getVal("categoriasCustom")) { try { const p = JSON.parse(getVal("categoriasCustom")); if(Array.isArray(p)) setCategoriasExtra(p); } catch(_) {} }
         if (getVal("categoriasBase")) { try { const p = JSON.parse(getVal("categoriasBase")); if(Array.isArray(p)) setCategoriasBase(p); } catch(_) {} }
         if (getVal("listaMetas")) { try { const p = JSON.parse(getVal("listaMetas")); if(Array.isArray(p)) setListaMetas(p); } catch(_) {} }
+        if (getVal("presupuestosMensuales")) { try { const p = JSON.parse(getVal("presupuestosMensuales")); if(p) setPresupuestosMensuales(p); } catch(_) {} }
       }
       setError(null);
       if (isManual) showToast("Datos actualizados ✓", c.green);
-    } catch (e) { setError("No se pudo conectar. Verifica tu configuración."); }
+    } catch (e) { setError("No se pudo conectar al servidor."); }
     setLoaded(true);
   };
 
@@ -273,10 +270,6 @@ export default function App() {
   const guardarConfig = async () => {
     setSaving(true);
     const upserts = [
-      { key: "metaAhorro", value: (metaAhorro || "0").toString() },
-      { key: "fechaInicio", value: fechaInicioPlan },
-      { key: "fechaFin", value: fechaFinPlan },
-      { key: "ingresoMensual", value: (ingresoMensual || "0").toString() },
       { key: "themePref", value: theme },
       { key: "useBoldPref", value: useBold.toString() },
       { key: "categoriasCustom", value: JSON.stringify(safeExtra) },
@@ -295,44 +288,25 @@ export default function App() {
     cerrarPantalla('datos', () => setProfileScreen(null));
   };
 
-  const abrirCrearCat = (tipo) => setCatForm({ visible: true, id: null, tipo, nombre: "", icono: "📌", color: COLORES_CUSTOM[0] });
-  const abrirEditarCat = (cat, tipo) => setCatForm({ visible: true, id: cat.id, tipo, nombre: getTexto(cat.label), icono: getIcono(cat.label), color: cat.color || COLORES_CUSTOM[0] });
-
-  const guardarCatForm = async () => {
-    const nombre = catForm.nombre.trim();
-    if (!nombre) return showToast("Escribe un nombre", c.red);
-    const labelFinal = `${catForm.icono} ${nombre}`;
-    const esIngreso = catForm.tipo === 'ingreso';
-    const arrayActual = esIngreso ? safeBase : safeExtra;
-    const key = esIngreso ? "categoriasBase" : "categoriasCustom";
-
-    let nuevoArray = catForm.id 
-      ? arrayActual.map(c => c.id === catForm.id ? { ...c, label: labelFinal, color: catForm.color } : c)
-      : [...arrayActual, { id: (esIngreso ? "base_" : "custom_") + Date.now(), label: labelFinal, color: catForm.color }];
-
-    if (esIngreso) setCategoriasBase(nuevoArray); else setCategoriasExtra(nuevoArray);
-
-    setSaving(true);
-    await supabase.from("config").upsert([{ key, value: JSON.stringify(nuevoArray) }], { onConflict: "key" });
-    setSaving(false);
-    showToast(catForm.id ? "Categoría actualizada ✓" : "Categoría creada ✓", c.green);
-    setCatForm({ ...catForm, visible: false });
-  };
-
-  const eliminarCat = async (id, tipo) => {
-    if (!window.confirm("¿Seguro que deseas eliminar esta categoría?")) return;
-    const esIngreso = tipo === 'ingreso';
-    const arrayActual = esIngreso ? safeBase : safeExtra;
-    const key = esIngreso ? "categoriasBase" : "categoriasCustom";
-    const nuevoArray = arrayActual.filter(c => c.id !== id);
+  // --- LÓGICA DE PRESUPUESTOS (NUEVA FASE 1) ---
+  const guardarPresupuesto = async () => {
+    const totalAsignado = Object.values(presupForm.categorias).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+    if (totalAsignado <= 0) return showToast("Asigna un monto a al menos una categoría", c.red);
     
-    if (esIngreso) setCategoriasBase(nuevoArray); else setCategoriasExtra(nuevoArray);
-
     setSaving(true);
-    await supabase.from("config").upsert([{ key, value: JSON.stringify(nuevoArray) }], { onConflict: "key" });
+    const nuevosPresupuestos = { 
+        ...presupuestosMensuales, 
+        [presupForm.periodo]: { total: totalAsignado, categorias: presupForm.categorias } 
+    };
+    
+    setPresupuestosMensuales(nuevosPresupuestos);
+    await supabase.from("config").upsert([{ key: "presupuestosMensuales", value: JSON.stringify(nuevosPresupuestos) }], { onConflict: "key" });
+    
     setSaving(false);
-    showToast("Categoría eliminada", c.muted);
+    showToast("Presupuesto guardado ✓", c.green);
+    cerrarPantalla('crearPresupuesto', () => setShowCrearPresupuesto(false));
   };
+  // ---------------------------------------------
 
   const procesarNuevaMeta = async () => {
     if (!metaForm.nombre.trim()) return showToast("⚠️ Ingresa el nombre de la meta", c.red);
@@ -409,18 +383,20 @@ export default function App() {
     setAporteMetaId(null);
   };
 
-  const metaTotalNum = parseFloat(metaAhorro) || 0;
-  const ingMensual = parseFloat(ingresoMensual) || 0;
-  const diasTotalPlan = Math.max(1, diffDias(fechaInicioPlan, fechaFinPlan) + 1);
-  const diasTranscurridosPlan = Math.max(0, Math.min(diasTotalPlan, diffDias(fechaInicioPlan, hoy()) + 1));
-  const presupuestoDiario = (ingMensual / 30) - (metaTotalNum / diasTotalPlan);
+  // --- CÁLCULO DINÁMICO DE "LÍMITE POR DÍA" BASADO EN PRESUPUESTO MENSUAL ---
   const fechaHoy = hoy();
-  
+  const mesActualStr = fechaHoy.slice(0, 7);
+  const presupuestoDelMes = presupuestosMensuales[mesActualStr]?.total || 0;
+  const gastosDelMesHoy = gastos.filter(g => g.tipo === "gasto" && g.fecha.startsWith(mesActualStr)).reduce((a, g) => a + g.monto, 0);
+  const diasEnMes = new Date(parseInt(mesActualStr.split('-')[0]), parseInt(mesActualStr.split('-')[1]), 0).getDate();
+  const diaActual = parseInt(fechaHoy.split('-')[2]);
+  const diasRestantesMes = Math.max(1, diasEnMes - diaActual + 1);
+  const presupuestoDiario = presupuestoDelMes > 0 ? Math.max(0, (presupuestoDelMes - gastosDelMesHoy) / diasRestantesMes) : 0;
+  // --------------------------------------------------------------------------
+
   const movimientosHoy = gastos.filter(g => g.fecha === fechaHoy);
   const totalGastadoHoy = movimientosHoy.filter(g => g.tipo === "gasto").reduce((a, g) => a + g.monto, 0);
   const totalIngresosHoy = movimientosHoy.filter(g => g.tipo === "ingreso").reduce((a, g) => a + g.monto, 0);
-  const totalGastado = gastos.filter(g => g.tipo === "gasto").reduce((a, g) => a + g.monto, 0);
-  const totalIngresos = gastos.filter(g => g.tipo === "ingreso").reduce((a, g) => a + g.monto, 0);
   
   const getFiltradosResumen = () => {
     let filtrados = gastos.filter(g => g.tipo !== "aporte");
@@ -741,7 +717,7 @@ export default function App() {
                 </div>
                 <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 0 }}><IconBadge emoji={<Target size={18} />} bg={c.iconBgPurple} color={c.iconTextPurple} /><span style={{ fontSize: 13, fontWeight: 500, color: c.muted }}>Límite / día</span></div>
-                  <div style={{ fontSize: 20, fontWeight: 600, color: c.text, textAlign: "center", marginTop: 0 }}>{formatMoney(presupuestoDiario > 0 ? presupuestoDiario : 0)}</div>
+                  <div style={{ fontSize: 20, fontWeight: 600, color: c.text, textAlign: "center", marginTop: 0 }}>{formatMoney(presupuestoDiario)}</div>
                 </div>
               </div>
 
@@ -1050,70 +1026,51 @@ export default function App() {
             </div>
           )}
 
-          {/* PRESUPUESTO */}
+          {/* PRESUPUESTO (FASE 1: EMPTY STATE + CREACIÓN) */}
           {tab === "presupuesto" && (() => {
-              const currentMonthPrefix = hoy().slice(0, 7); 
-              const gastosMes = gastos.filter(g => g.tipo === "gasto" && g.fecha.startsWith(currentMonthPrefix));
-              const totalGastadoMes = gastosMes.reduce((acc, g) => acc + g.monto, 0);
-              const presupuestoTotal = parseFloat(ingresoMensual) || 1500;
-              const disponible = Math.max(0, presupuestoTotal - totalGastadoMes);
-              const pctGeneral = Math.min(100, Math.round((totalGastadoMes / presupuestoTotal) * 100)) || 0;
+              const mesActualClave = hoy().slice(0, 7); 
+              const presupuestoActual = presupuestosMensuales[mesActualClave];
 
-              const mesesText = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-              const mesActualNum = parseInt(currentMonthPrefix.split("-")[1], 10) - 1;
-              const añoActual = currentMonthPrefix.split("-")[0];
-              const mesActualText = `${mesesText[mesActualNum]} ${añoActual}`;
+              // PANTALLA: SIN PRESUPUESTO (EMPTY STATE)
+              if (!presupuestoActual) {
+                 return (
+                    <div style={{...s.section, alignItems: "center", justifyContent: "center", minHeight: "80vh", paddingBottom: 120 }}>
+                       <div style={{ fontSize: 80, marginBottom: 24 }}>💰</div>
+                       <h2 style={{ fontSize: 22, color: c.text, fontWeight: 800, marginBottom: 12, textAlign: "center" }}>Aún no tienes un presupuesto</h2>
+                       <p style={{ color: c.muted, textAlign: "center", fontSize: 15, marginBottom: 40, lineHeight: 1.6, maxWidth: 300, fontWeight: 500 }}>
+                          Crea tu primer presupuesto y controla tus gastos por categoría mes a mes.
+                       </p>
+                       <button onClick={() => {
+                          setPresupForm({ periodo: mesActualClave, categorias: {} });
+                          setShowCrearPresupuesto(true);
+                       }} style={{...s.btnPrimary, background: c.brandBlue, boxShadow: "0 8px 24px rgba(74, 58, 255, 0.3)", padding: "16px 32px", fontSize: 16, width: "auto", borderRadius: 30 }}>
+                          Crear presupuesto
+                       </button>
+                    </div>
+                 );
+              }
 
-              const gastosPorCat = {};
-              gastosMes.forEach(g => {
-                  if(!gastosPorCat[g.categoria]) gastosPorCat[g.categoria] = 0;
-                  gastosPorCat[g.categoria] += g.monto;
-              });
-
+              // PANTALLA: ESTADO TEMPORAL (Muestra que se guardó, preparativo para Fase 2)
               return (
                   <div style={s.section}>
-                      <div style={{ background: "#4A3AFF", borderRadius: 20, padding: 20, color: "#FFF", marginBottom: 24, boxShadow: "0 10px 20px rgba(74, 58, 255, 0.3)" }}>
+                      <div style={{ background: c.brandBlue, borderRadius: 24, padding: 24, color: "#FFF", marginBottom: 24, boxShadow: "0 10px 30px rgba(74, 58, 255, 0.3)" }}>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-                              <span style={{ fontSize: 16, fontWeight: 700 }}>Resumen del mes</span>
-                              <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 14, fontWeight: 600, opacity: 0.9 }}>{mesActualText} <ChevronDown size={16} /></div>
+                              <span style={{ fontSize: 18, fontWeight: 800 }}>Resumen del mes</span>
+                              <div style={{ fontSize: 14, fontWeight: 600, opacity: 0.9 }}>{presupuestoActual.total ? `S/ ${formatMoney(presupuestoActual.total).replace("S/ ","")}` : ""}</div>
                           </div>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-                              <div><div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>Presupuesto total</div><div style={{ fontSize: 18, fontWeight: 700 }}>S/ {formatMoney(presupuestoTotal).replace("S/ ", "")}</div></div>
-                              <div><div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>Gastado</div><div style={{ fontSize: 18, fontWeight: 700 }}>S/ {formatMoney(totalGastadoMes).replace("S/ ", "")}</div></div>
-                              <div><div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>Disponible</div><div style={{ fontSize: 18, fontWeight: 700, color: "#4ADE80" }}>S/ {formatMoney(disponible).replace("S/ ", "")}</div></div>
+                          <div style={{ fontSize: 15, opacity: 0.9, marginBottom: 24, lineHeight: 1.5 }}>
+                              ¡Excelente! Has guardado tu presupuesto para este mes.<br/><br/>
+                              En el siguiente paso (Fase 2) transformaremos esta tarjeta en el dashboard completo con tus barras de progreso por categoría.
                           </div>
-                      </div>
-
-                      <div style={{ marginBottom: 32 }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}><span style={{ fontSize: 15, fontWeight: 700, color: c.text }}>Progreso general</span><span style={{ fontSize: 15, fontWeight: 700, color: c.text }}>{pctGeneral}%</span></div>
-                          <div style={{ background: isDark ? "#333" : "#E5E7EB", borderRadius: 8, height: 10, width: "100%", overflow: "hidden", marginBottom: 8 }}><div style={{ background: "#FFB020", height: "100%", width: `${pctGeneral}%`, borderRadius: 8 }}></div></div>
-                          <div style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}>Has gastado el {pctGeneral}% de tu presupuesto total</div>
-                      </div>
-
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                          <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: c.text }}>Por categorías</h3>
-                          <button style={{ background: "none", border: "none", color: "#4A3AFF", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>Ver todas</button>
-                      </div>
-
-                      <div style={{ display: "flex", flexDirection: "column", gap: 24, paddingBottom: 20 }}>
-                          {categoriasExtra.map(cat => {
-                              const gastado = gastosPorCat[cat.id] || 0;
-                              const presupCat = (presupuestoTotal / categoriasExtra.length) || 200; 
-                              const pctCat = Math.min(100, Math.round((gastado / presupCat) * 100)) || 0;
-                              return (
-                                  <div key={cat.id} style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                                      <div style={{ width: 48, height: 48, borderRadius: "50%", background: cat.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, color: "#FFF", flexShrink: 0 }}>{getIcono(cat.label)}</div>
-                                      <div style={{ flex: 1 }}>
-                                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}><span style={{ fontSize: 15, fontWeight: 700, color: c.text }}>{getTexto(cat.label)}</span><span style={{ fontSize: 15, fontWeight: 700, color: c.text }}>{pctCat}%</span></div>
-                                          <div style={{ fontSize: 13, color: c.muted, fontWeight: 500, marginBottom: 8 }}>S/ {formatMoney(gastado).replace("S/ ", "")} de S/ {formatMoney(presupCat).replace("S/ ", "")}</div>
-                                          <div style={{ background: isDark ? "#333" : "#E5E7EB", borderRadius: 4, height: 6, width: "100%", overflow: "hidden" }}><div style={{ background: cat.color, height: "100%", width: `${pctCat}%`, borderRadius: 4 }}></div></div>
-                                      </div>
-                                  </div>
-                              )
-                          })}
+                          <button onClick={() => {
+                              setPresupForm({ periodo: mesActualClave, categorias: presupuestoActual.categorias || {} });
+                              setShowCrearPresupuesto(true);
+                          }} style={{ background: "rgba(255,255,255,0.2)", border: "none", color: "#FFF", padding: "12px 16px", borderRadius: 12, fontWeight: 700, cursor: "pointer", width: "100%", fontSize: 15 }}>
+                              Editar mi presupuesto
+                          </button>
                       </div>
                   </div>
-              )
+              );
           })()}
 
           {/* METAS */}
@@ -1185,6 +1142,50 @@ export default function App() {
       )}
 
       {/* OVERLAYS Y PANTALLAS FLOTANTES (MODALS) */}
+
+      {/* MODAL CREAR PRESUPUESTO (FASE 1) */}
+      {showCrearPresupuesto && (() => {
+        const totalCalculado = Object.values(presupForm.categorias).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+        return (
+          <div className="hide-scroll" style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'crearPresupuesto' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+            <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
+              <button onClick={() => cerrarPantalla('crearPresupuesto', () => setShowCrearPresupuesto(false))} style={{ background: "none", border: "none", color: c.text, fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+              <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 800 }}>Crear presupuesto</h2>
+            </div>
+            
+            <div style={{ ...s.label, marginBottom: 8, fontSize: 13, color: c.muted }}>¿Para qué período?</div>
+            <input type="month" style={{...s.input, marginBottom: 24, fontSize: 16, fontWeight: 700}} value={presupForm.periodo} onChange={e => setPresupForm({...presupForm, periodo: e.target.value})} />
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: 16, borderBottom: `1px solid ${c.border}`, marginBottom: 24 }}>
+               <span style={{ fontSize: 15, fontWeight: 700, color: c.text }}>Presupuesto total</span>
+               <span style={{ fontSize: 20, fontWeight: 800, color: c.green }}>S/ {formatMoney(totalCalculado).replace("S/ ","")}</span>
+            </div>
+
+            <div style={{ ...s.label, marginBottom: 16, fontSize: 15 }}>Asignar por categorías</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 40 }}>
+               {categoriasExtra.map(cat => (
+                   <div key={cat.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                         <div style={{ width: 44, height: 44, borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, color: c.text }}>{getIcono(cat.label)}</div>
+                         <span style={{ fontSize: 15, fontWeight: 600, color: c.text }}>{getTexto(cat.label)}</span>
+                      </div>
+                      <div style={{ position: "relative", width: 130 }}>
+                         <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: c.muted, fontWeight: 600, fontSize: 15 }}>S/</span>
+                         <input type="number" style={{ ...s.input, paddingLeft: 36, textAlign: "right", fontSize: 16, fontWeight: 700 }} placeholder="0.00" 
+                            value={presupForm.categorias[cat.id] || ""}
+                            onChange={e => setPresupForm({ ...presupForm, categorias: { ...presupForm.categorias, [cat.id]: e.target.value } })}
+                         />
+                      </div>
+                   </div>
+               ))}
+            </div>
+
+            <button onClick={guardarPresupuesto} disabled={saving} style={{ ...s.btnPrimary, background: c.brandBlue, boxShadow: "0 8px 24px rgba(74, 58, 255, 0.3)", padding: 16, fontSize: 16, borderRadius: 16 }}>
+               {saving ? "Guardando..." : "Guardar presupuesto"}
+            </button>
+          </div>
+        );
+      })()}
       
       {showAporteModal && (
         <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setShowAporteModal(false); }}>
@@ -1497,8 +1498,8 @@ export default function App() {
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'ayuda' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 24, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}><button onClick={() => cerrarPantalla('ayuda', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button><h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Centro de ayuda</h2></div>
           <div style={{ ...s.card, padding: 16, marginBottom: 12 }}><div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 8 }}>¿Cómo edito una categoría?</div><div style={{ fontSize: 13, color: c.muted, lineHeight: 1.5, fontWeight: 500 }}>Ve a Configuración &gt; Configuración de categorías y presiona el ícono del lápiz junto a la categoría que deseas modificar.</div></div>
-          <div style={{ ...s.card, padding: 16, marginBottom: 12 }}><div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 8 }}>¿Cómo funciona la proyección?</div><div style={{ fontSize: 13, color: c.muted, lineHeight: 1.5, fontWeight: 500 }}>Calculamos tu promedio de ahorro diario desde que iniciaste tu plan, y con eso estimamos en qué fecha exacta llegarás a tu meta si mantienes ese ritmo.</div></div>
-          <div style={{ ...s.card, padding: 16, marginBottom: 24 }}><div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 8 }}>Mi meta se reinició, ¿qué hago?</div><div style={{ fontSize: 13, color: c.muted, lineHeight: 1.5, fontWeight: 500 }}>Verifica que el periodo de ahorro (Fechas Del / Al) en tu configuración abarque el día de hoy.</div></div>
+          <div style={{ ...s.card, padding: 16, marginBottom: 12 }}><div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 8 }}>¿Cómo funciona la proyección de metas?</div><div style={{ fontSize: 13, color: c.muted, lineHeight: 1.5, fontWeight: 500 }}>Calculamos cuánto te falta ahorrar y lo dividimos entre los días restantes hasta tu fecha límite para decirte tu cuota diaria.</div></div>
+          <div style={{ ...s.card, padding: 16, marginBottom: 24 }}><div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 8 }}>Mi presupuesto no aparece, ¿qué hago?</div><div style={{ fontSize: 13, color: c.muted, lineHeight: 1.5, fontWeight: 500 }}>Asegúrate de haber creado el presupuesto para el mes actual en la pestaña 'Presupuesto'.</div></div>
           <a href="mailto:soporte@ahorrometa.com" style={{ ...s.btnSecondary, display: "block", textAlign: "center", textDecoration: "none", padding: "16px 0", fontSize: 15 }}>✉️ Contactar a soporte</a>
         </div>
       )}
