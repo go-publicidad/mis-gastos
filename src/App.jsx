@@ -78,7 +78,7 @@ export default function App() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [startY, setStartY] = useState(0);
 
-  // ESTADOS PARA SWIPE
+  // ESTADOS PARA SWIPE EN EL HISTORIAL
   const [swipedId, setSwipedId] = useState(null);
   const [touchStartX, setTouchStartX] = useState(0);
   const [currentSwipeX, setCurrentSwipeX] = useState(0);
@@ -177,7 +177,24 @@ export default function App() {
 
   useEffect(() => { window.scrollTo(0, 0); }, [tab]);
 
-  // LOGICA PARA MANEJAR EL SWIPE
+  // LOGICA: DESLIZAR PARA ACTUALIZAR (PULL TO REFRESH)
+  const handleTouchStart = (e) => { const scrollTop = window.scrollY || document.documentElement.scrollTop; setStartY(scrollTop <= 5 ? e.touches[0].clientY : 0); };
+  const handleTouchMove = (e) => {
+    if (!startY) return;
+    const currentY = e.touches[0].clientY; const diff = currentY - startY;
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    if (diff > 0 && scrollTop <= 5) setPullDistance(Math.min(diff * 0.4, 80));
+  };
+  const handleTouchEnd = async () => {
+    if (pullDistance > 40) {
+      setIsRefreshing(true); setPullDistance(60);
+      const delay = new Promise(resolve => setTimeout(resolve, 800));
+      await Promise.all([loadData(true), delay]); setIsRefreshing(false);
+    }
+    setPullDistance(0); setStartY(0);
+  };
+
+  // LOGICA: DESLIZAR PARA EDITAR/ELIMINAR (SWIPE TO ACTION)
   const handleSwipeStart = (e) => setTouchStartX(e.touches[0].clientX);
   const handleSwipeMove = (id, e) => {
     const diff = e.touches[0].clientX - touchStartX;
