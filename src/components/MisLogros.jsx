@@ -6,7 +6,7 @@ export default function MisLogros({
 }) {
   const [filtro, setFiltro] = useState("todos");
 
-  // --- Lógica de cálculos (Se mantiene igual) ---
+  // --- Lógica de cálculos ---
   const safeMetas = listaMetas || [];
   const safeGastos = gastos || [];
 
@@ -66,7 +66,7 @@ export default function MisLogros({
   ];
 
   const filtered = achievements.filter(a => {
-     if (filtro === 'desbloqueados') return a.unlocked;
+     if (filtro === 'obtenidos') return a.unlocked;
      if (filtro === 'bloqueados') return !a.unlocked;
      return true;
   });
@@ -79,11 +79,8 @@ export default function MisLogros({
         <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 800 }}>Mis logros / Insignias</h2>
       </div>
 
-      {/* ========================================== */}
-      {/* EL NUEVO BANNER VERDE ESMERALDA            */}
-      {/* ========================================== */}
       <div style={{ 
-        background: "#064E3B", // Verde Esmeralda oscuro
+        background: "#064E3B", 
         borderRadius: 24, 
         padding: "24px", 
         display: "flex", 
@@ -103,12 +100,32 @@ export default function MisLogros({
           <div style={{ fontSize: 60, filter: "drop-shadow(0 4px 10px rgba(0,0,0,0.2))" }}>🏆</div>
       </div>
 
+      {/* ========================================== */}
+      {/* BOTONES DE FILTRO CON DISEÑO DE LA IMAGEN  */}
+      {/* ========================================== */}
       <div style={{ display: "flex", gap: 12, marginBottom: 24, overflowX: "auto", paddingBottom: 4 }} className="hide-scroll">
-          {["Todos", "Desbloqueados", "Bloqueados"].map(t => {
+          {["Todos", "Obtenidos", "Bloqueados"].map(t => {
               const tabId = t.toLowerCase();
               const isActive = filtro === tabId;
               return (
-                  <button key={tabId} onClick={() => setFiltro(tabId)} style={{ padding: "8px 16px", borderRadius: 20, fontSize: 14, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", border: isActive ? "1px solid #FF803C" : "1px solid transparent", background: isActive ? "transparent" : (isDark ? "#111" : "transparent"), color: isActive ? "#FF803C" : c.muted }}>{t}</button>
+                  <button 
+                    key={tabId} 
+                    onClick={() => setFiltro(tabId)} 
+                    style={{ 
+                      padding: "10px 20px", 
+                      borderRadius: 20, 
+                      fontSize: 14, 
+                      fontWeight: 700, 
+                      cursor: "pointer", 
+                      whiteSpace: "nowrap", 
+                      border: "none", 
+                      background: isActive ? "#059669" : (isDark ? "#222" : "#F3F4F6"), 
+                      color: isActive ? "#FFF" : c.muted,
+                      transition: "all 0.2s ease"
+                    }}
+                  >
+                    {t}
+                  </button>
               );
           })}
       </div>

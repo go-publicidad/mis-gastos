@@ -132,7 +132,7 @@ export default function App() {
     else setCurrentSwipeX(0);
   };
 
-  // PULL TO REFRESH (Seguro y Restaurado)
+  // PULL TO REFRESH
   const [pullDistance, setPullDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [startYGlobal, setStartYGlobal] = useState(0);
@@ -436,12 +436,7 @@ export default function App() {
     <div style={s.app}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
-        * { box-sizing: border-box; } 
-        html, body { 
-          background: ${c.bg} !important; /* CORRECCIÓN DEL FONDO GRIS */
-          color: ${c.text}; margin: 0; padding: 0; width: 100vw; max-width: 100%; overflow-x: hidden; font-family: 'Montserrat', sans-serif; transition: background 0.3s ease, color 0.3s ease; 
-          overscroll-behavior-y: none; /* CORRECCIÓN PARA ELIMINAR EL REBOTE NATIVO */
-        }
+        * { box-sizing: border-box; } html, body { background: ${c.bg} !important; color: ${c.text}; margin: 0; padding: 0; width: 100vw; max-width: 100%; overflow-x: hidden; font-family: 'Montserrat', sans-serif; transition: background 0.3s ease, color 0.3s ease; overscroll-behavior-y: none; }
         body * { font-weight: ${useBold ? '700' : 'inherit'}; } #root { background: ${c.bg}; min-height: 100vh; width: 100%; max-width: 100%; overflow-x: hidden; }
         .hide-scroll::-webkit-scrollbar { display: none; } .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
         @keyframes spin { to { transform: rotate(360deg) } } @keyframes slideInFromLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } } @keyframes slideOutToLeft { from { transform: translateX(0); } to { transform: translateX(-100%); } } @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } } @keyframes slideDown { from { transform: translate(-50%, -100%); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
@@ -460,8 +455,15 @@ export default function App() {
             {showVtFiltro && (
               <div style={{ padding: "16px 20px", background: c.card, borderBottom: `1px solid ${c.border}`, borderRadius: 16, marginBottom: 16 }}>
                 <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                  <div style={{ flex: 1, position: "relative" }}><input type="date" value={vtFechaDesde} onChange={e => setVtFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: vtFechaDesde ? c.text : "transparent" }} /></div>
-                  <div style={{ flex: 1, position: "relative" }}><input type="date" value={vtFechaHasta} onChange={e => setVtFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: vtFechaHasta ? c.text : "transparent" }} /></div>
+                  {/* ====== TEXTOS "DEL" Y "AL" INSERTADOS AQUÍ ====== */}
+                  <div style={{ flex: 1, position: "relative" }}>
+                    {!vtFechaDesde && <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: c.muted, fontSize: 15, fontWeight: 600, pointerEvents: "none", zIndex: 2 }}>Del</span>}
+                    <input type="date" value={vtFechaDesde} onChange={e => setVtFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: vtFechaDesde ? c.text : "transparent", position: "relative", zIndex: 1 }} />
+                  </div>
+                  <div style={{ flex: 1, position: "relative" }}>
+                    {!vtFechaHasta && <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: c.muted, fontSize: 15, fontWeight: 600, pointerEvents: "none", zIndex: 2 }}>Al</span>}
+                    <input type="date" value={vtFechaHasta} onChange={e => setVtFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: vtFechaHasta ? c.text : "transparent", position: "relative", zIndex: 1 }} />
+                  </div>
                 </div>
                 {(vtFechaDesde || vtFechaHasta) && (<button style={{ width: "100%", fontSize: 14, fontWeight: 600, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", padding: "12px 0 0", marginTop: 4, fontFamily: "inherit" }} onClick={() => { setVtFechaDesde(""); setVtFechaHasta(""); }}><X size={14} style={{ marginRight: 4, verticalAlign: "middle" }} /> Limpiar fechas</button>)}
               </div>
@@ -540,7 +542,6 @@ export default function App() {
 
           {error && <div style={{ ...s.errorCard, marginTop: 80, position: "relative", zIndex: 20 }}><AlertTriangle size={16} style={{ verticalAlign: "middle", marginRight: 8 }} /> {error}</div>}
 
-          {/* MENSAJE DE ACTUALIZACIÓN RESTAURADO */}
           {tab === "hoy" && (
             <>
               <div style={{ position: "fixed", top: "calc(52px + env(safe-area-inset-top, 0px))", left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, height: 60, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 10, color: "#10B981", opacity: (isRefreshing || pullDistance > 0) ? 1 : 0, visibility: (isRefreshing || pullDistance > 0) ? "visible" : "hidden", pointerEvents: "none" }}>
@@ -595,7 +596,7 @@ export default function App() {
           <div style={{ display: "flex", alignItems: "center", marginBottom: 24, marginTop: 16 }}><button onClick={() => cerrarPantalla('ayuda', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button><h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 800 }}>Centro de ayuda</h2></div>
           <div style={{ display: "flex", alignItems: "center", background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, padding: "12px 16px", marginBottom: 32, boxShadow: c.shadow }}><Search size={20} color={c.muted} style={{ marginRight: 12 }} /><input type="text" placeholder="Buscar ayuda..." style={{ border: "none", background: "transparent", outline: "none", color: c.text, fontSize: 15, width: "100%", fontFamily: "inherit" }} /></div>
           <div style={{ fontSize: 13, color: c.muted, fontWeight: 700, letterSpacing: "1px", marginBottom: 12, textTransform: "uppercase" }}>Categorías</div>
-          <div style={{ background: c.card, borderRadius: 16, border: `1px solid ${c.border}`, overflow: "hidden", marginBottom: 32, boxShadow: c.shadow }}>{helpCategories.map((cat, i) => (<div key={cat.id} style={{ display: "flex", alignItems: "center", padding: "16px", borderBottom: i === helpCategories.length - 1 ? "none" : `1px solid ${c.border}`, cursor: "pointer" }}><div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 40, height: 40, marginRight: 16 }}>{cat.icon}</div><div style={{ flex: 1 }}><div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 4 }}>{cat.title}</div><div style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}>{cat.desc}</div></div><ChevronRight size={20} color={c.muted} /></div>))}</div>
+          <div style={{ background: c.card, borderRadius: 16, border: `1px solid ${c.border}`, overflow: "hidden", marginBottom: 32, boxShadow: c.shadow }}>{helpCategories.map((cat, i) => (<div key={cat.id} onClick={() => alert(`Abriendo sección: ${cat.title}`)} style={{ display: "flex", alignItems: "center", padding: "16px", borderBottom: i === helpCategories.length - 1 ? "none" : `1px solid ${c.border}`, cursor: "pointer" }}><div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 40, height: 40, marginRight: 16 }}>{cat.icon}</div><div style={{ flex: 1 }}><div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 4 }}>{cat.title}</div><div style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}>{cat.desc}</div></div><ChevronRight size={20} color={c.muted} /></div>))}</div>
           <button style={{ width: "100%", padding: "16px", background: "transparent", border: `1.5px solid ${c.border}`, borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, cursor: "pointer", color: "#FF803C", fontSize: 16, fontWeight: 700, fontFamily: "inherit" }}><Headphones size={20} /> Contactar soporte</button>
         </div>
       )}
