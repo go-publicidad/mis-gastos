@@ -124,7 +124,7 @@ export default function TabInicio({
                     {isAporte ? "🎯" : (cat ? getIcono(cat.label) : (g.descripcion || "?").charAt(0).toUpperCase())}
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text, textDecoration: (!cat && !isAporte) ? "line-through" : "none" }}>
+                    <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text, textDecoration: (!cat && !isAporte) ? "line-through" : "none" }}>
                       {isAporte ? g.descripcion : (cat ? getTexto(cat.label) : g.descripcion)}
                       {cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 500, textDecoration: "none" }}>{descAdicional}</span>}
                       {!cat && !isAporte && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 500, textDecoration: "none" }}>(Eliminado)</span>}
@@ -133,7 +133,7 @@ export default function TabInicio({
                   </div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: montoColor, marginRight: 4 }}>
+                  <span style={{ fontSize: 16, fontWeight: 600, color: montoColor, marginRight: 4 }}>
                     {g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}
                   </span>
                   {!isAporte && (

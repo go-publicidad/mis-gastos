@@ -6,6 +6,10 @@ export default function TabReportes({ c, s, isDark, gastos, categoriasBase, cate
   const [filtroReporteTipo, setFiltroReporteTipo] = useState("general");
   const [reporteMetaId, setReporteMetaId] = useState("");
   const [filtroReporteCat, setFiltroReporteCat] = useState(null);
+  
+  // NUEVO ESTADO PARA EL COMBOBOX DE CATEGORÍAS
+  const [filtroTipoCategoria, setFiltroTipoCategoria] = useState("todas"); 
+  
   const [showFiltrosMenu, setShowFiltrosMenu] = useState(false);
   const [filtroFechaResumenDesde, setFiltroFechaResumenDesde] = useState("");
   const [filtroFechaResumenHasta, setFiltroFechaResumenHasta] = useState("");
@@ -76,14 +80,58 @@ export default function TabReportes({ c, s, isDark, gastos, categoriasBase, cate
 
       {filtroReporteTipo === "general" && (
         <>
-          <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: showFiltrosMenu ? 16 : 24 }}>
-            <div className="hide-scroll" style={{ flex: 1, display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, alignItems: "center" }}>
+          {/* NUEVA ZONA DE FILTROS PARA INGRESOS Y GASTOS */}
+          <div style={{ marginBottom: showFiltrosMenu ? 16 : 24 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: c.text, marginBottom: 8 }}>Selecciona una categoría:</div>
+            <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16 }}>
+                
+                {/* COMBOBOX DE CATEGORÍAS (Líneas negras delgadas) */}
+                <div style={{ position: "relative", flex: 1 }}>
+                    <select 
+                        style={{ ...s.select, paddingRight: 40, fontSize: 15, fontWeight: 600, color: c.text, borderColor: isDark ? "#555" : "#000", borderWidth: 1, marginBottom: 0, appearance: "none", WebkitAppearance: "none", backgroundColor: "transparent" }} 
+                        value={filtroTipoCategoria} 
+                        onChange={(e) => {
+                            setFiltroTipoCategoria(e.target.value);
+                            setFiltroReporteCat(null); // Limpia la selección previa al cambiar de tipo
+                        }}
+                    >
+                        <option value="todas">Todas las categorías</option>
+                        <option value="ingresos">Categorías de Ingresos</option>
+                        <option value="gastos">Categorías de Gastos</option>
+                    </select>
+                    <ChevronDown size={18} color={c.text} style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
+                </div>
+                
+                <button onClick={() => setShowFiltrosMenu(!showFiltrosMenu)} style={{ width: 48, height: 48, borderRadius: "50%", border: `1px solid ${isDark ? "#555" : "#000"}`, background: c.input, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, transition: "all 0.2s" }}><Calendar size={22} color={c.text} /></button>
+            </div>
+
+            {/* FECHAS (Se muestran debajo del combobox si el calendario se abre) */}
+            {showFiltrosMenu && (
+                <div style={{...s.card, marginBottom: 16, animation: "slideDown 0.3s ease-out"}}>
+                    <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                        <div style={{ flex: 1, position: "relative" }}>
+                            {!filtroFechaResumenDesde && <span style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontSize: 14, fontWeight: 600 }}>DEL</span>}
+                            <input type="date" value={filtroFechaResumenDesde} onChange={e => setFiltroFechaResumenDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenDesde ? c.text : "transparent" }} />
+                        </div>
+                        <div style={{ flex: 1, position: "relative" }}>
+                            {!filtroFechaResumenHasta && <span style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontSize: 14, fontWeight: 600 }}>AL</span>}
+                            <input type="date" value={filtroFechaResumenHasta} onChange={e => setFiltroFechaResumenHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenHasta ? c.text : "transparent" }} />
+                        </div>
+                    </div>
+                    {(filtroFechaResumenDesde || filtroFechaResumenHasta) && (
+                        <button style={{ width: "100%", fontSize: 14, fontWeight: 700, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 16, fontFamily: "inherit" }} onClick={() => { setFiltroFechaResumenDesde(""); setFiltroFechaResumenHasta(""); }}><X size={14} style={{ marginRight: 4, verticalAlign: "middle" }} /> Limpiar fechas</button>
+                    )}
+                </div>
+            )}
+
+            {/* LISTA DE BOTONCITOS (CHIPS) DE CATEGORÍAS */}
+            <div className="hide-scroll" style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, alignItems: "center" }}>
               {!filtroReporteCat ? (
                 <>
-                  {categoriasBase.map(c => (
+                  {(filtroTipoCategoria === "todas" || filtroTipoCategoria === "ingresos") && categoriasBase.map(c => (
                     <button key={c.id} onClick={() => setFiltroReporteCat(c.id)} style={{ whiteSpace: "nowrap", flexShrink: 0, padding: "8px 16px", borderRadius: 20, border: `1px solid ${isDark ? "#888" : "#000"}`, background: c.card, color: c.text, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>{c.label}</button>
                   ))}
-                  {categoriasExtra.map(catExtra => (
+                  {(filtroTipoCategoria === "todas" || filtroTipoCategoria === "gastos") && categoriasExtra.map(catExtra => (
                     <button key={catExtra.id} onClick={() => setFiltroReporteCat(catExtra.id)} style={{ whiteSpace: "nowrap", flexShrink: 0, padding: "8px 16px", borderRadius: 20, border: `1px solid ${c.red}`, background: c.card, color: c.text, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>{catExtra.label}</button>
                   ))}
                 </>
@@ -94,20 +142,7 @@ export default function TabReportes({ c, s, isDark, gastos, categoriasBase, cate
                 </div>
               )}
             </div>
-            <button onClick={() => setShowFiltrosMenu(!showFiltrosMenu)} style={{ width: 48, height: 48, borderRadius: "50%", border: `1.5px solid ${c.text}`, background: c.input, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, transition: "all 0.2s" }}><Calendar size={22} color={c.text} /></button>
           </div>
-
-          {showFiltrosMenu && (
-              <div style={{...s.card, marginBottom: 24, animation: "slideDown 0.3s ease-out"}}>
-                  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                      <div style={{ flex: 1, position: "relative" }}><input type="date" value={filtroFechaResumenDesde} onChange={e => setFiltroFechaResumenDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenDesde ? c.text : "transparent" }} /></div>
-                      <div style={{ flex: 1, position: "relative" }}><input type="date" value={filtroFechaResumenHasta} onChange={e => setFiltroFechaResumenHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenHasta ? c.text : "transparent" }} /></div>
-                  </div>
-                  {(filtroFechaResumenDesde || filtroFechaResumenHasta) && (
-                      <button style={{ width: "100%", fontSize: 14, fontWeight: 700, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 16, fontFamily: "inherit" }} onClick={() => { setFiltroFechaResumenDesde(""); setFiltroFechaResumenHasta(""); }}><X size={14} style={{ marginRight: 4, verticalAlign: "middle" }} /> Limpiar fechas</button>
-                  )}
-              </div>
-          )}
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
             <div style={{ background: isDark ? "rgba(16, 185, 129, 0.1)" : "#F0FDF4", borderRadius: 16, padding: 16, border: isDark ? "1px solid rgba(16, 185, 129, 0.2)" : "none" }}>
@@ -221,7 +256,7 @@ export default function TabReportes({ c, s, isDark, gastos, categoriasBase, cate
                     <div style={{ ...s.label, marginBottom: 8 }}>Selecciona una meta a analizar:</div>
                     <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                         <div style={{ position: "relative", flex: 1 }}>
-                            <select style={{ ...s.select, paddingRight: 40, fontSize: 16, fontWeight: 700, color: "#10B981", borderColor: "#10B981", marginBottom: 0 }} value={metaSelecId} onChange={(e) => setReporteMetaId(e.target.value)}>
+                            <select style={{ ...s.select, paddingRight: 40, fontSize: 16, fontWeight: 700, color: "#10B981", borderColor: "#10B981", marginBottom: 0, appearance: "none", WebkitAppearance: "none", backgroundColor: "transparent" }} value={metaSelecId} onChange={(e) => setReporteMetaId(e.target.value)}>
                                 {listaMetas.map(m => <option key={m.id} value={m.id}>{m.icono} {m.nombre}</option>)}
                             </select>
                             <ChevronDown size={20} color="#10B981" style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
@@ -233,8 +268,14 @@ export default function TabReportes({ c, s, isDark, gastos, categoriasBase, cate
                 {showFiltrosMenu && (
                     <div style={{...s.card, marginBottom: 24, animation: "slideDown 0.3s ease-out"}}>
                         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                            <div style={{ flex: 1, position: "relative" }}><input type="date" value={filtroFechaResumenDesde} onChange={e => setFiltroFechaResumenDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenDesde ? c.text : "transparent" }} /></div>
-                            <div style={{ flex: 1, position: "relative" }}><input type="date" value={filtroFechaResumenHasta} onChange={e => setFiltroFechaResumenHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenHasta ? c.text : "transparent" }} /></div>
+                            <div style={{ flex: 1, position: "relative" }}>
+                                {!filtroFechaResumenDesde && <span style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontSize: 14, fontWeight: 600 }}>DEL</span>}
+                                <input type="date" value={filtroFechaResumenDesde} onChange={e => setFiltroFechaResumenDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenDesde ? c.text : "transparent" }} />
+                            </div>
+                            <div style={{ flex: 1, position: "relative" }}>
+                                {!filtroFechaResumenHasta && <span style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)", color: c.muted, pointerEvents: "none", fontSize: 14, fontWeight: 600 }}>AL</span>}
+                                <input type="date" value={filtroFechaResumenHasta} onChange={e => setFiltroFechaResumenHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: filtroFechaResumenHasta ? c.text : "transparent" }} />
+                            </div>
                         </div>
                         {(filtroFechaResumenDesde || filtroFechaResumenHasta) && (
                             <button style={{ width: "100%", fontSize: 14, fontWeight: 700, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", marginTop: 16, fontFamily: "inherit" }} onClick={() => { setFiltroFechaResumenDesde(""); setFiltroFechaResumenHasta(""); }}><X size={14} style={{ marginRight: 4, verticalAlign: "middle" }} /> Limpiar fechas</button>
