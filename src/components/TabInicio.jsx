@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ArrowDownToLine, ArrowUpFromLine, PiggyBank, Target, Calendar, Clock, TrendingDown, PlusCircle, Edit2, Trash2 } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, PiggyBank, Target, Calendar, Clock, TrendingDown, PlusCircle } from "lucide-react";
 import { formatMoney, getTexto, getIcono, formatFecha, diffDias, hoy, getUIFechaHora } from "../utils";
 
 const IconBadge = ({ emoji, bg, color }) => (
@@ -129,32 +129,28 @@ export default function TabInicio({
             }
 
             return (
-              <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: i === arr.length - 1 ? "none" : `1px solid ${c.border}` }}>
+              <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: i === arr.length - 1 ? "none" : `1px solid ${c.border}`, height: "72px", boxSizing: "border-box" }}>
                 <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 14 }}>
 
+                  {/* Icono: Chanchito para ahorros, Dinámico para el resto */}
                   <div style={{ width: 44, height: 44, borderRadius: 14, background: iconBg, color: iconColor, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    {isAporte ? <Target size={20} strokeWidth={2.5} /> : getIcono(cat ? cat.label : (g.descripcion || "?"))}
+                    {isAporte ? <PiggyBank size={24} strokeWidth={2} /> : getIcono(cat ? cat.label : (g.descripcion || "?"))}
                   </div>
 
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text, textDecoration: (!cat && !isAporte) ? "line-through" : "none" }}>
                       {isAporte ? g.descripcion : (cat ? getTexto(cat.label) : g.descripcion)}
-                      {cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 500, textDecoration: "none" }}>{descAdicional}</span>}
-                      {!cat && !isAporte && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 500, textDecoration: "none" }}>(Eliminado)</span>}
+                      {cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 500 }}>{descAdicional}</span>}
                     </div>
-                    <div style={{ fontSize: 12, fontWeight: 500, color: c.muted }}>{getUIFechaHora(g.created_at)} · {isAporte ? "Aportes" : (g.tipo === "gasto" ? "Gastos" : "Ingresos")}</div>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: c.muted }}>{getUIFechaHora(g.created_at)}</div>
                   </div>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <span style={{ fontSize: 16, fontWeight: 600, color: montoColor, marginRight: 4 }}>
+                
+                {/* Lado derecho: Solo el monto, sin botones */}
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <span style={{ fontSize: 16, fontWeight: 600, color: montoColor }}>
                     {g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}
                   </span>
-                  {!isAporte && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                      <button style={{ ...s.editBtn, padding: 2 }} onClick={() => abrirEdicion(g)}><Edit2 size={16} /></button>
-                      <button style={{ ...s.deleteBtn, padding: 2 }} onClick={() => eliminar(g.id)}><Trash2 size={16} /></button>
-                    </div>
-                  )}
                 </div>
               </div>
             );
