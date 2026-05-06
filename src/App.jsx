@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import {
-  Home, PieChart, Calendar, X, Bell, Target, Wallet, Menu, Edit2, Trash2, AlertTriangle, Plus, ChevronRight, CheckCircle2, MoreVertical, ArrowLeft,
+  Home, PieChart, Calendar, X, Bell, Target, Wallet, Menu, Loader2, Edit2, Trash2, AlertTriangle, Plus, ChevronRight, CheckCircle2, MoreVertical, ArrowLeft,
   Search, Lightbulb, ArrowLeftRight, FileText, Shield, Headphones, PiggyBank
 } from "lucide-react";
 
@@ -100,9 +100,7 @@ export default function App() {
   const [metaSeleccionada, setMetaSeleccionada] = useState(null);
   const [showMetaMenu, setShowMetaMenu] = useState(false);
 
-  // =========================================================
-  // MOTOR DE SWIPE TO ACTION ACTUALIZADO (CON TOPE EN EL MEDIO)
-  // =========================================================
+  // SWIPE TO ACTION
   const [swipedId, setSwipedId] = useState(null);
   const [touchStartX, setTouchStartX] = useState(0);
   const [touchStartY, setTouchStartY] = useState(0);
@@ -111,50 +109,53 @@ export default function App() {
   const [isSwiping, setIsSwiping] = useState(false);
 
   const handleSwipeStart = (id, e) => {
-    // Autocierre: Si tocamos otra tarjeta, cerramos la anterior suavemente
-    if (swipedId && swipedId !== id) {
-      setCurrentSwipeX(0);
-      setSwipedId(null);
-    }
-    setTouchStartX(e.touches[0].clientX);
-    setTouchStartY(e.touches[0].clientY);
-    
-    // Guardamos la posición inicial exacta de la tarjeta tocada
-    setSwipeBaseX(swipedId === id ? currentSwipeX : 0);
-    setIsSwiping(true);
+    if (swipedId && swipedId !== id) { setCurrentSwipeX(0); setSwipedId(null); }
+    setTouchStartX(e.touches[0].clientX); setTouchStartY(e.touches[0].clientY);
+    setSwipeBaseX(swipedId === id ? currentSwipeX : 0); setIsSwiping(true);
   };
-
   const handleSwipeMove = (id, e) => {
-    // Prevenimos que arrastre una mientras otra se está cerrando sola
     if (swipedId && swipedId !== id) return;
-
     const diffX = e.touches[0].clientX - touchStartX;
     const diffY = e.touches[0].clientY - touchStartY;
-
-    // Solo activamos si el deslizamiento es más horizontal que vertical
     if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
         setSwipedId(id);
         let newX = swipeBaseX + diffX;
-
-        // LA MAGIA: Topes invisibles en el centro (0)
-        // Si estaba en "Eliminar" (-80), no dejamos que pase el centro hacia la derecha
         if (swipeBaseX < 0) newX = Math.min(0, newX);
-        // Si estaba en "Editar" (+80), no dejamos que pase el centro hacia la izquierda
         if (swipeBaseX > 0) newX = Math.max(0, newX);
-
         setCurrentSwipeX(Math.max(-85, Math.min(85, newX)));
     }
   };
-
   const handleSwipeEnd = () => {
     setIsSwiping(false);
-    if (currentSwipeX > 40) {
-        setCurrentSwipeX(80);
-    } else if (currentSwipeX < -40) {
-        setCurrentSwipeX(-80);
-    } else {
-        setCurrentSwipeX(0);
+    if (currentSwipeX > 40) setCurrentSwipeX(80);
+    else if (currentSwipeX < -40) setCurrentSwipeX(-80);
+    else setCurrentSwipeX(0);
+  };
+
+  // PULL TO REFRESH (Seguro y Restaurado)
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [startYGlobal, setStartYGlobal] = useState(0);
+
+  const handleTouchStartGlobal = (e) => {
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    if (scrollTop <= 5) setStartYGlobal(e.touches[0].clientY);
+    else setStartYGlobal(0);
+  };
+  const handleTouchMoveGlobal = (e) => {
+    if (!startYGlobal) return;
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - startYGlobal;
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    if (diff > 0 && scrollTop <= 5) setPullDistance(Math.min(diff * 0.4, 80));
+  };
+  const handleTouchEndGlobal = async () => {
+    if (pullDistance > 40) {
+      setIsRefreshing(true); setPullDistance(60);
+      const delay = new Promise(resolve => setTimeout(resolve, 800));
+      await Promise.all([loadData(true), delay]); setIsRefreshing(false);
     }
+    setPullDistance(0); setStartYGlobal(0);
   };
 
   const [theme, setTheme] = useState(localStorage.getItem("themePref") || "dark");
@@ -188,7 +189,7 @@ export default function App() {
     }, 280);
   };
 
-  const loadData = async () => {
+  const loadData = async (isManual = false) => {
     if (!usuario?.id) return;
     try {
       const { data: movimientos, error: err1 } = await supabase.from("gastos").select("*").eq("user_id", usuario.id).order("created_at", { ascending: false });
@@ -209,6 +210,7 @@ export default function App() {
         if (getVal("presupuestosMensuales")) { try { const p = JSON.parse(getVal("presupuestosMensuales")); if (p) setPresupuestosMensuales(p); } catch (_) { } }
       }
       setError(null);
+      if (isManual) showToast("Datos actualizados ✓", c.green);
     } catch (e) { setError("No se pudo conectar al servidor."); }
     setLoaded(true);
   };
@@ -434,7 +436,12 @@ export default function App() {
     <div style={s.app}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
-        * { box-sizing: border-box; } html, body { background: ${isDark ? "#000000" : "#E5E7EB"} !important; color: ${c.text}; margin: 0; padding: 0; width: 100vw; max-width: 100%; overflow-x: hidden; font-family: 'Montserrat', sans-serif; transition: background 0.3s ease, color 0.3s ease; }
+        * { box-sizing: border-box; } 
+        html, body { 
+          background: ${c.bg} !important; /* CORRECCIÓN DEL FONDO GRIS */
+          color: ${c.text}; margin: 0; padding: 0; width: 100vw; max-width: 100%; overflow-x: hidden; font-family: 'Montserrat', sans-serif; transition: background 0.3s ease, color 0.3s ease; 
+          overscroll-behavior-y: none; /* CORRECCIÓN PARA ELIMINAR EL REBOTE NATIVO */
+        }
         body * { font-weight: ${useBold ? '700' : 'inherit'}; } #root { background: ${c.bg}; min-height: 100vh; width: 100%; max-width: 100%; overflow-x: hidden; }
         .hide-scroll::-webkit-scrollbar { display: none; } .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
         @keyframes spin { to { transform: rotate(360deg) } } @keyframes slideInFromLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } } @keyframes slideOutToLeft { from { transform: translateX(0); } to { transform: translateX(-100%); } } @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } } @keyframes slideDown { from { transform: translate(-50%, -100%); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
@@ -533,13 +540,22 @@ export default function App() {
 
           {error && <div style={{ ...s.errorCard, marginTop: 80, position: "relative", zIndex: 20 }}><AlertTriangle size={16} style={{ verticalAlign: "middle", marginRight: 8 }} /> {error}</div>}
 
+          {/* MENSAJE DE ACTUALIZACIÓN RESTAURADO */}
           {tab === "hoy" && (
-            <TabInicio
-              c={c} s={s} isDark={isDark} listaMetas={listaMetas} setAporteMetaId={setAporteMetaId} setShowAporteModal={setShowAporteModal}
-              setIsEditingMetaObj={setIsEditingMetaObj} setMetaForm={setMetaForm} setShowCrearMeta={setShowCrearMeta} setViewAll={setViewAll}
-              movimientosHoy={movimientosHoy} totalIngresosHoy={totalIngresosHoy} totalGastadoHoy={totalGastadoHoy} presupuestoDiario={presupuestoDiario}
-              categorias={categorias} setMetaSeleccionada={setMetaSeleccionada}
-            />
+            <>
+              <div style={{ position: "fixed", top: "calc(52px + env(safe-area-inset-top, 0px))", left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, height: 60, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 10, color: "#10B981", opacity: (isRefreshing || pullDistance > 0) ? 1 : 0, visibility: (isRefreshing || pullDistance > 0) ? "visible" : "hidden", pointerEvents: "none" }}>
+                <Loader2 size={24} style={{ animation: isRefreshing ? "spin 1s linear infinite" : "none", transform: isRefreshing ? "none" : `rotate(${pullDistance * 5}deg)` }} />
+                <span style={{ fontSize: 12, fontWeight: 600, marginTop: 4, opacity: Math.min(pullDistance / 50, 1), color: c.muted }}>Actualizando...</span>
+              </div>
+
+              <TabInicio
+                c={c} s={s} isDark={isDark} listaMetas={listaMetas} setAporteMetaId={setAporteMetaId} setShowAporteModal={setShowAporteModal}
+                setIsEditingMetaObj={setIsEditingMetaObj} setMetaForm={setMetaForm} setShowCrearMeta={setShowCrearMeta} setViewAll={setViewAll}
+                movimientosHoy={movimientosHoy} totalIngresosHoy={totalIngresosHoy} totalGastadoHoy={totalGastadoHoy} presupuestoDiario={presupuestoDiario}
+                categorias={categorias} setMetaSeleccionada={setMetaSeleccionada}
+                isRefreshing={isRefreshing} pullDistance={pullDistance} handleTouchStart={handleTouchStartGlobal} handleTouchMove={handleTouchMoveGlobal} handleTouchEnd={handleTouchEndGlobal}
+              />
+            </>
           )}
           {tab === "resumen" && <TabReportes c={c} s={s} isDark={isDark} gastos={gastos} categoriasBase={categoriasBase} categoriasExtra={categoriasExtra} categorias={categorias} listaMetas={listaMetas} />}
           {tab === "presupuesto" && <TabPresupuesto c={c} s={s} isDark={isDark} presupuestosMensuales={presupuestosMensuales} setPresupForm={setPresupForm} setShowCrearPresupuesto={setShowCrearPresupuesto} gastos={gastos} categorias={categorias} setCatPresupSelec={setCatPresupSelec} setShowHistorial={setShowHistorial} setShowPresupAnual={setShowPresupAnual} />}
