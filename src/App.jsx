@@ -15,6 +15,9 @@ import ModalRegistrarMovimiento from "./components/ModalRegistrarMovimiento";
 import ModalEditarMovimiento from "./components/ModalEditarMovimiento";
 import ModalCrearMeta from "./components/ModalCrearMeta";
 import ModalCrearPresupuesto from "./components/ModalCrearPresupuesto";
+import ModalDetalleCategoria from "./components/ModalDetalleCategoria";
+import ModalHistorialPresupuestos from "./components/ModalHistorialPresupuestos";
+import ModalResumenMensual from "./components/ModalResumenMensual"; // <--- NUEVO IMPORT
 
 import TabInicio from "./components/TabInicio";
 import TabReportes from "./components/TabReportes";
@@ -54,6 +57,10 @@ export default function App() {
   const [presupuestosMensuales, setPresupuestosMensuales] = useState({});
   const [showCrearPresupuesto, setShowCrearPresupuesto] = useState(false);
   const [presupForm, setPresupForm] = useState({ periodo: hoy().slice(0, 7), categorias: {} });
+  
+  const [catPresupSelec, setCatPresupSelec] = useState(null);
+  const [showHistorial, setShowHistorial] = useState(false);
+  const [resumenMes, setResumenMes] = useState(null); // <--- NUEVO ESTADO
 
   const [tab, setTab] = useState("hoy");
   const [form, setForm] = useState({ monto: "", descripcion: "", categoria: GASTOS_DEFAULT[0]?.id || "", tipo: "gasto" });
@@ -105,7 +112,7 @@ export default function App() {
   const safeExtra = categoriasExtra || [];
   const categorias = [...safeBase, ...safeExtra];
   const isDark = theme === "dark";
-  const isModalOpen = showAddModal || !!editando || showCrearMeta || !!metaSeleccionada || showAporteModal || catForm.visible || showNovedades || showCrearPresupuesto;
+  const isModalOpen = showAddModal || !!editando || showCrearMeta || !!metaSeleccionada || showAporteModal || catForm.visible || showNovedades || showCrearPresupuesto || !!catPresupSelec || showHistorial || !!resumenMes;
 
   const c = {
     bg: isDark ? "#0A0A0A" : "#F4F5F7", card: isDark ? "#111111" : "#FFFFFF", text: isDark ? "#E8E0D0" : "#1A1A1A",
@@ -118,7 +125,15 @@ export default function App() {
 
   const showToast = (msg, color = "#FF803C") => { setToast({ msg, color }); setTimeout(() => setToast(null), 2500); };
 
-  const cerrarPantalla = (screenName, action) => { setIsClosing(screenName); setTimeout(() => { action(); setIsClosing(""); setShowMetaMenu(false); }, 280); };
+  const cerrarPantalla = (screenName, action) => { 
+    setIsClosing(screenName); 
+    setTimeout(() => { 
+        if(action) action(); 
+        else if (screenName === 'detalleCat') setCatPresupSelec(null);
+        else if (screenName === 'resumenMes') setResumenMes(null);
+        setIsClosing(""); setShowMetaMenu(false); 
+    }, 280); 
+  };
 
   const loadData = async (isManual = false) => {
     if (!usuario?.id) return;
@@ -370,7 +385,7 @@ export default function App() {
       {toast && (<div style={{ position: "fixed", top: 40, left: "50%", transform: "translateX(-50%)", background: toast.color || "#333", color: "#FFF", padding: "12px 24px", borderRadius: 30, zIndex: 999999, fontWeight: 600, fontSize: 14, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", animation: "slideDown 0.3s ease-out", whiteSpace: "nowrap" }}>{toast.msg}</div>)}
 
       {/* VISTA VER TODOS LOS MOVIMIENTOS */}
-      {viewAll && (
+      {viewAll ? (
         <>
           <div style={{ padding: "calc(12px + env(safe-area-inset-top, 0px)) 20px 12px", borderBottom: `1px solid ${c.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: c.bg, position: "fixed", top: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, zIndex: 110, boxSizing: "border-box" }}>
             <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 24, cursor: "pointer", padding: 0 }} onClick={() => { setViewAll(false); window.scrollTo(0, 0); }}>←</button>
@@ -414,11 +429,9 @@ export default function App() {
             })}
           </div>
         </>
-      )}
-
-      {/* VISTAS PRINCIPALES DEL TAB */}
-      {!viewAll && (
+      ) : (
         <>
+          {/* HEADER FIJO */}
           <div style={{ padding: "calc(12px + env(safe-area-inset-top, 0px)) 20px 12px", background: tab === "hoy" ? c.bg : c.card, borderBottom: tab === "hoy" ? "none" : `1px solid ${c.border}`, position: "fixed", top: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, zIndex: 110, boxSizing: "border-box" }}>
             <div style={{ display: "flex", justifyContent: tab === "hoy" ? "space-between" : "center", alignItems: "center" }}>
               {tab === "hoy" ? (
@@ -446,7 +459,7 @@ export default function App() {
             </>
           )}
           {tab === "resumen" && <TabReportes c={c} s={s} isDark={isDark} gastos={gastos} categoriasBase={categoriasBase} categoriasExtra={categoriasExtra} categorias={categorias} listaMetas={listaMetas} />}
-          {tab === "presupuesto" && <TabPresupuesto c={c} s={s} isDark={isDark} presupuestosMensuales={presupuestosMensuales} setPresupForm={setPresupForm} setShowCrearPresupuesto={setShowCrearPresupuesto} />}
+          {tab === "presupuesto" && <TabPresupuesto c={c} s={s} isDark={isDark} presupuestosMensuales={presupuestosMensuales} setPresupForm={setPresupForm} setShowCrearPresupuesto={setShowCrearPresupuesto} gastos={gastos} categorias={categorias} setCatPresupSelec={setCatPresupSelec} setShowHistorial={setShowHistorial} />}
           {tab === "metas" && <TabMetas c={c} s={s} isDark={isDark} listaMetas={listaMetas} setMetaSeleccionada={setMetaSeleccionada} setIsEditingMetaObj={setIsEditingMetaObj} setMetaForm={setMetaForm} setShowCrearMeta={setShowCrearMeta} />}
 
           <div style={s.navBar}>
@@ -467,9 +480,12 @@ export default function App() {
       {showCrearMeta && <ModalCrearMeta c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setShowCrearMeta={setShowCrearMeta} setIsEditingMetaObj={setIsEditingMetaObj} isEditingMetaObj={isEditingMetaObj} metaForm={metaForm} setMetaForm={setMetaForm} procesarNuevaMeta={procesarNuevaMeta} />}
       {showCrearPresupuesto && <ModalCrearPresupuesto c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setShowCrearPresupuesto={setShowCrearPresupuesto} presupForm={presupForm} setPresupForm={setPresupForm} safeExtra={safeExtra} setProfileScreen={setProfileScreen} setShowMenu={setShowMenu} guardarPresupuesto={guardarPresupuesto} saving={saving} />}
       
+      {catPresupSelec && <ModalDetalleCategoria c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} catId={catPresupSelec} categorias={categorias} gastos={gastos} presupuestoActual={presupuestosMensuales[hoy().slice(0, 7)]} />}
+      {showHistorial && <ModalHistorialPresupuestos c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} presupuestosMensuales={presupuestosMensuales} setShowHistorial={setShowHistorial} setResumenMes={setResumenMes} />}
+      {resumenMes && <ModalResumenMensual c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} mes={resumenMes} presupuestosMensuales={presupuestosMensuales} gastos={gastos} categorias={categorias} setResumenMes={setResumenMes} />}
+
       {showNovedades && <Novedades c={c} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setShowNovedades={setShowNovedades} />}
-      {showMenu && !profileScreen && <MenuPrincipal c={c} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setShowMenu={setShowMenu} setProfileScreen={setProfileScreen} setShowApariencia={setShowApariencia} cerrarSesion={cerrarSesion} />}
-      {showMenu && profileScreen === "exportar" && <ExportarReportes c={c} s={s} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} exportFechaDesde={exportFechaDesde} setExportFechaDesde={setExportFechaDesde} exportFechaHasta={exportFechaHasta} setExportFechaHasta={setExportFechaHasta} exportEmail={exportEmail} setExportEmail={setExportEmail} gastos={gastos} categorias={categorias} showToast={showToast} />}
+      {showMenu && <MenuPrincipal c={c} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setShowMenu={setShowMenu} setProfileScreen={setProfileScreen} setShowApariencia={setShowApariencia} cerrarSesion={cerrarSesion} />}      {showMenu && profileScreen === "exportar" && <ExportarReportes c={c} s={s} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} exportFechaDesde={exportFechaDesde} setExportFechaDesde={setExportFechaDesde} exportFechaHasta={exportFechaHasta} setExportFechaHasta={setExportFechaHasta} exportEmail={exportEmail} setExportEmail={setExportEmail} gastos={gastos} categorias={categorias} showToast={showToast} />}
       {showMenu && profileScreen === "categorias" && <ConfigCategorias c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} safeBase={safeBase} safeExtra={safeExtra} abrirEditarCat={abrirEditarCat} eliminarCat={eliminarCat} abrirCrearCat={abrirCrearCat} />}
       {showMenu && profileScreen === "logros" && <MisLogros c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} listaMetas={listaMetas} filtroLogros={filtroLogros} setFiltroLogros={setFiltroLogros} />}
 
@@ -514,8 +530,7 @@ export default function App() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}><span style={{ color: c.muted, fontSize: 14, fontWeight: 500 }}>Falta por ahorrar</span><span style={{ color: c.text, fontSize: 14, fontWeight: 600 }}>S/ {formatMoney(faltan).replace("S/ ", "")}</span></div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><span style={{ color: c.muted, fontSize: 14, fontWeight: 500 }}>Ahorro diario necesario</span><span style={{ color: c.text, fontSize: 14, fontWeight: 600 }}>{ahorroDiarioVal > 0 ? `S/ ${ahorroDiarioVal.toFixed(2)}` : "S/ 0.00"}</span></div>
               </div>
-              <button onClick={abrirEdicionMeta} style={{ width: "100%", padding: 16, background: "#059669", color: "#FFF", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(5, 150, 105, 0.2)" }}>Editar meta</button>
-            </div>
+              <button onClick={() => { setIsEditingMetaObj(true); setMetaForm(metaSeleccionada); setShowCrearMeta(true); setMetaSeleccionada(null); }} style={{ width: "100%", padding: 16, background: "#059669", color: "#FFF", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(5, 150, 105, 0.2)" }}>Editar meta</button>            </div>
           </div>
         );
       })()}
@@ -546,7 +561,10 @@ export default function App() {
 
       {showMenu && profileScreen === "datos" && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'datos' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}><button onClick={() => cerrarPantalla('datos', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button><h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Mis datos</h2></div>
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
+            <button onClick={() => cerrarPantalla('datos', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Mis datos</h2>
+          </div>
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 32 }}><div style={{ width: 80, height: 80, borderRadius: "50%", background: "#FF803C", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, fontWeight: 700, color: "#FFF" }}>{userInitials}</div></div>
           <div style={{ marginBottom: 20 }}><div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Nombre completo</div><input style={s.input} value={userName} onChange={e => setUserName(e.target.value)} placeholder="Ej. Paul Flores" /></div>
           <div style={{ marginBottom: 32 }}><div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Correo electrónico</div><input style={{ ...s.input, opacity: 0.6 }} value={usuario?.email || "Cargando..."} disabled /><div style={{ fontSize: 12, color: c.muted, marginTop: 8, fontWeight: 400 }}>El correo está enlazado a tu cuenta de acceso.</div></div>
@@ -564,15 +582,6 @@ export default function App() {
         </div>
       )}
 
-      {showMenu && profileScreen === "ayuda" && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'ayuda' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: 24, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}><button onClick={() => cerrarPantalla('ayuda', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button><h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Centro de ayuda</h2></div>
-          <div style={{ ...s.card, padding: 16, marginBottom: 12 }}><div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 8 }}>¿Cómo edito una categoría?</div><div style={{ fontSize: 13, color: c.muted, lineHeight: 1.5, fontWeight: 500 }}>Ve a Configuración &gt; Configuración de categorías y presiona el ícono del lápiz junto a la categoría que deseas modificar.</div></div>
-          <div style={{ ...s.card, padding: 16, marginBottom: 12 }}><div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 8 }}>¿Cómo funciona la proyección de metas?</div><div style={{ fontSize: 13, color: c.muted, lineHeight: 1.5, fontWeight: 500 }}>Calculamos cuánto te falta ahorrar y lo dividimos entre los días restantes hasta tu fecha límite para decirte tu cuota diaria.</div></div>
-          <div style={{ ...s.card, padding: 16, marginBottom: 24 }}><div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 8 }}>Mi presupuesto no aparece, ¿qué hago?</div><div style={{ fontSize: 13, color: c.muted, lineHeight: 1.5, fontWeight: 500 }}>Asegúrate de haber creado el presupuesto para el mes actual en la pestaña 'Presupuesto'.</div></div>
-          <a href="mailto:soporte@ahorrometa.com" style={{ ...s.btnSecondary, display: "block", textAlign: "center", textDecoration: "none", padding: "16px 0", fontSize: 15 }}>✉️ Contactar a soporte</a>
-        </div>
-      )}
     </div>
   );
 }
