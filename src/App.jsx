@@ -100,28 +100,61 @@ export default function App() {
   const [metaSeleccionada, setMetaSeleccionada] = useState(null);
   const [showMetaMenu, setShowMetaMenu] = useState(false);
 
-  // LOGICA SEGURA DE SWIPE TO ACTION
+  // =========================================================
+  // MOTOR DE SWIPE TO ACTION ACTUALIZADO (CON TOPE EN EL MEDIO)
+  // =========================================================
   const [swipedId, setSwipedId] = useState(null);
   const [touchStartX, setTouchStartX] = useState(0);
   const [touchStartY, setTouchStartY] = useState(0);
   const [currentSwipeX, setCurrentSwipeX] = useState(0);
+  const [swipeBaseX, setSwipeBaseX] = useState(0); 
+  const [isSwiping, setIsSwiping] = useState(false);
 
-  const handleSwipeStart = (e) => {
+  const handleSwipeStart = (id, e) => {
+    // Autocierre: Si tocamos otra tarjeta, cerramos la anterior suavemente
+    if (swipedId && swipedId !== id) {
+      setCurrentSwipeX(0);
+      setSwipedId(null);
+    }
     setTouchStartX(e.touches[0].clientX);
     setTouchStartY(e.touches[0].clientY);
+    
+    // Guardamos la posición inicial exacta de la tarjeta tocada
+    setSwipeBaseX(swipedId === id ? currentSwipeX : 0);
+    setIsSwiping(true);
   };
+
   const handleSwipeMove = (id, e) => {
+    // Prevenimos que arrastre una mientras otra se está cerrando sola
+    if (swipedId && swipedId !== id) return;
+
     const diffX = e.touches[0].clientX - touchStartX;
     const diffY = e.touches[0].clientY - touchStartY;
-    // Solo permitimos swipe horizontal si el usuario se mueve más de lado que de arriba/abajo
+
+    // Solo activamos si el deslizamiento es más horizontal que vertical
     if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
         setSwipedId(id);
-        setCurrentSwipeX(Math.max(-85, Math.min(85, diffX)));
+        let newX = swipeBaseX + diffX;
+
+        // LA MAGIA: Topes invisibles en el centro (0)
+        // Si estaba en "Eliminar" (-80), no dejamos que pase el centro hacia la derecha
+        if (swipeBaseX < 0) newX = Math.min(0, newX);
+        // Si estaba en "Editar" (+80), no dejamos que pase el centro hacia la izquierda
+        if (swipeBaseX > 0) newX = Math.max(0, newX);
+
+        setCurrentSwipeX(Math.max(-85, Math.min(85, newX)));
     }
   };
+
   const handleSwipeEnd = () => {
-    if (Math.abs(currentSwipeX) < 40) { setSwipedId(null); setCurrentSwipeX(0); }
-    else { setCurrentSwipeX(currentSwipeX > 0 ? 80 : -80); }
+    setIsSwiping(false);
+    if (currentSwipeX > 40) {
+        setCurrentSwipeX(80);
+    } else if (currentSwipeX < -40) {
+        setCurrentSwipeX(-80);
+    } else {
+        setCurrentSwipeX(0);
+    }
   };
 
   const [theme, setTheme] = useState(localStorage.getItem("themePref") || "dark");
@@ -399,7 +432,6 @@ export default function App() {
 
   return (
     <div style={s.app}>
-      {/* SE ELIMINARON LOS BLOQUEOS DE SCROLL DEL CSS GLOBAL PARA DEVOLVER FLUIDEZ AL CELULAR */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
         * { box-sizing: border-box; } html, body { background: ${isDark ? "#000000" : "#E5E7EB"} !important; color: ${c.text}; margin: 0; padding: 0; width: 100vw; max-width: 100%; overflow-x: hidden; font-family: 'Montserrat', sans-serif; transition: background 0.3s ease, color 0.3s ease; }
@@ -428,6 +460,7 @@ export default function App() {
               </div>
             )}
             <div style={{ ...s.label, textAlign: "center", marginBottom: 12 }}>{gastosVerTodos.length} movimientos</div>
+            
             {gastosVerTodos.map(g => {
               const isAporte = g.tipo === "aporte"; const cat = isAporte ? null : categorias.find(c => c.id === g.categoria);
               const descAdicional = (!isAporte && g.descripcion && cat && g.descripcion !== getTexto(cat.label)) ? g.descripcion : "";
@@ -459,10 +492,15 @@ export default function App() {
                       <div onClick={() => eliminar(g)} style={{ flex: 1, height: "100%", background: c.red, color: "#FFF", display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 24, cursor: "pointer" }}><Trash2 size={24} /></div>
                   </div>
                   <div
-                    onTouchStart={handleSwipeStart}
+                    onTouchStart={(e) => handleSwipeStart(g.id, e)}
                     onTouchMove={(e) => handleSwipeMove(g.id, e)}
                     onTouchEnd={handleSwipeEnd}
-                    style={{ position: "absolute", inset: 0, background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: "0 16px", display: "flex", alignItems: "center", justifyContent: "space-between", transform: isCurrentSwiped ? `translateX(${currentSwipeX}px)` : "translateX(0)", transition: currentSwipeX === 0 ? "transform 0.3s ease" : "none", zIndex: 2, touchAction: "pan-y" }}
+                    style={{ 
+                      position: "absolute", inset: 0, background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: "0 16px", display: "flex", alignItems: "center", justifyContent: "space-between", 
+                      transform: isCurrentSwiped ? `translateX(${currentSwipeX}px)` : "translateX(0)", 
+                      transition: isSwiping && isCurrentSwiped ? "none" : "transform 0.3s ease", 
+                      zIndex: 2, touchAction: "pan-y" 
+                    }}
                   >
                     <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12 }}>
                       <div style={{ width: 44, height: 44, borderRadius: 14, background: iconBg, color: iconColor, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -500,7 +538,7 @@ export default function App() {
               c={c} s={s} isDark={isDark} listaMetas={listaMetas} setAporteMetaId={setAporteMetaId} setShowAporteModal={setShowAporteModal}
               setIsEditingMetaObj={setIsEditingMetaObj} setMetaForm={setMetaForm} setShowCrearMeta={setShowCrearMeta} setViewAll={setViewAll}
               movimientosHoy={movimientosHoy} totalIngresosHoy={totalIngresosHoy} totalGastadoHoy={totalGastadoHoy} presupuestoDiario={presupuestoDiario}
-              categorias={categorias} setMetaSeleccionada={setMetaSeleccionada} // <-- SE PASÓ LA FUNCION FALTANTE AQUI
+              categorias={categorias} setMetaSeleccionada={setMetaSeleccionada}
             />
           )}
           {tab === "resumen" && <TabReportes c={c} s={s} isDark={isDark} gastos={gastos} categoriasBase={categoriasBase} categoriasExtra={categoriasExtra} categorias={categorias} listaMetas={listaMetas} />}
