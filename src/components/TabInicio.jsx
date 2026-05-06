@@ -9,8 +9,7 @@ const IconBadge = ({ emoji, bg, color }) => (
 export default function TabInicio({
   c, s, isDark, listaMetas, setAporteMetaId, setShowAporteModal, setIsEditingMetaObj,
   setMetaForm, setShowCrearMeta, setViewAll, movimientosHoy, totalIngresosHoy,
-  totalGastadoHoy, presupuestoDiario, categorias, abrirEdicion, eliminar,
-  isRefreshing, pullDistance, handleTouchStart, handleTouchMove, handleTouchEnd
+  totalGastadoHoy, presupuestoDiario, categorias, setMetaSeleccionada
 }) {
   const [activeSlide, setActiveSlide] = useState(0);
 
@@ -21,7 +20,7 @@ export default function TabInicio({
   };
 
   return (
-    <div style={{ ...s.section, background: "transparent", minHeight: "100vh", position: "relative", zIndex: 20, transform: `translateY(${isRefreshing ? 60 : pullDistance}px)`, transition: pullDistance === 0 || isRefreshing ? "transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)" : "none" }} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+    <div style={{ ...s.section, background: "transparent", minHeight: "100vh", position: "relative", zIndex: 20 }}>
       {listaMetas.length === 0 ? (
         <div style={{ ...s.sliderCard, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", marginBottom: 24, textAlign: "center" }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>🎯</div>
@@ -31,7 +30,8 @@ export default function TabInicio({
         </div>
       ) : (
         <>
-          <div className="hide-scroll" style={s.sliderContainer} onScroll={handleScroll}>
+          {/* AQUÍ SE CORRIGE EL CARRUSEL APILADO */}
+          <div className="hide-scroll" style={{ display: "flex", overflowX: "auto", scrollSnapType: "x mandatory", gap: 16, paddingBottom: 8, marginTop: 4, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }} onScroll={handleScroll}>
             {listaMetas.map((meta, i) => {
               const obj = parseFloat(meta.montoObjetivo) || 1;
               const ahorrado = parseFloat(meta.aporteInicial) || 0;
@@ -41,8 +41,11 @@ export default function TabInicio({
               if (meta.fechaLimite) { fechaStr = formatFecha(meta.fechaLimite); diasRestantes = diffDias(hoy(), meta.fechaLimite); }
 
               return (
-                <div key={meta.id} style={s.slideItem}>
-                  <div style={s.sliderCard}>
+                <div key={meta.id} style={{ minWidth: "100%", scrollSnapAlign: "center", flexShrink: 0 }}>
+                  <div 
+                    style={{ ...s.sliderCard, cursor: "pointer" }}
+                    onClick={() => setMetaSeleccionada(meta)} // <-- AQUÍ SE RESTAURA EL CLIC PARA EDITAR
+                  >
                     <div style={{ position: "absolute", top: 16, left: 20, background: i === 0 ? "rgba(168,85,247,0.2)" : (isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)"), color: i === 0 ? "#D8B4FE" : (isDark ? "#AAA" : "#666"), padding: "4px 10px", borderRadius: 12, fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>{i === 0 ? "★ Meta principal" : "Meta secundaria"}</div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 28, marginBottom: 16 }}>
                       <div>
@@ -62,7 +65,13 @@ export default function TabInicio({
                       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}><span style={{ fontSize: 12, color: "#999", display: "flex", alignItems: "center", gap: 4 }}><Calendar size={14} color="#10B981" /> Fecha límite</span><span style={{ fontSize: 14, fontWeight: 600, color: "#FFF", paddingLeft: 18 }}>{fechaStr}</span></div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}><span style={{ fontSize: 12, color: "#999", display: "flex", alignItems: "center", gap: 4 }}><Clock size={14} color="#F59E0B" /> Llegarás en</span><span style={{ fontSize: 14, fontWeight: 600, color: "#FFF", paddingLeft: 18 }}>{diasRestantes > 0 ? `${diasRestantes} días` : "—"}</span></div>
                     </div>
-                    <button onClick={() => { setAporteMetaId(meta.id); setShowAporteModal(true); }} style={{ width: "100%", background: "#10B981", color: "#FFF", padding: "14px", borderRadius: 12, border: "none", fontSize: 15, fontWeight: 700, cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: 8, boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)" }}><PlusCircle size={18} /> Aportar a esta meta</button>
+                    
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setAporteMetaId(meta.id); setShowAporteModal(true); }} 
+                      style={{ width: "100%", background: "#10B981", color: "#FFF", padding: "14px", borderRadius: 12, border: "none", fontSize: 15, fontWeight: 700, cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: 8, boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)" }}
+                    >
+                      <PlusCircle size={18} /> Aportar a esta meta
+                    </button>
                   </div>
                 </div>
               )
@@ -129,26 +138,23 @@ export default function TabInicio({
             }
 
             return (
-              <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: i === arr.length - 1 ? "none" : `1px solid ${c.border}`, height: "72px", boxSizing: "border-box" }}>
+              <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: i === arr.length - 1 ? "none" : `1px solid ${c.border}`, height: 72, boxSizing: "border-box" }}>
                 <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 14 }}>
 
-                  {/* Icono: Chanchito para ahorros, Dinámico para el resto */}
                   <div style={{ width: 44, height: 44, borderRadius: 14, background: iconBg, color: iconColor, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     {isAporte ? <PiggyBank size={24} strokeWidth={2} /> : getIcono(cat ? cat.label : (g.descripcion || "?"))}
                   </div>
 
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text, textDecoration: (!cat && !isAporte) ? "line-through" : "none" }}>
+                    <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2, color: c.text, textDecoration: (!cat && !isAporte) ? "line-through" : "none" }}>
                       {isAporte ? g.descripcion : (cat ? getTexto(cat.label) : g.descripcion)}
-                      {cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 500 }}>{descAdicional}</span>}
+                      {cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 500, textDecoration: "none" }}>{descAdicional}</span>}
                     </div>
                     <div style={{ fontSize: 12, fontWeight: 500, color: c.muted }}>{getUIFechaHora(g.created_at)}</div>
                   </div>
                 </div>
-                
-                {/* Lado derecho: Solo el monto, sin botones */}
-                <div style={{ display: "flex", alignItems: "center" }}>
-                  <span style={{ fontSize: 16, fontWeight: 600, color: montoColor }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <span style={{ fontSize: 16, fontWeight: 600, color: montoColor, marginRight: 4 }}>
                     {g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}
                   </span>
                 </div>
