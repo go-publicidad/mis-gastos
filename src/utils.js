@@ -1,4 +1,10 @@
+import React from "react";
 import { CURRENCY } from "./constants";
+import {
+  Utensils, Bus, Home as HomeIcon, Lightbulb, ShoppingCart, Pill,
+  Gamepad2, Shirt, BookOpen, Gift, Smile, Plane,
+  Coins, Briefcase, TrendingUp, Landmark, Pin
+} from "lucide-react";
 
 // ─── FECHAS (zona horaria Lima, Perú UTC-5) ───────────────────────────────────
 
@@ -65,14 +71,28 @@ export const formatMoney = (n) =>
     maximumFractionDigits: 2,
   })}`;
 
-// ─── CATEGORÍAS ───────────────────────────────────────────────────────────────
+// ─── CATEGORÍAS E ÍCONOS VECTORIALES ──────────────────────────────────────────
+
+// Este diccionario traduce tus viejos emojis a los nuevos íconos Premium
+const emojiToIcon = {
+  "🍽️": Utensils, "🚌": Bus, "🏠": HomeIcon, "💡": Lightbulb, "🛒": ShoppingCart,
+  "💊": Pill, "🎮": Gamepad2, "👗": Shirt, "📚": BookOpen, "🎁": Gift,
+  "🐶": Smile, "✈️": Plane, "💰": Coins, "💼": Briefcase, "📈": TrendingUp,
+  "🏦": Landmark, "📌": Pin
+};
 
 export const getIcono = (label) => {
-  if (!label || !label.trim()) return "📌";
+  if (!label || !label.trim()) return <Pin size={20} strokeWidth={2.5} />;
   const arr = label.trim().split(" ");
-  if (arr.length > 1 && !/[a-zA-Z0-9]/.test(arr[0])) return arr[0];
-  const firstChar = Array.from(label.trim())[0];
-  return firstChar ? firstChar.toUpperCase() : "📌";
+  
+  // Extraemos el emoji original de la base de datos
+  const firstToken = arr[0];
+  const isEmoji = !/[a-zA-Z0-9]/.test(firstToken);
+  const key = isEmoji ? firstToken : Array.from(label.trim())[0];
+  
+  // Buscamos su equivalente en vector. Si no existe, usamos el Pin por defecto.
+  const IconComponent = emojiToIcon[key] || Pin;
+  return <IconComponent size={20} strokeWidth={2.5} />;
 };
 
 export const getTexto = (label) => {

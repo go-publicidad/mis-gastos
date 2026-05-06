@@ -419,14 +419,36 @@ export default function App() {
             {gastosVerTodos.map(g => {
               const isAporte = g.tipo === "aporte"; const cat = isAporte ? null : categorias.find(c => c.id === g.categoria);
               const descAdicional = (!isAporte && g.descripcion && cat && g.descripcion !== getTexto(cat.label)) ? g.descripcion : "";
-              let iconBg = isDark ? "rgba(255,255,255,0.05)" : "#E5E7EB"; let montoColor = c.text;
-              if (isAporte) { iconBg = isDark ? "rgba(16,185,129,0.15)" : "#D1FAE5"; montoColor = c.green; }
-              else if (g.tipo === "gasto") { iconBg = isDark ? "rgba(239,68,68,0.15)" : "#FEE2E2"; montoColor = c.red; }
+
+              // LÓGICA DE COLORES SEMÁNTICOS (Diseño limpio)
+              let iconBg = isDark ? "rgba(255,255,255,0.05)" : "#E5E7EB";
+              let montoColor = c.text;
+              let iconColor = c.muted;
+
+              if (isAporte) {
+                iconBg = isDark ? "rgba(16,185,129,0.15)" : "#D1FAE5";
+                montoColor = c.green;
+                iconColor = c.green;
+              } else if (g.tipo === "gasto") {
+                iconBg = isDark ? "rgba(239,68,68,0.15)" : "#FEE2E2";
+                montoColor = c.red;
+                iconColor = c.red;
+              } else if (g.tipo === "ingreso") {
+                iconBg = isDark ? "rgba(255,255,255,0.1)" : "#F3F4F6";
+                iconColor = isDark ? "#D1D5DB" : "#4B5563"; // Plomito oscuro
+                montoColor = c.text;
+              }
+
               return (
                 <div key={g.id} style={{ ...s.card, padding: "12px 16px", marginBottom: 8 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12 }}>
-                      <div style={{ width: 40, height: 40, borderRadius: 12, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, color: cat ? "inherit" : c.muted, fontWeight: cat ? "normal" : 600 }}>{isAporte ? "🎯" : (cat ? getIcono(cat.label) : (g.descripcion || "?").charAt(0).toUpperCase())}</div>
+
+                      {/* CONTENEDOR DEL NUEVO ÍCONO VECTORIAL */}
+                      <div style={{ width: 40, height: 40, borderRadius: 12, background: iconBg, color: iconColor, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        {isAporte ? <Target size={20} strokeWidth={2.5} /> : getIcono(cat ? cat.label : g.descripcion)}
+                      </div>
+
                       <div style={{ minWidth: 0 }}>
                         <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2, color: c.text, textDecoration: (!cat && !isAporte) ? "line-through" : "none" }}>{isAporte ? g.descripcion : (cat ? getTexto(cat.label) : g.descripcion)}{cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 500, textDecoration: "none" }}>{descAdicional}</span>}{!cat && !isAporte && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 500, textDecoration: "none" }}>(Eliminado)</span>}</div>
                         <div style={{ fontSize: 12, fontWeight: 500, color: c.muted }}>{getUIFechaHora(g.created_at)} · {isAporte ? "Aportes" : (g.tipo === "gasto" ? "Gastos" : "Ingresos")}</div>

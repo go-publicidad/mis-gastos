@@ -7,8 +7,8 @@ const IconBadge = ({ emoji, bg, color }) => (
 );
 
 export default function TabInicio({
-  c, s, isDark, listaMetas, setAporteMetaId, setShowAporteModal, setIsEditingMetaObj, 
-  setMetaForm, setShowCrearMeta, setViewAll, movimientosHoy, totalIngresosHoy, 
+  c, s, isDark, listaMetas, setAporteMetaId, setShowAporteModal, setIsEditingMetaObj,
+  setMetaForm, setShowCrearMeta, setViewAll, movimientosHoy, totalIngresosHoy,
   totalGastadoHoy, presupuestoDiario, categorias, abrirEdicion, eliminar,
   isRefreshing, pullDistance, handleTouchStart, handleTouchMove, handleTouchEnd
 }) {
@@ -23,57 +23,57 @@ export default function TabInicio({
   return (
     <div style={{ ...s.section, background: "transparent", minHeight: "100vh", position: "relative", zIndex: 20, transform: `translateY(${isRefreshing ? 60 : pullDistance}px)`, transition: pullDistance === 0 || isRefreshing ? "transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)" : "none" }} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
       {listaMetas.length === 0 ? (
-         <div style={{ ...s.sliderCard, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", marginBottom: 24, textAlign: "center" }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>🎯</div>
-            <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Aún no tienes metas</div>
-            <div style={{ fontSize: 14, color: "#AAA", marginBottom: 24, lineHeight: 1.4 }}>Crea tu primera meta y empieza a ahorrar para lo que siempre quisiste.</div>
-            <button onClick={() => { setIsEditingMetaObj(false); setMetaForm({ id: "", nombre: "", montoObjetivo: "", aporteInicial: "", fechaLimite: "", prioridad: "alta", tipo: "libre", icono: "💻" }); setShowCrearMeta(true); }} style={{ background: c.green, color: "#FFF", padding: "14px 24px", borderRadius: 30, border: "none", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>+ Crea tu primera meta</button>
-         </div>
+        <div style={{ ...s.sliderCard, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", marginBottom: 24, textAlign: "center" }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>🎯</div>
+          <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Aún no tienes metas</div>
+          <div style={{ fontSize: 14, color: "#AAA", marginBottom: 24, lineHeight: 1.4 }}>Crea tu primera meta y empieza a ahorrar para lo que siempre quisiste.</div>
+          <button onClick={() => { setIsEditingMetaObj(false); setMetaForm({ id: "", nombre: "", montoObjetivo: "", aporteInicial: "", fechaLimite: "", prioridad: "alta", tipo: "libre", icono: "💻" }); setShowCrearMeta(true); }} style={{ background: c.green, color: "#FFF", padding: "14px 24px", borderRadius: 30, border: "none", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>+ Crea tu primera meta</button>
+        </div>
       ) : (
-         <>
-           <div className="hide-scroll" style={s.sliderContainer} onScroll={handleScroll}>
-              {listaMetas.map((meta, i) => {
-                 const obj = parseFloat(meta.montoObjetivo) || 1;
-                 const ahorrado = parseFloat(meta.aporteInicial) || 0;
-                 const faltan = Math.max(0, obj - ahorrado);
-                 const pct = Math.min(100, Math.round((ahorrado / obj) * 100));
-                 let fechaStr = "Sin límite"; let diasRestantes = 0;
-                 if (meta.fechaLimite) { fechaStr = formatFecha(meta.fechaLimite); diasRestantes = diffDias(hoy(), meta.fechaLimite); }
+        <>
+          <div className="hide-scroll" style={s.sliderContainer} onScroll={handleScroll}>
+            {listaMetas.map((meta, i) => {
+              const obj = parseFloat(meta.montoObjetivo) || 1;
+              const ahorrado = parseFloat(meta.aporteInicial) || 0;
+              const faltan = Math.max(0, obj - ahorrado);
+              const pct = Math.min(100, Math.round((ahorrado / obj) * 100));
+              let fechaStr = "Sin límite"; let diasRestantes = 0;
+              if (meta.fechaLimite) { fechaStr = formatFecha(meta.fechaLimite); diasRestantes = diffDias(hoy(), meta.fechaLimite); }
 
-                 return (
-                     <div key={meta.id} style={s.slideItem}>
-                         <div style={s.sliderCard}>
-                            <div style={{ position: "absolute", top: 16, left: 20, background: i === 0 ? "rgba(168,85,247,0.2)" : (isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)"), color: i === 0 ? "#D8B4FE" : (isDark ? "#AAA" : "#666"), padding: "4px 10px", borderRadius: 12, fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>{i === 0 ? "★ Meta principal" : "Meta secundaria"}</div>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 28, marginBottom: 16 }}>
-                                <div>
-                                    <div style={{ fontSize: 20, fontWeight: 700, color: "#FFF", marginBottom: 4, display: "flex", alignItems: "center", gap: 8 }}>{meta.nombre} <span style={{ fontSize: 24 }}>{meta.icono}</span></div>
-                                    <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-                                        <span style={{ fontSize: 20, fontWeight: 700, color: "#FFF" }}>S/ {formatMoney(ahorrado).replace("S/ ", "")}</span>
-                                        <span style={{ fontSize: 14, color: "#999", fontWeight: 500 }}>de S/ {formatMoney(obj).replace("S/ ", "")}</span>
-                                    </div>
-                                </div>
-                                <div style={{ width: 64, height: 64, borderRadius: "50%", background: `conic-gradient(#10B981 ${pct}%, #333 0)`, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                   <div style={{ position: "absolute", inset: 5, background: "#111", borderRadius: "50%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}><span style={{ fontSize: 16, fontWeight: 700, color: "#FFF" }}>{pct}%</span></div>
-                                </div>
-                            </div>
-                            <div style={{ background: "#333", borderRadius: 4, height: 6, marginBottom: 20, overflow: "hidden" }}><div style={{ height: "100%", width: `${pct}%`, background: "#10B981", borderRadius: 4 }}></div></div>
-                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 24 }}>
-                                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}><span style={{ fontSize: 12, color: "#999", display: "flex", alignItems: "center", gap: 4 }}><TrendingDown size={14} color="#10B981" /> Te faltan</span><span style={{ fontSize: 14, fontWeight: 600, color: "#FFF", paddingLeft: 18 }}>S/ {formatMoney(faltan).replace("S/ ", "")}</span></div>
-                                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}><span style={{ fontSize: 12, color: "#999", display: "flex", alignItems: "center", gap: 4 }}><Calendar size={14} color="#10B981" /> Fecha límite</span><span style={{ fontSize: 14, fontWeight: 600, color: "#FFF", paddingLeft: 18 }}>{fechaStr}</span></div>
-                                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}><span style={{ fontSize: 12, color: "#999", display: "flex", alignItems: "center", gap: 4 }}><Clock size={14} color="#F59E0B" /> Llegarás en</span><span style={{ fontSize: 14, fontWeight: 600, color: "#FFF", paddingLeft: 18 }}>{diasRestantes > 0 ? `${diasRestantes} días` : "—"}</span></div>
-                            </div>
-                            <button onClick={() => { setAporteMetaId(meta.id); setShowAporteModal(true); }} style={{ width: "100%", background: "#10B981", color: "#FFF", padding: "14px", borderRadius: 12, border: "none", fontSize: 15, fontWeight: 700, cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: 8, boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)" }}><PlusCircle size={18} /> Aportar a esta meta</button>
-                         </div>
-                     </div>
-                 )
-              })}
-           </div>
-           {listaMetas.length > 1 && (
-             <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 4, marginBottom: 20 }}>
-               {listaMetas.map((_, idx) => ( <div key={idx} style={{ width: activeSlide === idx ? 18 : 8, height: 8, borderRadius: 4, background: activeSlide === idx ? "#10B981" : (isDark ? "#333" : "#E5E7EB"), transition: "all 0.3s ease" }} /> ))}
-             </div>
-           )}
-         </>
+              return (
+                <div key={meta.id} style={s.slideItem}>
+                  <div style={s.sliderCard}>
+                    <div style={{ position: "absolute", top: 16, left: 20, background: i === 0 ? "rgba(168,85,247,0.2)" : (isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)"), color: i === 0 ? "#D8B4FE" : (isDark ? "#AAA" : "#666"), padding: "4px 10px", borderRadius: 12, fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>{i === 0 ? "★ Meta principal" : "Meta secundaria"}</div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 28, marginBottom: 16 }}>
+                      <div>
+                        <div style={{ fontSize: 20, fontWeight: 700, color: "#FFF", marginBottom: 4, display: "flex", alignItems: "center", gap: 8 }}>{meta.nombre} <span style={{ fontSize: 24 }}>{meta.icono}</span></div>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                          <span style={{ fontSize: 20, fontWeight: 700, color: "#FFF" }}>S/ {formatMoney(ahorrado).replace("S/ ", "")}</span>
+                          <span style={{ fontSize: 14, color: "#999", fontWeight: 500 }}>de S/ {formatMoney(obj).replace("S/ ", "")}</span>
+                        </div>
+                      </div>
+                      <div style={{ width: 64, height: 64, borderRadius: "50%", background: `conic-gradient(#10B981 ${pct}%, #333 0)`, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <div style={{ position: "absolute", inset: 5, background: "#111", borderRadius: "50%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}><span style={{ fontSize: 16, fontWeight: 700, color: "#FFF" }}>{pct}%</span></div>
+                      </div>
+                    </div>
+                    <div style={{ background: "#333", borderRadius: 4, height: 6, marginBottom: 20, overflow: "hidden" }}><div style={{ height: "100%", width: `${pct}%`, background: "#10B981", borderRadius: 4 }}></div></div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 24 }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}><span style={{ fontSize: 12, color: "#999", display: "flex", alignItems: "center", gap: 4 }}><TrendingDown size={14} color="#10B981" /> Te faltan</span><span style={{ fontSize: 14, fontWeight: 600, color: "#FFF", paddingLeft: 18 }}>S/ {formatMoney(faltan).replace("S/ ", "")}</span></div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}><span style={{ fontSize: 12, color: "#999", display: "flex", alignItems: "center", gap: 4 }}><Calendar size={14} color="#10B981" /> Fecha límite</span><span style={{ fontSize: 14, fontWeight: 600, color: "#FFF", paddingLeft: 18 }}>{fechaStr}</span></div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}><span style={{ fontSize: 12, color: "#999", display: "flex", alignItems: "center", gap: 4 }}><Clock size={14} color="#F59E0B" /> Llegarás en</span><span style={{ fontSize: 14, fontWeight: 600, color: "#FFF", paddingLeft: 18 }}>{diasRestantes > 0 ? `${diasRestantes} días` : "—"}</span></div>
+                    </div>
+                    <button onClick={() => { setAporteMetaId(meta.id); setShowAporteModal(true); }} style={{ width: "100%", background: "#10B981", color: "#FFF", padding: "14px", borderRadius: 12, border: "none", fontSize: 15, fontWeight: 700, cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: 8, boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)" }}><PlusCircle size={18} /> Aportar a esta meta</button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          {listaMetas.length > 1 && (
+            <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 4, marginBottom: 20 }}>
+              {listaMetas.map((_, idx) => (<div key={idx} style={{ width: activeSlide === idx ? 18 : 8, height: 8, borderRadius: 4, background: activeSlide === idx ? "#10B981" : (isDark ? "#333" : "#E5E7EB"), transition: "all 0.3s ease" }} />))}
+            </div>
+          )}
+        </>
       )}
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, marginTop: listaMetas.length <= 1 ? 8 : 0 }}>
@@ -109,20 +109,33 @@ export default function TabInicio({
             const isAporte = g.tipo === "aporte";
             const cat = isAporte ? null : categorias.find(c => c.id === g.categoria);
             const descAdicional = (!isAporte && g.descripcion && cat && g.descripcion !== getTexto(cat.label)) ? g.descripcion : "";
-            const isLast = i === arr.length - 1;
-            
-            let iconBg = isDark ? "rgba(255,255,255,0.05)" : "#E5E7EB"; 
+
+            let iconBg = isDark ? "rgba(255,255,255,0.05)" : "#E5E7EB";
             let montoColor = c.text;
-            if (isAporte) { iconBg = isDark ? "rgba(16,185,129,0.15)" : "#D1FAE5"; montoColor = c.green; }
-            else if (g.tipo === "gasto") { iconBg = isDark ? "rgba(239,68,68,0.15)" : "#FEE2E2"; montoColor = c.red; }
-            else if (g.tipo === "ingreso") { iconBg = isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"; montoColor = c.text; }
+            let iconColor = c.muted;
+
+            if (isAporte) {
+              iconBg = isDark ? "rgba(16,185,129,0.15)" : "#D1FAE5";
+              montoColor = c.green;
+              iconColor = c.green;
+            } else if (g.tipo === "gasto") {
+              iconBg = isDark ? "rgba(239,68,68,0.15)" : "#FEE2E2";
+              montoColor = c.red;
+              iconColor = c.red;
+            } else if (g.tipo === "ingreso") {
+              iconBg = isDark ? "rgba(255,255,255,0.1)" : "#F3F4F6";
+              iconColor = isDark ? "#D1D5DB" : "#4B5563";
+              montoColor = c.text;
+            }
 
             return (
-              <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: isLast ? "none" : `1px solid ${c.border}` }}>
+              <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: i === arr.length - 1 ? "none" : `1px solid ${c.border}` }}>
                 <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 14 }}>
-                  <div style={{ width: 44, height: 44, borderRadius: 14, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0, color: cat ? "inherit" : c.muted, fontWeight: cat ? "normal" : 600 }}>
-                    {isAporte ? "🎯" : (cat ? getIcono(cat.label) : (g.descripcion || "?").charAt(0).toUpperCase())}
+
+                  <div style={{ width: 44, height: 44, borderRadius: 14, background: iconBg, color: iconColor, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    {isAporte ? <Target size={20} strokeWidth={2.5} /> : getIcono(cat ? cat.label : (g.descripcion || "?"))}
                   </div>
+
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4, color: c.text, textDecoration: (!cat && !isAporte) ? "line-through" : "none" }}>
                       {isAporte ? g.descripcion : (cat ? getTexto(cat.label) : g.descripcion)}
@@ -137,10 +150,10 @@ export default function TabInicio({
                     {g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}
                   </span>
                   {!isAporte && (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                      <button style={{...s.editBtn, padding: 2}} onClick={() => abrirEdicion(g)}><Edit2 size={16} /></button>
-                      <button style={{...s.deleteBtn, padding: 2}} onClick={() => eliminar(g.id)}><Trash2 size={16} /></button>
-                      </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      <button style={{ ...s.editBtn, padding: 2 }} onClick={() => abrirEdicion(g)}><Edit2 size={16} /></button>
+                      <button style={{ ...s.deleteBtn, padding: 2 }} onClick={() => eliminar(g.id)}><Trash2 size={16} /></button>
+                    </div>
                   )}
                 </div>
               </div>
