@@ -17,6 +17,11 @@ import ExportarReportes from "./components/ExportarReportes";
 import ConfigCategorias from "./components/ConfigCategorias";
 import MisLogros from "./components/MisLogros";
 
+import ModalRegistrarMovimiento from "./components/ModalRegistrarMovimiento";
+import ModalEditarMovimiento from "./components/ModalEditarMovimiento";
+import ModalCrearMeta from "./components/ModalCrearMeta";
+import ModalCrearPresupuesto from "./components/ModalCrearPresupuesto";
+
 import {
   INGRESOS_DEFAULT, GASTOS_DEFAULT, METAS_INICIALES,
   COLORES_CUSTOM, PASTEL_COLORS, METAS_ICONS, CAT_ICONS
@@ -176,7 +181,7 @@ export default function App() {
         
         if (getVal("themePref")) {
             setTheme(getVal("themePref"));
-            localStorage.setItem("themePref", getVal("themePref")); // Lo guardamos en disco duro local
+            localStorage.setItem("themePref", getVal("themePref"));
         }
         if (getVal("useBoldPref")) setUseBold(getVal("useBoldPref") === "true");
         if (getVal("userName")) setUserName(getVal("userName"));
@@ -1193,60 +1198,40 @@ export default function App() {
         </>
       )}
 
-      {/* OVERLAYS Y PANTALLAS FLOTANTES (MODALS) */}
+      {showAddModal && (
+        <ModalRegistrarMovimiento 
+          s={s} c={c} form={form} setForm={setForm} safeBase={safeBase} safeExtra={safeExtra} 
+          agregarMovimiento={agregarMovimiento} setShowAddModal={setShowAddModal} saving={saving} 
+        />
+      )}
 
-      {/* MODAL CREAR PRESUPUESTO (FASE 1) */}
-      {showCrearPresupuesto && (() => {
-        const totalCalculado = Object.values(presupForm.categorias).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
-        return (
-          <div className="hide-scroll" style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'crearPresupuesto' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
-            <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
-              <button onClick={() => cerrarPantalla('crearPresupuesto', () => setShowCrearPresupuesto(false))} style={{ background: "none", border: "none", color: c.text, fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
-              <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 800 }}>Crear presupuesto</h2>
-            </div>
-            
-            <div style={{ ...s.label, marginBottom: 8, fontSize: 13, color: c.muted }}>¿Para qué período?</div>
-            <input type="month" style={{...s.input, marginBottom: 24, fontSize: 16, fontWeight: 700}} value={presupForm.periodo} onChange={e => setPresupForm({...presupForm, periodo: e.target.value})} />
+      {editando && (
+        <ModalEditarMovimiento 
+          s={s} c={c} editForm={editForm} setEditForm={setEditForm} safeBase={safeBase} safeExtra={safeExtra} 
+          guardarEdicion={guardarEdicion} setEditando={setEditando} saving={saving} 
+        />
+      )}
 
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: 16, borderBottom: `1px solid ${c.border}`, marginBottom: 24 }}>
-               <span style={{ fontSize: 15, fontWeight: 700, color: c.text }}>Presupuesto total</span>
-               <span style={{ fontSize: 20, fontWeight: 800, color: c.green }}>S/ {formatMoney(totalCalculado).replace("S/ ","")}</span>
-            </div>
+      {showCrearMeta && (
+        <ModalCrearMeta 
+          c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} 
+          setShowCrearMeta={setShowCrearMeta} setIsEditingMetaObj={setIsEditingMetaObj} 
+          isEditingMetaObj={isEditingMetaObj} metaForm={metaForm} setMetaForm={setMetaForm} 
+          procesarNuevaMeta={procesarNuevaMeta} 
+        />
+      )}
 
-            <div style={{ ...s.label, marginBottom: 16, fontSize: 15 }}>Asignar por categorías</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 24 }}>
-               {/* Aquí nos aseguramos de mapear SOLO safeExtra (Gastos) */}
-               {safeExtra.map(cat => (
-                   <div key={cat.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                         <div style={{ width: 44, height: 44, borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, color: c.text }}>{getIcono(cat.label)}</div>
-                         <span style={{ fontSize: 15, fontWeight: 600, color: c.text }}>{getTexto(cat.label)}</span>
-                      </div>
-                      <div style={{ position: "relative", width: 130 }}>
-                         <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: c.muted, fontWeight: 600, fontSize: 15 }}>S/</span>
-                         <input type="number" style={{ ...s.input, paddingLeft: 36, textAlign: "right", fontSize: 16, fontWeight: 700 }} placeholder="0.00" 
-                            value={presupForm.categorias[cat.id] || ""}
-                            onChange={e => setPresupForm({ ...presupForm, categorias: { ...presupForm.categorias, [cat.id]: e.target.value } })}
-                         />
-                      </div>
-                   </div>
-               ))}
-            </div>
+      {showCrearPresupuesto && (
+        <ModalCrearPresupuesto 
+          c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} 
+          setShowCrearPresupuesto={setShowCrearPresupuesto} presupForm={presupForm} setPresupForm={setPresupForm} 
+          safeExtra={safeExtra} setProfileScreen={setProfileScreen} setShowMenu={setShowMenu} 
+          guardarPresupuesto={guardarPresupuesto} saving={saving} 
+        />
+      )}
 
-            {/* NUEVO TEXTO DE AYUDA (UX) */}
-            <div style={{ textAlign: "center", marginBottom: 32 }}>
-               <p style={{ fontSize: 13, color: c.muted, margin: 0, fontWeight: 500 }}>
-                  ¿Falta alguna? Administra tus categorías desde la <button onClick={() => { setShowCrearPresupuesto(false); setProfileScreen("categorias"); setShowMenu(true); }} style={{ background: "none", border: "none", color: c.brandBlue, fontWeight: 700, cursor: "pointer", padding: 0, textDecoration: "underline", fontFamily: "inherit" }}>Configuración</button>.
-               </p>
-            </div>
+      {/* OVERLAYS RESTANTES (Aporte a meta, Edicion Cat, Perfil, Apariencia, etc.) */}
 
-            <button onClick={guardarPresupuesto} disabled={saving} style={{ ...s.btnPrimary, background: c.brandBlue, boxShadow: "0 8px 24px rgba(74, 58, 255, 0.3)", padding: 16, fontSize: 16, borderRadius: 16 }}>
-               {saving ? "Guardando..." : "Guardar presupuesto"}
-            </button>
-          </div>
-        );
-      })()}
-      
       {showAporteModal && (
         <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setShowAporteModal(false); }}>
           <div style={{...s.modal, animation: "slideUp 0.3s ease-out"}}>
@@ -1261,204 +1246,6 @@ export default function App() {
         </div>
       )}
 
-      {metaSeleccionada && (() => {
-        const obj = parseFloat(metaSeleccionada.montoObjetivo) || 1;
-        const ahorrado = parseFloat(metaSeleccionada.aporteInicial) || 0;
-        const faltan = Math.max(0, obj - ahorrado);
-        const pct = Math.min(100, Math.round((ahorrado / obj) * 100));
-        let fechaStr = "Sin fecha límite"; let diasRestantes = 0;
-        if (metaSeleccionada.fechaLimite) {
-          fechaStr = formatFecha(metaSeleccionada.fechaLimite);
-          diasRestantes = diffDias(hoy(), metaSeleccionada.fechaLimite);
-        }
-        const ahorroDiarioVal = diasRestantes > 0 ? (faltan / diasRestantes) : 0;
-        const bgIconColor = PASTEL_COLORS[metaSeleccionada.indexColor % PASTEL_COLORS.length];
-
-        return (
-          <div className="hide-scroll" style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, display: "flex", flexDirection: "column", animation: isClosing === 'detalleMeta' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "env(safe-area-inset-top, 20px) 20px 16px", background: c.bg, borderBottom: `1px solid ${c.border}` }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                <button onClick={() => cerrarPantalla('detalleMeta', () => setMetaSeleccionada(null))} style={{ background: "none", border: "none", color: c.muted, cursor: "pointer", padding: 0, display: "flex" }}><ArrowLeft size={28} /></button>
-                <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>{metaSeleccionada.nombre}</h2>
-              </div>
-              <div style={{ position: "relative" }}>
-                <button onClick={() => setShowMetaMenu(!showMetaMenu)} style={{ background: "none", border: "none", color: c.muted, cursor: "pointer", padding: 0, display: "flex" }}><MoreVertical size={24} /></button>
-                {showMetaMenu && (
-                  <div style={{ position: "absolute", top: 30, right: 0, background: c.card, border: `1px solid ${c.border}`, borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", zIndex: 105, overflow: "hidden", minWidth: 140 }}>
-                    <button onClick={() => eliminarMeta(metaSeleccionada.id)} style={{ width: "100%", padding: "14px 16px", background: "transparent", border: "none", color: c.red, textAlign: "left", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, fontFamily: "inherit" }}><Trash2 size={18} /> Eliminar</button>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div style={{ padding: "32px 20px 20px", flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 40 }}>
-                <div style={{ position: "relative", marginBottom: 24 }}>
-                  <div style={{ width: 110, height: 110, borderRadius: "50%", background: bgIconColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 56 }}>{metaSeleccionada.icono}</div>
-                  <div style={{ position: "absolute", bottom: 0, right: 0, width: 28, height: 28, background: "#FFF", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}><CheckCircle2 size={20} color={c.green} /></div>
-                </div>
-                <div style={{ fontSize: 32, fontWeight: 700, color: c.green, marginBottom: 4 }}>S/ {formatMoney(ahorrado).replace("S/ ", "")}</div>
-                <div style={{ fontSize: 14, color: c.muted, fontWeight: 500, marginBottom: 24 }}>de S/ {formatMoney(obj).replace("S/ ", "")}</div>
-                <div style={{ width: "100%", display: "flex", alignItems: "center", gap: 16 }}>
-                  <div style={{ background: isDark ? "#333" : "#E5E7EB", borderRadius: 6, height: 10, flex: 1, overflow: "hidden" }}><div style={{ background: c.green, height: "100%", width: `${pct}%`, borderRadius: 6 }}></div></div>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: c.text }}>{pct}%</span>
-                </div>
-              </div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 12 }}>Resumen de tu progreso</div>
-              <div style={{ ...s.card, padding: "20px", marginBottom: 24 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}><span style={{ color: c.muted, fontSize: 14, fontWeight: 500 }}>Fecha limite</span><span style={{ color: c.text, fontSize: 14, fontWeight: 600 }}>{fechaStr}</span></div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}><span style={{ color: c.muted, fontSize: 14, fontWeight: 500 }}>Faltan</span><span style={{ color: c.text, fontSize: 14, fontWeight: 600 }}>{metaSeleccionada.fechaLimite ? `${Math.max(0, diasRestantes)} días` : "—"}</span></div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}><span style={{ color: c.muted, fontSize: 14, fontWeight: 500 }}>Ahorrado</span><span style={{ color: c.text, fontSize: 14, fontWeight: 600 }}>S/ {formatMoney(ahorrado).replace("S/ ", "")}</span></div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}><span style={{ color: c.muted, fontSize: 14, fontWeight: 500 }}>Falta por ahorrar</span><span style={{ color: c.text, fontSize: 14, fontWeight: 600 }}>S/ {formatMoney(faltan).replace("S/ ", "")}</span></div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><span style={{ color: c.muted, fontSize: 14, fontWeight: 500 }}>Ahorro diario necesario</span><span style={{ color: c.text, fontSize: 14, fontWeight: 600 }}>{ahorroDiarioVal > 0 ? `S/ ${ahorroDiarioVal.toFixed(2)}` : "S/ 0.00"}</span></div>
-              </div>
-              <button onClick={abrirEdicionMeta} style={{ width: "100%", padding: 16, background: "#059669", color: "#FFF", border: "none", borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 12px rgba(5, 150, 105, 0.2)" }}>Editar meta</button>
-            </div>
-          </div>
-        );
-      })()}
-
-      {showCrearMeta && (
-        <div className="hide-scroll" style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'crearMeta' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
-            <button onClick={() => cerrarPantalla('crearMeta', () => { setShowCrearMeta(false); setIsEditingMetaObj(false); })} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
-            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>{isEditingMetaObj ? "Editar meta" : "Crear nueva meta"}</h2>
-          </div>
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Nombre de la meta</div>
-            <input style={{ ...s.input }} placeholder="Ej: Nueva Laptop, Viaje a Europa" value={metaForm.nombre} onChange={e => setMetaForm({ ...metaForm, nombre: e.target.value })} />
-          </div>
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Monto objetivo</div>
-            <input style={{ ...s.input }} type="number" placeholder="S/ 0.00" value={metaForm.montoObjetivo} onChange={e => setMetaForm({ ...metaForm, montoObjetivo: e.target.value })} />
-          </div>
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Aporte inicial <span style={{ color: c.muted, fontWeight: "normal" }}>{isEditingMetaObj ? "(No se puede editar)" : "(Opcional)"}</span></div>
-            <input style={{ ...s.input, opacity: isEditingMetaObj ? 0.6 : 1 }} type="number" placeholder="S/ 0.00" value={metaForm.aporteInicial} onChange={e => setMetaForm({ ...metaForm, aporteInicial: e.target.value })} disabled={isEditingMetaObj} />
-          </div>
-          <div style={{ marginBottom: 24 }}>
-            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Fecha límite</div>
-            <div style={{ position: "relative" }}>
-              {!metaForm.fechaLimite && <span style={{ position: "absolute", top: "50%", left: 14, transform: "translateY(-50%)", color: c.muted, pointerEvents: "none", fontSize: 15 }}>Selecciona una fecha</span>}
-              <input type="date" value={metaForm.fechaLimite} onChange={e => setMetaForm({ ...metaForm, fechaLimite: e.target.value })} style={{ ...s.input, color: metaForm.fechaLimite ? c.text : "transparent" }} />
-            </div>
-          </div>
-          <div style={{ marginBottom: 40 }}>
-            <div style={{ ...s.label, marginBottom: 8, fontSize: 13 }}>Imagen / ícono</div>
-            <div className="hide-scroll" style={{ display: "flex", gap: 16, overflowX: "auto", paddingBottom: 4 }}>
-              {METAS_ICONS.map(ico => (
-                <div key={ico} onClick={() => setMetaForm({ ...metaForm, icono: ico })} style={{ width: 56, height: 56, borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, flexShrink: 0, border: metaForm.icono === ico ? `2px solid #10B981` : "2px solid transparent", cursor: "pointer", transition: "0.2s" }}>{ico}</div>
-              ))}
-            </div>
-          </div>
-          <button onClick={procesarNuevaMeta} style={{ ...s.btnPrimary, background: "#059669", boxShadow: "0 4px 12px rgba(5, 150, 105, 0.3)", padding: 16, fontSize: 16 }}>{isEditingMetaObj ? "Guardar cambios" : "Guardar meta"}</button>
-        </div>
-      )}
-
-      {showNovedades && (
-        <Novedades 
-          c={c} 
-          isDark={isDark} 
-          isClosing={isClosing} 
-          cerrarPantalla={cerrarPantalla} 
-          setShowNovedades={setShowNovedades} 
-        />
-      )}
-
-      {showMenu && !profileScreen && (
-        <MenuPrincipal 
-          c={c} 
-          isClosing={isClosing} 
-          cerrarPantalla={cerrarPantalla} 
-          setShowMenu={setShowMenu} 
-          setProfileScreen={setProfileScreen} 
-          setShowApariencia={setShowApariencia} 
-          cerrarSesion={cerrarSesion} 
-        />
-      )}
-
-      {showMenu && profileScreen === "exportar" && (
-        <ExportarReportes 
-          c={c} 
-          s={s} 
-          isClosing={isClosing} 
-          cerrarPantalla={cerrarPantalla} 
-          setProfileScreen={setProfileScreen} 
-          exportFechaDesde={exportFechaDesde} 
-          setExportFechaDesde={setExportFechaDesde} 
-          exportFechaHasta={exportFechaHasta} 
-          setExportFechaHasta={setExportFechaHasta} 
-          exportEmail={exportEmail} 
-          setExportEmail={setExportEmail} 
-          gastos={gastos} 
-          categorias={categorias} 
-          showToast={showToast} 
-        />
-      )}
-
-      {showMenu && profileScreen === "categorias" && (
-        <ConfigCategorias 
-          c={c} 
-          s={s} 
-          isDark={isDark} 
-          isClosing={isClosing} 
-          cerrarPantalla={cerrarPantalla} 
-          setProfileScreen={setProfileScreen} 
-          safeBase={safeBase} 
-          safeExtra={safeExtra} 
-          abrirEditarCat={abrirEditarCat} 
-          eliminarCat={eliminarCat} 
-          abrirCrearCat={abrirCrearCat} 
-        />
-      )}
-
-      {showMenu && profileScreen === "logros" && (
-        <MisLogros 
-          c={c} 
-          s={s} 
-          isDark={isDark} 
-          isClosing={isClosing} 
-          cerrarPantalla={cerrarPantalla} 
-          setProfileScreen={setProfileScreen} 
-          listaMetas={listaMetas} 
-          filtroLogros={filtroLogros} 
-          setFiltroLogros={setFiltroLogros} 
-        />
-      )}
-
-      {showMenu && profileScreen === "datos" && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'datos' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
-            <button onClick={() => cerrarPantalla('datos', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
-            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Mis datos</h2>
-          </div>
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 32 }}><div style={{ width: 80, height: 80, borderRadius: "50%", background: "#FF803C", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, fontWeight: 700, color: "#FFF" }}>{userInitials}</div></div>
-          <div style={{ marginBottom: 20 }}><div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Nombre completo</div><input style={s.input} value={userName} onChange={e => setUserName(e.target.value)} placeholder="Ej. Paul Flores" /></div>
-          <div style={{ marginBottom: 32 }}><div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Correo electrónico</div><input style={{ ...s.input, opacity: 0.6 }} value={usuario?.email || "Cargando..."} disabled /><div style={{ fontSize: 12, color: c.muted, marginTop: 8, fontWeight: 400 }}>El correo está enlazado a tu cuenta de acceso.</div></div>
-          <button style={s.btnPrimary} onClick={guardarPerfil} disabled={saving}>{saving ? "Guardando..." : "Guardar cambios"}</button>
-        </div>
-      )}
-
-      {showMenu && profileScreen === "clave" && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'clave' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}><button onClick={() => cerrarPantalla('clave', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button><h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Cambiar mi clave</h2></div>
-          <div style={{ marginBottom: 20 }}><div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Contraseña actual</div><input type="password" style={s.input} placeholder="••••••••" /></div>
-          <div style={{ marginBottom: 20 }}><div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Nueva contraseña</div><input type="password" style={s.input} placeholder="••••••••" /></div>
-          <div style={{ marginBottom: 32 }}><div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Repetir nueva contraseña</div><input type="password" style={s.input} placeholder="••••••••" /></div>
-          <button style={s.btnPrimary} onClick={() => { showToast("Clave actualizada ✓", c.green); cerrarPantalla('clave', () => setProfileScreen(null)); }}>Actualizar clave</button>
-        </div>
-      )}
-
-      {showMenu && profileScreen === "ayuda" && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'ayuda' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: 24, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}><button onClick={() => cerrarPantalla('ayuda', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button><h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Centro de ayuda</h2></div>
-          <div style={{ ...s.card, padding: 16, marginBottom: 12 }}><div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 8 }}>¿Cómo edito una categoría?</div><div style={{ fontSize: 13, color: c.muted, lineHeight: 1.5, fontWeight: 500 }}>Ve a Configuración &gt; Configuración de categorías y presiona el ícono del lápiz junto a la categoría que deseas modificar.</div></div>
-          <div style={{ ...s.card, padding: 16, marginBottom: 12 }}><div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 8 }}>¿Cómo funciona la proyección de metas?</div><div style={{ fontSize: 13, color: c.muted, lineHeight: 1.5, fontWeight: 500 }}>Calculamos cuánto te falta ahorrar y lo dividimos entre los días restantes hasta tu fecha límite para decirte tu cuota diaria.</div></div>
-          <div style={{ ...s.card, padding: 16, marginBottom: 24 }}><div style={{ fontSize: 15, fontWeight: 700, color: c.text, marginBottom: 8 }}>Mi presupuesto no aparece, ¿qué hago?</div><div style={{ fontSize: 13, color: c.muted, lineHeight: 1.5, fontWeight: 500 }}>Asegúrate de haber creado el presupuesto para el mes actual en la pestaña 'Presupuesto'.</div></div>
-          <a href="mailto:soporte@ahorrometa.com" style={{ ...s.btnSecondary, display: "block", textAlign: "center", textDecoration: "none", padding: "16px 0", fontSize: 15 }}>✉️ Contactar a soporte</a>
-        </div>
-      )}
-
-      {/* MODAL CREAR/EDITAR CATEGORÍA */}
       {catForm.visible && (
         <div className="hide-scroll" style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10001, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}><button onClick={() => setCatForm({...catForm, visible: false})} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button><h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>{catForm.id ? "Editar categoría" : "Crear categoría"}</h2></div>
@@ -1483,27 +1270,26 @@ export default function App() {
         </div>
       )}
 
-      {showAddModal && (
-        <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setShowAddModal(false); }}>
-          <div style={{...s.modal, animation: "slideUp 0.3s ease-out"}}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}><h3 style={{ margin: 0, fontSize: 18, color: c.text, fontWeight: 700 }}>Registrar Movimiento</h3><button onClick={() => setShowAddModal(false)} style={{ background: "none", border: "none", color: c.muted, fontSize: 24, cursor: "pointer", padding: 0 }}>×</button></div>
-            <div style={{ display: "flex", gap: 12, marginBottom: 16 }}><button style={s.tipoBtn(form.tipo === "ingreso", c.green)} onClick={() => setForm(f => ({ ...f, tipo: "ingreso", categoria: safeBase[0]?.id || "" }))}>+ Ingreso</button><button style={s.tipoBtn(form.tipo === "gasto", c.red)} onClick={() => setForm(f => ({ ...f, tipo: "gasto", categoria: safeExtra[0]?.id || "" }))}>− Gasto</button></div>
-            <input autoFocus style={{ ...s.input, marginBottom: 16, fontSize: 32, textAlign: "center", fontWeight: 700, padding: "20px 10px", height: "auto" }} type="number" placeholder="0.00" value={form.monto} onChange={e => setForm(f => ({ ...f, monto: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} />
-            <div style={{ display: "flex", gap: 12, marginBottom: 24 }}><select style={{ ...s.select, flex: 1, marginBottom: 0 }} value={form.categoria} onChange={e => setForm(f => ({ ...f, categoria: e.target.value }))}>{(form.tipo === "ingreso" ? safeBase : safeExtra).map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select><input style={{ ...s.input, flex: 1, marginBottom: 0, fontSize: 15, fontWeight: 500 }} type="text" placeholder="Descripción" value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} onKeyDown={e => e.key === "Enter" && agregarMovimiento()} /></div>
-            <button style={{...s.btnPrimary, padding: "16px"}} onClick={agregarMovimiento} disabled={saving}>{saving ? "Guardando..." : "Guardar Registro"}</button>
+      {showMenu && profileScreen === "datos" && (
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'datos' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
+            <button onClick={() => cerrarPantalla('datos', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Mis datos</h2>
           </div>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 32 }}><div style={{ width: 80, height: 80, borderRadius: "50%", background: "#FF803C", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, fontWeight: 700, color: "#FFF" }}>{userInitials}</div></div>
+          <div style={{ marginBottom: 20 }}><div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Nombre completo</div><input style={s.input} value={userName} onChange={e => setUserName(e.target.value)} placeholder="Ej. Paul Flores" /></div>
+          <div style={{ marginBottom: 32 }}><div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Correo electrónico</div><input style={{ ...s.input, opacity: 0.6 }} value={usuario?.email || "Cargando..."} disabled /><div style={{ fontSize: 12, color: c.muted, marginTop: 8, fontWeight: 400 }}>El correo está enlazado a tu cuenta de acceso.</div></div>
+          <button style={s.btnPrimary} onClick={guardarPerfil} disabled={saving}>{saving ? "Guardando..." : "Guardar cambios"}</button>
         </div>
       )}
 
-      {editando && (
-        <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setEditando(null); }}>
-          <div style={{...s.modal, animation: "slideUp 0.3s ease-out"}}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}><h3 style={{ margin: 0, fontSize: 18, color: c.text, fontWeight: 700 }}>Editar Movimiento</h3><button onClick={() => setEditando(null)} style={{ background: "none", border: "none", color: c.muted, fontSize: 24, cursor: "pointer", padding: 0 }}>×</button></div>
-            <div style={{ display: "flex", gap: 12, marginBottom: 16 }}><button style={s.tipoBtn(editForm.tipo === "ingreso", c.green)} onClick={() => setEditForm(f => ({ ...f, tipo: "ingreso", categoria: safeBase[0]?.id || "" }))}>+ Ingreso</button><button style={s.tipoBtn(editForm.tipo === "gasto", c.red)} onClick={() => setEditForm(f => ({ ...f, tipo: "gasto", categoria: safeExtra[0]?.id || "" }))}>− Gasto</button></div>
-            <input style={{ ...s.input, marginBottom: 16, fontSize: 32, textAlign: "center", fontWeight: 700, padding: "20px 10px", height: "auto" }} type="number" placeholder="0.00" value={editForm.monto} onChange={e => setEditForm(f => ({ ...f, monto: e.target.value }))} />
-            <div style={{ display: "flex", gap: 12, marginBottom: 24 }}><select style={{ ...s.select, flex: 1, marginBottom: 0 }} value={editForm.categoria} onChange={e => setEditForm(f => ({ ...f, categoria: e.target.value }))}>{(editForm.tipo === "ingreso" ? safeBase : safeExtra).map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select><input style={{ ...s.input, flex: 1, marginBottom: 0, fontSize: 15, fontWeight: 500 }} type="text" placeholder="Descripción" value={editForm.descripcion} onChange={e => setEditForm(f => ({ ...f, descripcion: e.target.value }))} /></div>
-            <button style={{...s.btnPrimary, padding: "16px"}} onClick={guardarEdicion} disabled={saving}>{saving ? "Guardando..." : "Guardar Cambios"}</button>
-          </div>
+      {showMenu && profileScreen === "clave" && (
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'clave' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}><button onClick={() => cerrarPantalla('clave', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button><h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Cambiar mi clave</h2></div>
+          <div style={{ marginBottom: 20 }}><div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Contraseña actual</div><input type="password" style={s.input} placeholder="••••••••" /></div>
+          <div style={{ marginBottom: 20 }}><div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Nueva contraseña</div><input type="password" style={s.input} placeholder="••••••••" /></div>
+          <div style={{ marginBottom: 32 }}><div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Repetir nueva contraseña</div><input type="password" style={s.input} placeholder="••••••••" /></div>
+          <button style={s.btnPrimary} onClick={() => { showToast("Clave actualizada ✓", c.green); cerrarPantalla('clave', () => setProfileScreen(null)); }}>Actualizar clave</button>
         </div>
       )}
 
