@@ -1,5 +1,5 @@
 import React from "react";
-import { Calendar, Clock, Plus } from "lucide-react";
+import { Calendar, Clock, Plus, ChevronRight } from "lucide-react";
 import { formatMoney, formatFecha, diffDias, hoy } from "../utils";
 
 export default function TabMetas({
@@ -39,7 +39,7 @@ export default function TabMetas({
           return (
             <div 
               key={meta.id} 
-              style={{ ...s.card, cursor: "pointer", padding: "20px", marginBottom: 16, WebkitTapHighlightColor: "transparent" }}
+              style={{ ...s.card, cursor: "pointer", padding: "20px", marginBottom: 16, position: "relative", WebkitTapHighlightColor: "transparent" }}
               // 👇 AQUÍ ESTÁ LA MAGIA QUE FALTABA 👇
               onClick={() => setMetaSeleccionada(meta)}
             >
@@ -47,7 +47,7 @@ export default function TabMetas({
                 <div style={{ width: 56, height: 56, borderRadius: "50%", background: bgIconColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, flexShrink: 0 }}>
                   {meta.icono}
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ flex: 1, minWidth: 0, paddingRight: 24 }}>
                   <div style={{ fontSize: 16, fontWeight: 700, color: c.text, marginBottom: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                     {meta.nombre}
                   </div>
@@ -56,6 +56,11 @@ export default function TabMetas({
                     <span style={{ fontSize: 13, color: c.muted, fontWeight: 500 }}>de S/ {formatMoney(obj).replace("S/ ", "")}</span>
                   </div>
                 </div>
+              </div>
+
+              {/* FLECHITA INDICADORA DE CLIC */}
+              <div style={{ position: "absolute", top: 36, right: 20, color: c.muted }}>
+                <ChevronRight size={20} />
               </div>
 
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
