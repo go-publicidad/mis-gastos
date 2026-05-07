@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   Home, PieChart, Calendar, X, Bell, Target, Wallet, Menu, Loader2, Edit2, Trash2, AlertTriangle, Plus, ChevronRight, CheckCircle2, MoreVertical, ArrowLeft,
-  Search, Lightbulb, ArrowLeftRight, FileText, Shield, Headphones, PiggyBank, Book
+  Search, Lightbulb, ArrowLeftRight, FileText, Shield, Headphones, PiggyBank
 } from "lucide-react";
 
 import { supabase } from "./supabaseClient";
@@ -108,7 +108,7 @@ export default function App() {
   const [touchStartX, setTouchStartX] = useState(0);
   const [touchStartY, setTouchStartY] = useState(0);
   const [currentSwipeX, setCurrentSwipeX] = useState(0);
-  const [swipeBaseX, setSwipeBaseX] = useState(0);
+  const [swipeBaseX, setSwipeBaseX] = useState(0); 
   const [isSwiping, setIsSwiping] = useState(false);
 
   const handleSwipeStart = (id, e) => {
@@ -121,11 +121,11 @@ export default function App() {
     const diffX = e.touches[0].clientX - touchStartX;
     const diffY = e.touches[0].clientY - touchStartY;
     if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
-      setSwipedId(id);
-      let newX = swipeBaseX + diffX;
-      if (swipeBaseX < 0) newX = Math.min(0, newX);
-      if (swipeBaseX > 0) newX = Math.max(0, newX);
-      setCurrentSwipeX(Math.max(-85, Math.min(85, newX)));
+        setSwipedId(id);
+        let newX = swipeBaseX + diffX;
+        if (swipeBaseX < 0) newX = Math.min(0, newX);
+        if (swipeBaseX > 0) newX = Math.max(0, newX);
+        setCurrentSwipeX(Math.max(-85, Math.min(85, newX)));
     }
   };
   const handleSwipeEnd = () => {
@@ -216,7 +216,7 @@ export default function App() {
     }, 280);
   };
 
- const loadData = async (isManual = false) => {
+  const loadData = async (isManual = false) => {
     if (!usuario?.id) return;
     try {
       const { data: movimientos, error: err1 } = await supabase.from("gastos").select("*").eq("user_id", usuario.id).order("created_at", { ascending: false });
@@ -227,14 +227,7 @@ export default function App() {
       if (err2) throw err2;
 
       if (cfg) {
-        // AQUÍ ESTÁ LA MAGIA: Prioridad a la llave limpia, ignorando el fantasma.
-        const getVal = (k) => {
-          const valorNuevo = cfg.find(item => item.key === k);
-          if (valorNuevo) return valorNuevo.value;
-          const valorViejo = cfg.find(item => item.key === `${usuario.id}_${k}`);
-          return valorViejo?.value;
-        };
-        
+        const getVal = (k) => cfg.find(item => item.key === k || item.key === `${usuario.id}_${k}`)?.value;
         if (getVal("themePref")) { setTheme(getVal("themePref")); localStorage.setItem("themePref", getVal("themePref")); }
         if (getVal("useBoldPref")) setUseBold(getVal("useBoldPref") === "true");
         if (getVal("userName")) setUserName(getVal("userName"));
@@ -308,20 +301,20 @@ export default function App() {
     const { error: err } = await supabase.from("gastos").delete().eq("id", g.id);
     if (err) return showToast("Error", c.red);
     if (g.tipo === "aporte") {
-      const metaNombre = g.descripcion.replace("Aporte a ", "").replace("Aporte inicial a ", "").trim();
-      const metaEncontrada = listaMetas.find(m => m.nombre === metaNombre);
-      if (metaEncontrada) {
-        const nuevasMetas = listaMetas.map(m => m.id === metaEncontrada.id ? { ...m, aporteInicial: Math.max(0, m.aporteInicial - g.monto) } : m);
-        setListaMetas(nuevasMetas);
-        await supabase.from("config").upsert([{ user_id: usuario.id, key: `listaMetas`, value: JSON.stringify(nuevasMetas) }], { onConflict: "user_id, key" });
-      }
+        const metaNombre = g.descripcion.replace("Aporte a ", "").replace("Aporte inicial a ", "").trim();
+        const metaEncontrada = listaMetas.find(m => m.nombre === metaNombre);
+        if (metaEncontrada) {
+            const nuevasMetas = listaMetas.map(m => m.id === metaEncontrada.id ? { ...m, aporteInicial: Math.max(0, m.aporteInicial - g.monto) } : m);
+            setListaMetas(nuevasMetas);
+            await supabase.from("config").upsert([{ user_id: usuario.id, key: `listaMetas`, value: JSON.stringify(nuevasMetas) }], { onConflict: "user_id, key" });
+        }
     }
     setGastos(prev => prev.filter(item => item.id !== g.id));
     showToast("Eliminado", c.muted); setSwipedId(null); setCurrentSwipeX(0);
   };
 
-  const abrirEdicion = (g) => {
-    setEditando(g);
+  const abrirEdicion = (g) => { 
+    setEditando(g); 
     setEditForm({ monto: g.monto, descripcion: g.descripcion, categoria: g.categoria, tipo: g.tipo });
     setSwipedId(null); setCurrentSwipeX(0);
   };
@@ -334,14 +327,14 @@ export default function App() {
     const { error: err } = await supabase.from("gastos").update(updates).eq("id", editando.id);
     if (err) { showToast("Error", c.red); setSaving(false); return; }
     if (editando.tipo === "aporte") {
-      const metaNombre = editando.descripcion.replace("Aporte a ", "").replace("Aporte inicial a ", "").trim();
-      const metaEncontrada = listaMetas.find(m => m.nombre === metaNombre);
-      if (metaEncontrada) {
-        const diff = montoNuevo - editando.monto;
-        const nuevasMetas = listaMetas.map(m => m.id === metaEncontrada.id ? { ...m, aporteInicial: Math.max(0, m.aporteInicial + diff) } : m);
-        setListaMetas(nuevasMetas);
-        await supabase.from("config").upsert([{ user_id: usuario.id, key: `listaMetas`, value: JSON.stringify(nuevasMetas) }], { onConflict: "user_id, key" });
-      }
+        const metaNombre = editando.descripcion.replace("Aporte a ", "").replace("Aporte inicial a ", "").trim();
+        const metaEncontrada = listaMetas.find(m => m.nombre === metaNombre);
+        if (metaEncontrada) {
+            const diff = montoNuevo - editando.monto;
+            const nuevasMetas = listaMetas.map(m => m.id === metaEncontrada.id ? { ...m, aporteInicial: Math.max(0, m.aporteInicial + diff) } : m);
+            setListaMetas(nuevasMetas);
+            await supabase.from("config").upsert([{ user_id: usuario.id, key: `listaMetas`, value: JSON.stringify(nuevasMetas) }], { onConflict: "user_id, key" });
+        }
     }
     setGastos(prev => prev.map(g => g.id === editando.id ? { ...g, ...updates } : g));
     setEditando(null); showToast("Actualizado ✓"); setSaving(false);
@@ -429,8 +422,9 @@ export default function App() {
         .hide-scroll::-webkit-scrollbar { display: none; } .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
         @keyframes spin { to { transform: rotate(360deg) } } @keyframes slideInFromLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } } @keyframes slideOutToLeft { from { transform: translateX(0); } to { transform: translateX(-100%); } } @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } } @keyframes slideDown { from { transform: translate(-50%, -100%); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
       `}</style>
+      
       {toast && (<div style={{ position: "fixed", top: 40, left: "50%", transform: "translateX(-50%)", background: toast.color || "#333", color: "#FFF", padding: "12px 24px", borderRadius: 30, zIndex: 999999, fontWeight: 600, fontSize: 14, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", animation: "slideDown 0.3s ease-out", whiteSpace: "nowrap" }}>{toast.msg}</div>)}
-
+      
       {viewAll ? (
         <>
           <div style={{ padding: "calc(12px + env(safe-area-inset-top, 0px)) 20px 12px", borderBottom: `1px solid ${c.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: c.bg, position: "fixed", top: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, zIndex: 110, boxSizing: "border-box" }}>
@@ -466,8 +460,8 @@ export default function App() {
               return (
                 <div key={g.id} style={{ position: "relative", marginBottom: 10, borderRadius: 16, overflow: "hidden", height: 72 }}>
                   <div style={{ position: "absolute", inset: 0, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div onClick={() => abrirEdicion(g)} style={{ flex: 1, height: "100%", background: "#10B981", color: "#FFF", display: "flex", alignItems: "center", paddingLeft: 24, cursor: "pointer" }}><Edit2 size={24} /></div>
-                    <div onClick={() => eliminar(g)} style={{ flex: 1, height: "100%", background: c.red, color: "#FFF", display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 24, cursor: "pointer" }}><Trash2 size={24} /></div>
+                      <div onClick={() => abrirEdicion(g)} style={{ flex: 1, height: "100%", background: "#10B981", color: "#FFF", display: "flex", alignItems: "center", paddingLeft: 24, cursor: "pointer" }}><Edit2 size={24} /></div>
+                      <div onClick={() => eliminar(g)} style={{ flex: 1, height: "100%", background: c.red, color: "#FFF", display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 24, cursor: "pointer" }}><Trash2 size={24} /></div>
                   </div>
                   <div onTouchStart={(e) => handleSwipeStart(g.id, e)} onTouchMove={(e) => handleSwipeMove(g.id, e)} onTouchEnd={handleSwipeEnd} style={{ position: "absolute", inset: 0, background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: "0 16px", display: "flex", alignItems: "center", justifyContent: "space-between", transform: isCurrentSwiped ? `translateX(${currentSwipeX}px)` : "translateX(0)", transition: isSwiping && isCurrentSwiped ? "none" : "transform 0.3s ease", zIndex: 2, touchAction: "pan-y" }} >
                     <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12 }}>
@@ -497,6 +491,7 @@ export default function App() {
             </div>
           </div>
           {error && <div style={{ ...s.errorCard, marginTop: 80, position: "relative", zIndex: 20 }}><AlertTriangle size={16} style={{ verticalAlign: "middle", marginRight: 8 }} /> {error}</div>}
+          
           {tab === "hoy" && (
             <>
               <div style={{ position: "fixed", top: "calc(52px + env(safe-area-inset-top, 0px))", left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, height: 60, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 10, color: "#10B981", opacity: (isRefreshing || pullDistance > 0) ? 1 : 0, visibility: (isRefreshing || pullDistance > 0) ? "visible" : "hidden", pointerEvents: "none" }}>
@@ -506,9 +501,11 @@ export default function App() {
               <TabInicio c={c} s={s} isDark={isDark} listaMetas={listaMetas} setAporteMetaId={setAporteMetaId} setShowAporteModal={setShowAporteModal} setIsEditingMetaObj={setIsEditingMetaObj} setMetaForm={setMetaForm} setShowCrearMeta={setShowCrearMeta} setViewAll={setViewAll} movimientosHoy={movimientosHoy} totalIngresosHoy={totalIngresosHoy} totalGastadoHoy={totalGastadoHoy} presupuestoDiario={presupuestoDiario} categorias={categorias} setMetaSeleccionada={setMetaSeleccionada} isRefreshing={isRefreshing} pullDistance={pullDistance} handleTouchStart={handleTouchStartGlobal} handleTouchMove={handleTouchMoveGlobal} handleTouchEnd={handleTouchEndGlobal} />
             </>
           )}
+          
           {tab === "resumen" && <TabReportes c={c} s={s} isDark={isDark} gastos={gastos} categoriasBase={categoriasBase} categoriasExtra={categoriasExtra} categorias={categorias} listaMetas={listaMetas} />}
           {tab === "presupuesto" && <TabPresupuesto c={c} s={s} isDark={isDark} presupuestosMensuales={presupuestosMensuales} setPresupForm={setPresupForm} setShowCrearPresupuesto={setShowCrearPresupuesto} gastos={gastos} categorias={categorias} setCatPresupSelec={setCatPresupSelec} setShowHistorial={setShowHistorial} setShowPresupAnual={setShowPresupAnual} />}
           {tab === "metas" && <TabMetas c={c} s={s} isDark={isDark} listaMetas={listaMetas} setMetaSeleccionada={setMetaSeleccionada} setIsEditingMetaObj={setIsEditingMetaObj} setMetaForm={setMetaForm} setShowCrearMeta={setShowCrearMeta} />}
+          
           <div style={s.navBar}>
             {[{ id: "hoy", icon: <Home size={24} strokeWidth={2.5} />, label: "Inicio" }, { id: "resumen", icon: <PieChart size={24} strokeWidth={2.5} />, label: "Reportes" }].map(n => (
               <button key={n.id} style={s.navBtn(tab === n.id)} onClick={() => setTab(n.id)}>{tab === n.id && <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 44, height: 3, background: "#FF803C", borderRadius: "0 0 4px 4px" }} />}<div style={{ marginBottom: -2 }}>{n.icon}</div><span style={{ fontFamily: "'Montserrat', sans-serif" }}>{n.label}</span></button>
@@ -521,23 +518,27 @@ export default function App() {
         </>
       )}
 
+      {/* MODALES FLOTANTES */}
       {showAddModal && <ModalRegistrarMovimiento s={s} c={c} form={form} setForm={setForm} safeBase={safeBase} safeExtra={safeExtra} agregarMovimiento={agregarMovimiento} setShowAddModal={setShowAddModal} saving={saving} />}
       {editando && <ModalEditarMovimiento s={s} c={c} editForm={editForm} setEditForm={setEditForm} safeBase={safeBase} safeExtra={safeExtra} guardarEdicion={guardarEdicion} setEditando={setEditando} saving={saving} />}
       {showCrearMeta && <ModalCrearMeta c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setShowCrearMeta={setShowCrearMeta} setIsEditingMetaObj={setIsEditingMetaObj} isEditingMetaObj={isEditingMetaObj} metaForm={metaForm} setMetaForm={setMetaForm} procesarNuevaMeta={procesarNuevaMeta} />}
       {showCrearPresupuesto && <ModalCrearPresupuesto c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setShowCrearPresupuesto={setShowCrearPresupuesto} presupForm={presupForm} setPresupForm={setPresupForm} safeExtra={safeExtra} setProfileScreen={setProfileScreen} setShowMenu={setShowMenu} guardarPresupuesto={guardarPresupuesto} saving={saving} />}
+      
       {catPresupSelec && <ModalDetalleCategoria c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} catId={catPresupSelec} categorias={categorias} gastos={gastos} presupuestoActual={presupuestosMensuales[hoy().slice(0, 7)]} />}
       {showHistorial && <ModalHistorialPresupuestos c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} presupuestosMensuales={presupuestosMensuales} setShowHistorial={setShowHistorial} setResumenMes={setResumenMes} />}
       {resumenMes && <ModalResumenMensual c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} mes={resumenMes} presupuestosMensuales={presupuestosMensuales} gastos={gastos} categorias={categorias} setResumenMes={setResumenMes} />}
       {showPresupAnual && <ModalPresupuestoAnual c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} presupuestosMensuales={presupuestosMensuales} gastos={gastos} setShowPresupAnual={setShowPresupAnual} />}
       {showNovedades && <Novedades c={c} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setShowNovedades={setShowNovedades} />}
 
-      {/* SECCIÓN CATEGORÍAS PASANDO LAS FUNCIONES CORRECTAS */}
-      {(showMenu || showApariencia) && <MenuPrincipal c={c} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setShowMenu={setShowMenu} setProfileScreen={setProfileScreen} setShowApariencia={setShowApariencia} cerrarSesion={cerrarSesion} />}
-      {showMenu && profileScreen === "exportar" && <ExportarReportes c={c} s={s} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} exportFechaDesde={exportFechaDesde} setExportFechaDesde={setExportFechaDesde} exportFechaHasta={exportFechaHasta} setExportFechaHasta={setExportFechaHasta} exportEmail={exportEmail} setExportEmail={setExportEmail} gastos={gastos} categorias={categorias} showToast={showToast} />}
-      {showMenu && profileScreen === "categorias" && <ConfigCategorias c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} safeBase={safeBase} safeExtra={safeExtra} abrirEditarCat={abrirEditarCat} eliminarCat={eliminarCat} abrirCrearCat={abrirCrearCat} />}
-      {showMenu && profileScreen === "logros" && <MisLogros c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} listaMetas={listaMetas} gastos={gastos} userName={userName} />}
-
-      {showMenu && profileScreen === "ayuda" && (
+      {/* MENÚ PRINCIPAL: Solo se dibuja cuando showMenu es verdaderamente true */}
+      {showMenu && <MenuPrincipal c={c} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setShowMenu={setShowMenu} setProfileScreen={setProfileScreen} setShowApariencia={setShowApariencia} cerrarSesion={cerrarSesion} />}
+      
+      {/* PANTALLAS SECUNDARIAS DEL MENÚ */}
+      {profileScreen === "exportar" && <ExportarReportes c={c} s={s} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} exportFechaDesde={exportFechaDesde} setExportFechaDesde={setExportFechaDesde} exportFechaHasta={exportFechaHasta} setExportFechaHasta={setExportFechaHasta} exportEmail={exportEmail} setExportEmail={setExportEmail} gastos={gastos} categorias={categorias} showToast={showToast} />}
+      {profileScreen === "categorias" && <ConfigCategorias c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} safeBase={safeBase} safeExtra={safeExtra} abrirEditarCat={abrirEditarCat} eliminarCat={eliminarCat} abrirCrearCat={abrirCrearCat} />}
+      {profileScreen === "logros" && <MisLogros c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} listaMetas={listaMetas} gastos={gastos} userName={userName} />}
+      
+      {profileScreen === "ayuda" && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'ayuda' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 24, marginTop: 16 }}><button onClick={() => cerrarPantalla('ayuda', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button><h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 800 }}>Centro de ayuda</h2></div>
           <div style={{ display: "flex", alignItems: "center", background: c.card, border: `1px solid ${c.border}`, borderRadius: 12, padding: "12px 16px", marginBottom: 32, boxShadow: c.shadow }}><Search size={20} color={c.muted} style={{ marginRight: 12 }} /><input type="text" placeholder="Buscar ayuda..." style={{ border: "none", background: "transparent", outline: "none", color: c.text, fontSize: 15, width: "100%", fontFamily: "inherit" }} /></div>
@@ -558,7 +559,6 @@ export default function App() {
         </div>
       )}
 
-      {/* DETALLE DE META PARA EDITAR Y ELIMINAR */}
       {metaSeleccionada && (() => {
         const obj = parseFloat(metaSeleccionada.montoObjetivo) || 1; const ahorrado = parseFloat(metaSeleccionada.aporteInicial) || 0;
         const faltan = Math.max(0, obj - ahorrado); const pct = Math.min(100, Math.round((ahorrado / obj) * 100));
@@ -594,7 +594,6 @@ export default function App() {
         );
       })()}
 
-      {/* FORMULARIO DE CATEGORÍAS */}
       {catForm.visible && (
         <div className="hide-scroll" style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10001, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}><button onClick={() => setCatForm({ ...catForm, visible: false })} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button><h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>{catForm.id ? "Editar categoría" : "Crear categoría"}</h2></div>
@@ -605,8 +604,24 @@ export default function App() {
         </div>
       )}
 
-      {/* PANTALLA MIS DATOS */}
-      {showMenu && profileScreen === "datos" && (
+      {/* APARIENCIA: Controlada por dos estados para mayor seguridad de clics */}
+      {(showApariencia || profileScreen === "apariencia") && (
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: isClosing === 'apariencia' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
+            <button onClick={() => cerrarPantalla('apariencia', () => { setShowApariencia(false); setProfileScreen(null); setShowMenu(true); })} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
+            <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: "700" }}>Pantalla y brillo</h2>
+          </div>
+          <div style={{ fontSize: 14, color: c.muted, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 12, fontWeight: 700 }}>Aspecto</div>
+          <div style={{ background: c.card, borderRadius: 16, padding: "20px 20px 0", marginBottom: 24, border: `1px solid ${c.border}`, boxShadow: c.shadow }}>
+            <div style={{ display: "flex", justifyContent: "space-around", paddingBottom: 24 }}>
+              <div onClick={async () => { setTheme("light"); localStorage.setItem("themePref", "light"); showToast("Tema Claro guardado ✓"); await supabase.from("config").upsert([{ user_id: usuario.id, key: `themePref`, value: "light" }], { onConflict: "user_id, key" }); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer" }}><div style={{ width: 66, height: 130, borderRadius: 12, background: "#FFF", border: theme === "light" ? "3px solid #34C759" : "1px solid #CCC", position: "relative", overflow: "hidden" }}><div style={{ position: "absolute", top: 12, left: 6, right: 6, height: 24, background: "#E5E5E5", borderRadius: 4 }} /><div style={{ position: "absolute", top: 44, left: 6, right: 6, height: 18, background: "#E5E5E5", borderRadius: 4 }} /></div><span style={{ fontSize: 16, fontWeight: 600 }}>Claro</span><div style={{ width: 22, height: 22, borderRadius: "50%", border: theme === "light" ? "none" : `1px solid ${c.muted}`, background: theme === "light" ? "#34C759" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>{theme === "light" && <span style={{ color: "#FFF", fontSize: 14 }}>✓</span>}</div></div>
+              <div onClick={async () => { setTheme("dark"); localStorage.setItem("themePref", "dark"); showToast("Tema Oscuro guardado ✓"); await supabase.from("config").upsert([{ user_id: usuario.id, key: `themePref`, value: "dark" }], { onConflict: "user_id, key" }); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer" }}><div style={{ width: 66, height: 130, borderRadius: 12, background: "#111", border: theme === "dark" ? "3px solid #34C759" : "1px solid #444", position: "relative", overflow: "hidden" }}><div style={{ position: "absolute", top: 12, left: 6, right: 6, height: 24, background: "#333", borderRadius: 4 }} /><div style={{ position: "absolute", top: 44, left: 6, right: 6, height: 18, background: "#333", borderRadius: 4 }} /></div><span style={{ fontSize: 16, fontWeight: 600 }}>Oscuro</span><div style={{ width: 22, height: 22, borderRadius: "50%", border: theme === "dark" ? "none" : `1px solid ${c.muted}`, background: theme === "dark" ? "#34C759" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>{theme === "dark" && <span style={{ color: "#FFF", fontSize: 14 }}>✓</span>}</div></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {profileScreen === "datos" && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'datos' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
             <button onClick={() => cerrarPantalla('datos', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
@@ -615,12 +630,11 @@ export default function App() {
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 32 }}><div style={{ width: 80, height: 80, borderRadius: "50%", background: "#FF803C", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, fontWeight: 700, color: "#FFF" }}>{userInitials}</div></div>
           <div style={{ marginBottom: 20 }}><div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Nombre completo</div><input style={s.input} value={userName} onChange={e => setUserName(e.target.value)} placeholder="Ej. Paul Flores" /></div>
           <div style={{ marginBottom: 32 }}><div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Correo electrónico</div><input style={{ ...s.input, opacity: 0.6 }} value={usuario?.email || "Cargando..."} disabled /><div style={{ fontSize: 12, color: c.muted, marginTop: 8, fontWeight: 400 }}>El correo está enlazado a tu cuenta de acceso.</div></div>
-          <button style={s.btnPrimary} onClick={guardarPerfil} disabled={saving}>{saving ? "Guardando..." : "Guardar cambios"}</button>
+          <button style={s.btnPrimary} onClick={guardarPerfil} disabled={saving}>Guardar cambios</button>
         </div>
       )}
 
-      {/* PANTALLA CAMBIAR CLAVE */}
-      {showMenu && profileScreen === "clave" && (
+      {profileScreen === "clave" && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'clave' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}><button onClick={() => cerrarPantalla('clave', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button><h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Cambiar mi clave</h2></div>
           <div style={{ marginBottom: 20 }}><div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Contraseña actual</div><input type="password" style={s.input} placeholder="••••••••" /></div>
@@ -629,6 +643,7 @@ export default function App() {
           <button style={s.btnPrimary} onClick={() => { showToast("Clave actualizada ✓", c.green); cerrarPantalla('clave', () => setProfileScreen(null)); }}>Actualizar clave</button>
         </div>
       )}
+
     </div>
   );
 }
