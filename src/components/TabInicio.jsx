@@ -1,6 +1,7 @@
-import React, { useState } from "react";
-import { ArrowDownToLine, ArrowUpFromLine, PiggyBank, Target, Calendar, Clock, TrendingDown, PlusCircle } from "lucide-react";
-import { formatMoney, formatFecha, diffDias, hoy, getUIFechaHora, getIcono, getTexto } from "../utils";
+import React from "react";
+import { ArrowDownToLine, ArrowUpFromLine, PiggyBank, Target } from "lucide-react";
+import { formatMoney, getUIFechaHora, getIcono, getTexto } from "../utils";
+import CarruselMetas from "./CarruselMetas";
 
 const IconBadge = ({ emoji, bg, color }) => (
   <div style={{ width: 32, height: 32, borderRadius: "50%", background: bg, color: color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>{emoji}</div>
@@ -12,204 +13,34 @@ export default function TabInicio({
   totalGastadoHoy, presupuestoDiario, categorias, setMetaSeleccionada,
   isRefreshing, pullDistance, handleTouchStart, handleTouchMove, handleTouchEnd
 }) {
-  // LÓGICA DEL NUEVO CARRUSEL INFINITO Y MAGNÉTICO
-  const N = listaMetas.length;
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [dragOffset, setDragOffset] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [animating, setAnimating] = useState(false);
-  const [swipeDir, setSwipeDir] = useState(0);
-  const [startX, setStartX] = useState(0);
-  const [startY, setStartY] = useState(0);
 
-  const onSliderTouchStart = (e) => {
-    if (animating || N <= 1) return;
-    setStartX(e.touches[0].clientX);
-    setStartY(e.touches[0].clientY);
-    setIsDragging(true);
-    setDragOffset(0);
-  };
-
-  const onSliderTouchMove = (e) => {
-    if (!isDragging || animating || N <= 1) return;
-    const diffX = e.touches[0].clientX - startX;
-    const diffY = e.touches[0].clientY - startY;
-    
-    // Si el usuario desliza horizontalmente, evitamos que la pantalla haga "pull to refresh"
-    if (Math.abs(diffX) > Math.abs(diffY)) {
-      e.stopPropagation(); 
-      setDragOffset(diffX);
-    } else {
-      setIsDragging(false); // Es un scroll vertical normal, cancelamos el arrastre del carrusel
-    }
-  };
-
-  const onSliderTouchEnd = () => {
-    if (!isDragging || N <= 1) return;
-    setIsDragging(false);
-    const threshold = 40; // Sensibilidad del deslizamiento (píxeles)
-    
-    if (dragOffset > threshold) {
-        // Deslizó hacia la derecha (Ver tarjeta anterior)
-        setSwipeDir(1);
-        setAnimating(true);
-        setTimeout(() => {
-            setActiveIndex((prev) => (prev - 1 + N) % N);
-            setSwipeDir(0);
-            setDragOffset(0);
-            setAnimating(false);
-        }, 300);
-    } else if (dragOffset < -threshold) {
-        // Deslizó hacia la izquierda (Ver tarjeta siguiente)
-        setSwipeDir(-1);
-        setAnimating(true);
-        setTimeout(() => {
-            setActiveIndex((prev) => (prev + 1) % N);
-            setSwipeDir(0);
-            setDragOffset(0);
-            setAnimating(false);
-        }, 300);
-    } else {
-        // Deslizó muy poco, regresamos la tarjeta al centro (Snap back)
-        setSwipeDir(0);
-        setAnimating(true);
-        setTimeout(() => {
-            setDragOffset(0);
-            setAnimating(false);
-        }, 300);
-    }
-  };
-
-  const getTransform = () => {
-    if (isDragging) return `translateX(${dragOffset}px)`;
-    if (animating) {
-        if (swipeDir === 1) return `translateX(100%)`;
-        if (swipeDir === -1) return `translateX(-100%)`;
-        return `translateX(0)`;
-    }
-    return `translateX(0)`;
-  };
-
-  let cardsToRender = [];
-  if (N === 1) {
-    cardsToRender.push({ meta: listaMetas[0], pos: '0%', key: 'single' });
-  } else if (N > 1) {
-    cardsToRender.push({ meta: listaMetas[(activeIndex - 1 + N) % N], pos: '-100%', key: 'prev' });
-    cardsToRender.push({ meta: listaMetas[activeIndex], pos: '0%', key: 'curr' });
-    cardsToRender.push({ meta: listaMetas[(activeIndex + 1) % N], pos: '100%', key: 'next' });
-  }
+  // ESCUDO PARA COLORES DE METAS
+  const SAFE_PASTEL = ['#F3E8FF', '#DBEAFE', '#D1FAE5', '#FEF3C7', '#FCE7F3'];
 
   return (
     <div 
       style={{ ...s.section, background: "transparent", minHeight: "100vh", position: "relative", zIndex: 20, transform: `translateY(${isRefreshing ? 60 : pullDistance}px)`, transition: pullDistance === 0 || isRefreshing ? "transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)" : "none" }}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
+      onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
     >
+      {/* EL CEREBRO DEL CARRUSEL AHORA ES UN COMPONENTE INDEPENDIENTE */}
       {listaMetas.length === 0 ? (
         <div style={{ ...s.sliderCard, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px", marginBottom: 24, textAlign: "center" }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>🎯</div>
           <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Aún no tienes metas</div>
-          <div style={{ fontSize: 14, color: "#AAA", marginBottom: 24, lineHeight: 1.4 }}>Crea tu primera meta y empieza a ahorrar para lo que siempre quisiste.</div>
           <button onClick={() => { setIsEditingMetaObj(false); setMetaForm({ id: "", nombre: "", montoObjetivo: "", aporteInicial: "", fechaLimite: "", prioridad: "alta", tipo: "libre", icono: "💻" }); setShowCrearMeta(true); }} style={{ background: c.green, color: "#FFF", padding: "14px 24px", borderRadius: 30, border: "none", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>+ Crea tu primera meta</button>
         </div>
       ) : (
-        <>
-          {/* NUEVO CONTENEDOR DEL CARRUSEL INFINITO JS */}
-          <div style={{ overflow: "hidden", width: "100%", paddingBottom: 8, marginTop: 4 }}>
-            <div 
-              style={{ 
-                position: "relative", width: "100%", 
-                transform: getTransform(), 
-                transition: (isDragging || !animating) ? "none" : "transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)" 
-              }}
-              onTouchStart={onSliderTouchStart} 
-              onTouchMove={onSliderTouchMove} 
-              onTouchEnd={onSliderTouchEnd}
-            >
-              {cardsToRender.map((item) => {
-                const meta = item.meta;
-                const obj = parseFloat(meta.montoObjetivo) || 1;
-                const ahorrado = parseFloat(meta.aporteInicial) || 0;
-                const faltan = Math.max(0, obj - ahorrado);
-                const pct = Math.min(100, Math.round((ahorrado / obj) * 100));
-                let fechaStr = "Sin límite"; let diasRestantes = 0;
-                if (meta.fechaLimite) { fechaStr = formatFecha(meta.fechaLimite); diasRestantes = diffDias(hoy(), meta.fechaLimite); }
-                const isPrincipal = meta.id === listaMetas[0].id;
-
-                return (
-                  <div key={item.key} style={{ position: item.pos === '0%' ? 'relative' : 'absolute', top: 0, left: item.pos, width: "100%" }}>
-                    <div 
-                      style={{ ...s.sliderCard, cursor: "pointer", overflow: "hidden" }}
-                      onClick={() => setMetaSeleccionada && setMetaSeleccionada(meta)}
-                    >
-                      <div style={{ position: "absolute", top: 16, left: 20, background: isPrincipal ? "rgba(168,85,247,0.2)" : (isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)"), color: isPrincipal ? "#D8B4FE" : (isDark ? "#AAA" : "#666"), padding: "4px 10px", borderRadius: 12, fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>{isPrincipal ? "★ Meta principal" : "Meta secundaria"}</div>
-                      
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 28, marginBottom: 16 }}>
-                        <div style={{ minWidth: 0, flex: 1, paddingRight: 12 }}>
-                          <div style={{ fontSize: 20, fontWeight: 700, color: "#FFF", marginBottom: 4, display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                            {meta.nombre} <span style={{ fontSize: 24, flexShrink: 0 }}>{meta.icono}</span>
-                          </div>
-                          <div style={{ display: "flex", alignItems: "baseline", gap: 6, flexWrap: "wrap" }}>
-                            <span style={{ fontSize: 20, fontWeight: 700, color: "#FFF" }}>S/ {formatMoney(ahorrado).replace("S/ ", "")}</span>
-                            <span style={{ fontSize: 14, color: "#999", fontWeight: 500 }}>de S/ {formatMoney(obj).replace("S/ ", "")}</span>
-                          </div>
-                        </div>
-                        <div style={{ width: 64, height: 64, borderRadius: "50%", background: `conic-gradient(#10B981 ${pct}%, #333 0)`, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                          <div style={{ position: "absolute", inset: 5, background: "#111", borderRadius: "50%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}><span style={{ fontSize: 16, fontWeight: 700, color: "#FFF" }}>{pct}%</span></div>
-                        </div>
-                      </div>
-
-                      <div style={{ background: "#333", borderRadius: 4, height: 6, marginBottom: 20, overflow: "hidden" }}><div style={{ height: "100%", width: `${pct}%`, background: "#10B981", borderRadius: 4 }}></div></div>
-                      
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 24, gap: 8 }}>
-                        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
-                          <span style={{ fontSize: 11, color: "#999", display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                            <TrendingDown size={14} color="#10B981" style={{flexShrink: 0}} /> 
-                            <span style={{overflow: "hidden", textOverflow: "ellipsis"}}>Te faltan</span>
-                          </span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: "#FFF", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>S/ {formatMoney(faltan).replace("S/ ", "")}</span>
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
-                          <span style={{ fontSize: 11, color: "#999", display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                            <Calendar size={14} color="#10B981" style={{flexShrink: 0}} /> 
-                            <span style={{overflow: "hidden", textOverflow: "ellipsis"}}>Fecha límite</span>
-                          </span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: "#FFF", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{fechaStr}</span>
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
-                          <span style={{ fontSize: 11, color: "#999", display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                            <Clock size={14} color="#F59E0B" style={{flexShrink: 0}} /> 
-                            <span style={{overflow: "hidden", textOverflow: "ellipsis"}}>Llegarás en</span>
-                          </span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: "#FFF", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{diasRestantes > 0 ? `${diasRestantes} días` : "—"}</span>
-                        </div>
-                      </div>
-                      
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); setAporteMetaId(meta.id); setShowAporteModal(true); }} 
-                        style={{ width: "100%", background: "#10B981", color: "#FFF", padding: "14px", borderRadius: 12, border: "none", fontSize: 15, fontWeight: 700, cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: 8, boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)" }}
-                      >
-                        <PlusCircle size={18} /> Aportar a esta meta
-                      </button>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-          {/* PUNTITOS INDICADORES */}
-          {listaMetas.length > 1 && (
-            <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 4, marginBottom: 20 }}>
-              {listaMetas.map((_, idx) => (<div key={idx} style={{ width: activeIndex === idx ? 18 : 8, height: 8, borderRadius: 4, background: activeIndex === idx ? "#10B981" : (isDark ? "#333" : "#E5E7EB"), transition: "all 0.3s ease" }} />))}
-            </div>
-          )}
-        </>
+        <CarruselMetas 
+          listaMetas={listaMetas} c={c} s={s} isDark={isDark} 
+          setAporteMetaId={setAporteMetaId} setShowAporteModal={setShowAporteModal} 
+          setMetaSeleccionada={setMetaSeleccionada} SAFE_PASTEL={SAFE_PASTEL}
+        />
       )}
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, marginTop: listaMetas.length <= 1 ? 8 : 0 }}>
         <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0, color: c.text }}>Resumen de hoy</h3>
       </div>
+
       <div style={s.grid2}>
         <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 0 }}><IconBadge emoji={<ArrowDownToLine size={18} />} bg={c.iconBgGreen} color={c.green} /><span style={{ fontSize: 13, fontWeight: 500, color: c.muted }}>Ingresos hoy</span></div>
@@ -229,9 +60,9 @@ export default function TabInicio({
         </div>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 0, marginBottom: 12 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 24, marginBottom: 12 }}>
         <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0, color: c.text }}>Últimos movimientos</h3>
-        <button onClick={() => { setViewAll(true); window.scrollTo(0, 0); }} style={{ background: "none", border: "none", color: c.muted, fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>Ver todos</button>
+        <button onClick={() => setViewAll(true)} style={{ background: "none", border: "none", color: c.muted, fontWeight: 600, fontSize: 14, cursor: "pointer" }}>Ver todos</button>
       </div>
 
       {movimientosHoy.length > 0 ? (
@@ -239,51 +70,27 @@ export default function TabInicio({
           {movimientosHoy.map((g, i, arr) => {
             const isAporte = g.tipo === "aporte";
             const cat = isAporte ? null : categorias.find(c => c.id === g.categoria);
-            const descAdicional = (!isAporte && g.descripcion && cat && g.descripcion !== getTexto(cat.label)) ? g.descripcion : "";
-
-            let iconBg = isDark ? "rgba(255,255,255,0.05)" : "#E5E7EB";
-            let montoColor = c.text;
-            let iconColor = c.muted;
-
-            if (isAporte) {
-              iconBg = isDark ? "rgba(16,185,129,0.15)" : "#D1FAE5";
-              montoColor = c.green;
-              iconColor = c.green;
-            } else if (g.tipo === "gasto") {
-              iconBg = isDark ? "rgba(239,68,68,0.15)" : "#FEE2E2";
-              montoColor = c.red;
-              iconColor = c.red;
-            } else if (g.tipo === "ingreso") {
-              iconBg = isDark ? "rgba(255,255,255,0.1)" : "#F3F4F6";
-              iconColor = isDark ? "#D1D5DB" : "#4B5563";
-              montoColor = c.text;
-            }
+            let iconBg = isAporte ? c.iconBgGreen : (g.tipo === "gasto" ? c.iconBgRed : "rgba(255,255,255,0.05)");
+            let iconColor = isAporte ? c.green : (g.tipo === "gasto" ? c.red : c.muted);
 
             return (
-              <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: i === arr.length - 1 ? "none" : `1px solid ${c.border}`, height: 72, boxSizing: "border-box" }}>
+              <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: i === arr.length - 1 ? "none" : `1px solid ${c.border}`, height: 72 }}>
                 <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 14 }}>
                   <div style={{ width: 44, height: 44, borderRadius: 14, background: iconBg, color: iconColor, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    {isAporte ? <PiggyBank size={24} strokeWidth={2} /> : getIcono(cat ? cat.label : (g.descripcion || "?"))}
+                    {isAporte ? <PiggyBank size={24} /> : getIcono(cat ? cat.label : (g.descripcion || "?"))}
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2, color: c.text, textDecoration: (!cat && !isAporte) ? "line-through" : "none" }}>
-                      {isAporte ? g.descripcion : (cat ? getTexto(cat.label) : g.descripcion)}
-                      {cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 500, textDecoration: "none" }}>{descAdicional}</span>}
-                    </div>
-                    <div style={{ fontSize: 12, fontWeight: 500, color: c.muted }}>{getUIFechaHora(g.created_at)}</div>
+                    <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: c.text }}>{isAporte ? g.descripcion : (cat ? getTexto(cat.label) : g.descripcion)}</div>
+                    <div style={{ fontSize: 12, color: c.muted }}>{getUIFechaHora(g.created_at)}</div>
                   </div>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <span style={{ fontSize: 16, fontWeight: 600, color: montoColor, marginRight: 4 }}>
-                    {g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}
-                  </span>
-                </div>
+                <span style={{ fontSize: 16, fontWeight: 600, color: g.tipo === "gasto" ? c.red : c.green }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
               </div>
             );
           })}
         </div>
       ) : (
-        <div style={{ ...s.card, textAlign: "center", color: c.muted, padding: "24px 0", fontWeight: 500 }}>Aún no hay movimientos hoy</div>
+        <div style={{ ...s.card, textAlign: "center", color: c.muted, padding: "24px 0" }}>Aún no hay movimientos hoy</div>
       )}
     </div>
   );
