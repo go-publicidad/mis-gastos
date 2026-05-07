@@ -43,12 +43,15 @@ export default function useMisGastos() {
       if (err2) throw err2;
 
       if (cfg) {
+        // SOLUCIÓN: Buscamos primero la llave segura con el ID del usuario
         const getVal = (k) => {
-          const valNuevo = cfg.find(item => item.key === k);
-          if (valNuevo) return valNuevo.value;
-          const valViejo = cfg.find(item => item.key === `${usuario.id}_${k}`);
-          return valViejo?.value;
+          const valSeguro = cfg.find(item => item.key === `${usuario.id}_${k}`);
+          if (valSeguro) return valSeguro.value;
+          // Respaldo temporal por si se guardó algo sin ID recientemente
+          const valTemporal = cfg.find(item => item.key === k);
+          return valTemporal?.value;
         };
+        
         if (getVal("themePref")) { setTheme(getVal("themePref")); localStorage.setItem("themePref", getVal("themePref")); }
         if (getVal("useBoldPref")) setUseBold(getVal("useBoldPref") === "true");
         if (getVal("userName")) setUserName(getVal("userName"));
@@ -66,9 +69,10 @@ export default function useMisGastos() {
 
   const guardarConfig = async (key, value) => {
     setSaving(true);
-    // AQUÍ ESTÁ EL ARREGLO: Se solucionó el conflicto de la llave primaria en la base de datos
+    // SOLUCIÓN: Guardamos siempre usando el ID de usuario como candado de seguridad
+    const llaveSegura = `${usuario.id}_${key}`;
     const { error } = await supabase.from("config").upsert(
-      [{ user_id: usuario.id, key, value: typeof value === 'string' ? value : JSON.stringify(value) }], 
+      [{ user_id: usuario.id, key: llaveSegura, value: typeof value === 'string' ? value : JSON.stringify(value) }], 
       { onConflict: "key" }
     );
     setSaving(false);
