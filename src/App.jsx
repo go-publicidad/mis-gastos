@@ -25,6 +25,9 @@ import TabReportes from "./components/TabReportes";
 import TabPresupuesto from "./components/TabPresupuesto";
 import TabMetas from "./components/TabMetas";
 
+// AÑADE ESTA LÍNEA AQUÍ 👇
+import PantallaMovimientos from "./components/PantallaMovimientos";
+
 import useMisGastos from "./hooks/useMisGastos";
 
 import { COLORES_CUSTOM, PASTEL_COLORS, CAT_ICONS } from "./constants";
