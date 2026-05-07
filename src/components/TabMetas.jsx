@@ -5,7 +5,6 @@ import { formatMoney, formatFecha, diffDias, hoy } from "../utils";
 export default function TabMetas({
   c, s, isDark, listaMetas, setMetaSeleccionada, setIsEditingMetaObj, setMetaForm, setShowCrearMeta
 }) {
-  // Colores pastel para el fondo de los íconos
   const SAFE_PASTEL = ['#F3E8FF', '#DBEAFE', '#D1FAE5', '#FEF3C7', '#FCE7F3'];
 
   return (
@@ -33,15 +32,21 @@ export default function TabMetas({
             diasRestantes = diffDias(hoy(), meta.fechaLimite);
           }
           
-          // Asigna un color pastel basado en la longitud del nombre
           const bgIconColor = SAFE_PASTEL[Math.abs((meta.nombre || "").length) % SAFE_PASTEL.length];
 
           return (
-            <div 
+            // 👇 SOLUCIÓN: Convertido a <button> nativo para forzar el registro del toque móvil 👇
+            <button 
               key={meta.id} 
-              style={{ ...s.card, cursor: "pointer", padding: "20px", marginBottom: 16, position: "relative", WebkitTapHighlightColor: "transparent" }}
-              // 👇 AQUÍ ESTÁ LA MAGIA QUE FALTABA 👇
-              onClick={() => setMetaSeleccionada(meta)}
+              style={{ ...s.card, cursor: "pointer", padding: "20px", marginBottom: 16, position: "relative", WebkitTapHighlightColor: "transparent", WebkitAppearance: "none", border: `1px solid ${c.border}`, textAlign: "left", display: "block", fontFamily: "inherit" }}
+              onClick={(e) => {
+                e.preventDefault();
+                if (setMetaSeleccionada) {
+                  setMetaSeleccionada(meta);
+                } else {
+                  console.error("Error: setMetaSeleccionada no está conectado");
+                }
+              }}
             >
               <div style={{ display: "flex", gap: 16, alignItems: "flex-start", marginBottom: 16 }}>
                 <div style={{ width: 56, height: 56, borderRadius: "50%", background: bgIconColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, flexShrink: 0 }}>
@@ -58,7 +63,6 @@ export default function TabMetas({
                 </div>
               </div>
 
-              {/* FLECHITA INDICADORA DE CLIC */}
               <div style={{ position: "absolute", top: 36, right: 20, color: c.muted }}>
                 <ChevronRight size={20} />
               </div>
@@ -78,7 +82,7 @@ export default function TabMetas({
                   <Clock size={14} /> {diasRestantes > 0 ? `En ${diasRestantes} días` : "—"}
                 </div>
               </div>
-            </div>
+            </button>
           );
         })
       )}
