@@ -21,7 +21,6 @@ export default function useMisGastos() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
-  // 1. AUTENTICACIÓN
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUsuario(session?.user ?? null);
@@ -33,7 +32,6 @@ export default function useMisGastos() {
 
   const cerrarSesion = async () => await supabase.auth.signOut();
 
-  // 2. CARGA DE DATOS AL ENTRAR
   const loadData = async () => {
     if (!usuario?.id) return;
     try {
@@ -66,10 +64,13 @@ export default function useMisGastos() {
 
   useEffect(() => { if (usuario) loadData(); }, [usuario]);
 
-  // 3. COMANDOS DIRECTOS A BASE DE DATOS
   const guardarConfig = async (key, value) => {
     setSaving(true);
-    const { error } = await supabase.from("config").upsert([{ user_id: usuario.id, key, value: typeof value === 'string' ? value : JSON.stringify(value) }], { onConflict: "user_id, key" });
+    // AQUÍ ESTÁ EL ARREGLO: Se solucionó el conflicto de la llave primaria en la base de datos
+    const { error } = await supabase.from("config").upsert(
+      [{ user_id: usuario.id, key, value: typeof value === 'string' ? value : JSON.stringify(value) }], 
+      { onConflict: "key" }
+    );
     setSaving(false);
     return { error };
   };
