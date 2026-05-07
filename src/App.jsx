@@ -181,6 +181,7 @@ export default function App() {
     setIsClosing(screenName);
     setTimeout(() => {
       if (action) action();
+      else if (screenName === 'detalleMeta') setMetaSeleccionada(null);
       else if (screenName === 'detalleCat') setCatPresupSelec(null);
       else if (screenName === 'resumenMes') setResumenMes(null);
       setIsClosing(""); setShowMetaMenu(false);
@@ -396,6 +397,7 @@ export default function App() {
   };
 
   const userInitials = userName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'PF';
+
   if (verificandoSesion) return (<div style={{ background: "#0A0A0A", height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}><div style={{ width: 32, height: 32, border: "2px solid #1E1E1E", borderTop: "2px solid #FF803C", borderRadius: "50%", animation: "spin 1s linear infinite" }} /><style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style></div>);
   if (!usuario) return <Auth />;
   if (!loaded) return (<div style={{ background: c.bg, height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}><div style={{ width: 32, height: 32, border: `2px solid ${c.border}`, borderTop: "2px solid #FF803C", borderRadius: "50%", animation: "spin 1s linear infinite" }} /><span style={{ color: c.muted, fontSize: 14, fontFamily: "'Montserrat', sans-serif" }}>Cargando datos...</span></div>);
@@ -439,7 +441,7 @@ export default function App() {
                     <input type="date" value={vtFechaHasta} onChange={e => setVtFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: vtFechaHasta ? c.text : "transparent", position: "relative", zIndex: 1 }} />
                   </div>
                 </div>
-                {(vtFechaDesde || vtFechaHasta) && (<button style={{ width: "100%", fontSize: 14, fontWeight: 600, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", padding: "12px 0 0", marginTop: 4, fontFamily: "inherit" }} onClick={() => { setVtFechaDesde(""); setVtFechaHasta(""); }}><X size={14} style={{ marginRight: 4, verticalAlign: "middle" }} /> Limpiar fechas</button>)}
+                {(vtFechaDesde || vtFechaHasta) && (<button style={{ width: "100%", fontSize: 14, fontWeight: 600, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", padding: "12px 0 0", marginTop: 4, fontFamily: "inherit" }} onClick={() => { setVtFechaDesde(""); setVtFechaHasta(""); }}>Limpiar fechas</button>)}
               </div>
             )}
             <div style={{ ...s.label, textAlign: "center", marginBottom: 12 }}>{gastosVerTodos.length} movimientos</div>
@@ -459,11 +461,9 @@ export default function App() {
                   </div>
                   <div onTouchStart={(e) => handleSwipeStart(g.id, e)} onTouchMove={(e) => handleSwipeMove(g.id, e)} onTouchEnd={handleSwipeEnd} style={{ position: "absolute", inset: 0, background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: "0 16px", display: "flex", alignItems: "center", justifyContent: "space-between", transform: isCurrentSwiped ? `translateX(${currentSwipeX}px)` : "translateX(0)", transition: isSwiping && isCurrentSwiped ? "none" : "transform 0.3s ease", zIndex: 2, touchAction: "pan-y" }} >
                     <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12 }}>
-                      <div style={{ width: 44, height: 44, borderRadius: 14, background: iconBg, color: iconColor, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        {isAporte ? <PiggyBank size={24} strokeWidth={2} /> : getIcono(cat ? cat.label : (g.descripcion || "?"))}
-                      </div>
+                      <div style={{ width: 44, height: 44, borderRadius: 14, background: iconBg, color: iconColor, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{isAporte ? <PiggyBank size={24} /> : getIcono(cat ? cat.label : (g.descripcion || "?"))}</div>
                       <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2, color: c.text, textDecoration: (!cat && !isAporte) ? "line-through" : "none" }}>{isAporte ? g.descripcion : (cat ? getTexto(cat.label) : g.descripcion)}{cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 500, textDecoration: "none" }}>{descAdicional}</span>}{!cat && !isAporte && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 500, textDecoration: "none" }}>(Eliminado)</span>}</div>
+                        <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2, color: c.text }}>{isAporte ? g.descripcion : (cat ? getTexto(cat.label) : g.descripcion)}{cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6 }}>{descAdicional}</span>}</div>
                         <div style={{ fontSize: 12, fontWeight: 500, color: c.muted }}>{getUIFechaHora(g.created_at)}</div>
                       </div>
                     </div>
@@ -479,17 +479,16 @@ export default function App() {
           <div style={{ padding: "calc(12px + env(safe-area-inset-top, 0px)) 20px 12px", background: tab === "hoy" ? c.bg : c.card, borderBottom: tab === "hoy" ? "none" : `1px solid ${c.border}`, position: "fixed", top: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, zIndex: 110, boxSizing: "border-box" }}>
             <div style={{ display: "flex", justifyContent: tab === "hoy" ? "space-between" : "center", alignItems: "center" }}>
               {tab === "hoy" ? (
-                <><div style={{ display: "flex", alignItems: "center", gap: 16 }}><button onClick={() => setShowMenu(true)} style={{ background: "none", border: "none", color: c.text, cursor: "pointer", padding: 0 }}><Menu size={28} /></button><h1 style={{ fontSize: 20, fontWeight: 600, color: c.text, margin: 0, lineHeight: 1.1 }}><span style={{ fontWeight: 500 }}>¡Hola</span><span style={{ fontWeight: 600 }}>, {userName}! 👋</span></h1></div>
+                <><div style={{ display: "flex", alignItems: "center", gap: 16 }}><button onClick={() => setShowMenu(true)} style={{ background: "none", border: "none", color: c.text, cursor: "pointer", padding: 0 }}><Menu size={28} /></button><h1 style={{ fontSize: 20, fontWeight: 600, color: c.text, margin: 0 }}>¡Hola, {userName}! 👋</h1></div>
                   <div style={{ position: "relative" }}><button onClick={() => setShowNovedades(true)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: c.green }}><Bell size={24} /></button><div style={{ position: "absolute", top: -2, right: -2, width: 8, height: 8, background: c.red, borderRadius: "50%", border: `2px solid ${c.bg}` }}></div></div></>
-              ) : (<h1 style={{ fontSize: 18, fontWeight: 700, color: c.text, margin: 0, lineHeight: 1.1 }}>{tab === "metas" ? "Mis Metas" : tab === "resumen" ? "Reportes" : "Presupuesto"}</h1>)}
+              ) : (<h1 style={{ fontSize: 18, fontWeight: 700, color: c.text, margin: 0 }}>{tab === "metas" ? "Mis Metas" : tab === "resumen" ? "Reportes" : "Presupuesto"}</h1>)}
             </div>
           </div>
-          {error && <div style={{ ...s.errorCard, marginTop: 80, position: "relative", zIndex: 20 }}><AlertTriangle size={16} style={{ verticalAlign: "middle", marginRight: 8 }} /> {error}</div>}
           {tab === "hoy" && (
             <>
-              <div style={{ position: "fixed", top: "calc(52px + env(safe-area-inset-top, 0px))", left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, height: 60, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 10, color: "#10B981", opacity: (isRefreshing || pullDistance > 0) ? 1 : 0, visibility: (isRefreshing || pullDistance > 0) ? "visible" : "hidden", pointerEvents: "none" }}>
+              <div style={{ position: "fixed", top: 60, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, height: 60, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 10, color: "#10B981", opacity: (isRefreshing || pullDistance > 0) ? 1 : 0, visibility: (isRefreshing || pullDistance > 0) ? "visible" : "hidden", pointerEvents: "none" }}>
                 <Loader2 size={24} style={{ animation: isRefreshing ? "spin 1s linear infinite" : "none", transform: isRefreshing ? "none" : `rotate(${pullDistance * 5}deg)` }} />
-                <span style={{ fontSize: 12, fontWeight: 600, marginTop: 4, opacity: Math.min(pullDistance / 50, 1), color: c.muted }}>Actualizando...</span>
+                <span style={{ fontSize: 12, fontWeight: 600, marginTop: 4, color: c.muted }}>Actualizando...</span>
               </div>
               <TabInicio c={c} s={s} isDark={isDark} listaMetas={listaMetas} setAporteMetaId={setAporteMetaId} setShowAporteModal={setShowAporteModal} setIsEditingMetaObj={setIsEditingMetaObj} setMetaForm={setMetaForm} setShowCrearMeta={setShowCrearMeta} setViewAll={setViewAll} movimientosHoy={movimientosHoy} totalIngresosHoy={totalIngresosHoy} totalGastadoHoy={totalGastadoHoy} presupuestoDiario={presupuestoDiario} categorias={categorias} setMetaSeleccionada={setMetaSeleccionada} isRefreshing={isRefreshing} pullDistance={pullDistance} handleTouchStart={handleTouchStartGlobal} handleTouchMove={handleTouchMoveGlobal} handleTouchEnd={handleTouchEndGlobal} />
             </>
@@ -498,12 +497,12 @@ export default function App() {
           {tab === "presupuesto" && <TabPresupuesto c={c} s={s} isDark={isDark} presupuestosMensuales={presupuestosMensuales} setPresupForm={setPresupForm} setShowCrearPresupuesto={setShowCrearPresupuesto} gastos={gastos} categorias={categorias} setCatPresupSelec={setCatPresupSelec} setShowHistorial={setShowHistorial} setShowPresupAnual={setShowPresupAnual} />}
           {tab === "metas" && <TabMetas c={c} s={s} isDark={isDark} listaMetas={listaMetas} setMetaSeleccionada={setMetaSeleccionada} setIsEditingMetaObj={setIsEditingMetaObj} setMetaForm={setMetaForm} setShowCrearMeta={setShowCrearMeta} />}
           <div style={s.navBar}>
-            {[{ id: "hoy", icon: <Home size={24} strokeWidth={2.5} />, label: "Inicio" }, { id: "resumen", icon: <PieChart size={24} strokeWidth={2.5} />, label: "Reportes" }].map(n => (
-              <button key={n.id} style={s.navBtn(tab === n.id)} onClick={() => setTab(n.id)}>{tab === n.id && <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 44, height: 3, background: "#FF803C", borderRadius: "0 0 4px 4px" }} />}<div style={{ marginBottom: -2 }}>{n.icon}</div><span style={{ fontFamily: "'Montserrat', sans-serif" }}>{n.label}</span></button>
+            {[{ id: "hoy", icon: <Home size={24} />, label: "Inicio" }, { id: "resumen", icon: <PieChart size={24} />, label: "Reportes" }].map(n => (
+              <button key={n.id} style={s.navBtn(tab === n.id)} onClick={() => setTab(n.id)}>{tab === n.id && <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 44, height: 3, background: "#FF803C", borderRadius: "0 0 4px 4px" }} />}<div>{n.icon}</div><span>{n.label}</span></button>
             ))}
-            <div style={{ width: 72, position: "relative", display: "flex", justifyContent: "center" }}><button style={s.fabCircle} onClick={() => setShowAddModal(true)}><Plus size={36} strokeWidth={2.5} color="#FFF" /></button></div>
-            {[{ id: "presupuesto", icon: <Wallet size={24} strokeWidth={2.5} />, label: "Presupuesto" }, { id: "metas", icon: <Target size={24} strokeWidth={2.5} />, label: "Metas" }].map(n => (
-              <button key={n.id} style={s.navBtn(tab === n.id)} onClick={() => setTab(n.id)}>{tab === n.id && <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 44, height: 3, background: "#FF803C", borderRadius: "0 0 4px 4px" }} />}<div style={{ marginBottom: -2 }}>{n.icon}</div><span style={{ fontFamily: "'Montserrat', sans-serif" }}>{n.label}</span></button>
+            <div style={{ width: 72, position: "relative", display: "flex", justifyContent: "center" }}><button style={s.fabCircle} onClick={() => setShowAddModal(true)}><Plus size={36} color="#FFF" /></button></div>
+            {[{ id: "presupuesto", icon: <Wallet size={24} />, label: "Presupuesto" }, { id: "metas", icon: <Target size={24} />, label: "Metas" }].map(n => (
+              <button key={n.id} style={s.navBtn(tab === n.id)} onClick={() => setTab(n.id)}>{tab === n.id && <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 44, height: 3, background: "#FF803C", borderRadius: "0 0 4px 4px" }} />}<div>{n.icon}</div><span>{n.label}</span></button>
             ))}
           </div>
         </>
@@ -536,7 +535,7 @@ export default function App() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}><h3 style={{ margin: 0, fontSize: 18, color: c.text, fontWeight: 700 }}>Aportar a la meta</h3><button onClick={() => setShowAporteModal(false)} style={{ background: "none", border: "none", color: c.muted, fontSize: 24, cursor: "pointer", padding: 0 }}>×</button></div>
             <div style={{ ...s.label, textAlign: "center", marginBottom: 12, color: c.muted }}>¿Cuánto deseas aportar?</div>
             <input autoFocus style={{ ...s.input, marginBottom: 24, fontSize: 36, textAlign: "center", fontWeight: 700, padding: "20px 10px", height: "auto", color: c.green }} type="number" placeholder="0.00" value={aporteMonto} onChange={e => setAporteMonto(e.target.value)} onKeyDown={e => e.key === "Enter" && procesarAporte()} />
-            <button style={{ ...s.btnPrimary, padding: "16px", background: c.green, boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)" }} onClick={procesarAporte} disabled={saving}>{saving ? "Procesando..." : "Confirmar Aporte"}</button>
+            <button style={{ ...s.btnPrimary, padding: "16px", background: c.green, boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)" }} onClick={procesarAporte} disabled={saving}>Confirmar Aporte</button>
           </div>
         </div>
       )}
@@ -557,7 +556,7 @@ export default function App() {
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}><button onClick={() => cerrarPantalla('datos', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button><h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Mis datos</h2></div>
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 32 }}><div style={{ width: 80, height: 80, borderRadius: "50%", background: "#FF803C", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, fontWeight: 700, color: "#FFF" }}>{userInitials}</div></div>
           <div style={{ marginBottom: 20 }}><div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Nombre completo</div><input style={s.input} value={userName} onChange={e => setUserName(e.target.value)} placeholder="Ej. Paul Flores" /></div>
-          <button style={s.btnPrimary} onClick={guardarPerfil} disabled={saving}>{saving ? "Guardando..." : "Guardar cambios"}</button>
+          <button style={s.btnPrimary} onClick={guardarPerfil} disabled={saving}>Guardar cambios</button>
         </div>
       )}
     </div>
