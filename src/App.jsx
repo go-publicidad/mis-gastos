@@ -108,7 +108,7 @@ export default function App() {
   const [touchStartX, setTouchStartX] = useState(0);
   const [touchStartY, setTouchStartY] = useState(0);
   const [currentSwipeX, setCurrentSwipeX] = useState(0);
-  const [swipeBaseX, setSwipeBaseX] = useState(0); 
+  const [swipeBaseX, setSwipeBaseX] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
 
   const handleSwipeStart = (id, e) => {
@@ -121,11 +121,11 @@ export default function App() {
     const diffX = e.touches[0].clientX - touchStartX;
     const diffY = e.touches[0].clientY - touchStartY;
     if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
-        setSwipedId(id);
-        let newX = swipeBaseX + diffX;
-        if (swipeBaseX < 0) newX = Math.min(0, newX);
-        if (swipeBaseX > 0) newX = Math.max(0, newX);
-        setCurrentSwipeX(Math.max(-85, Math.min(85, newX)));
+      setSwipedId(id);
+      let newX = swipeBaseX + diffX;
+      if (swipeBaseX < 0) newX = Math.min(0, newX);
+      if (swipeBaseX > 0) newX = Math.max(0, newX);
+      setCurrentSwipeX(Math.max(-85, Math.min(85, newX)));
     }
   };
   const handleSwipeEnd = () => {
@@ -216,7 +216,7 @@ export default function App() {
     }, 280);
   };
 
-  const loadData = async (isManual = false) => {
+ const loadData = async (isManual = false) => {
     if (!usuario?.id) return;
     try {
       const { data: movimientos, error: err1 } = await supabase.from("gastos").select("*").eq("user_id", usuario.id).order("created_at", { ascending: false });
@@ -227,7 +227,14 @@ export default function App() {
       if (err2) throw err2;
 
       if (cfg) {
-        const getVal = (k) => cfg.find(item => item.key === k || item.key === `${usuario.id}_${k}`)?.value;
+        // AQUÍ ESTÁ LA MAGIA: Prioridad a la llave limpia, ignorando el fantasma.
+        const getVal = (k) => {
+          const valorNuevo = cfg.find(item => item.key === k);
+          if (valorNuevo) return valorNuevo.value;
+          const valorViejo = cfg.find(item => item.key === `${usuario.id}_${k}`);
+          return valorViejo?.value;
+        };
+        
         if (getVal("themePref")) { setTheme(getVal("themePref")); localStorage.setItem("themePref", getVal("themePref")); }
         if (getVal("useBoldPref")) setUseBold(getVal("useBoldPref") === "true");
         if (getVal("userName")) setUserName(getVal("userName"));
@@ -301,20 +308,20 @@ export default function App() {
     const { error: err } = await supabase.from("gastos").delete().eq("id", g.id);
     if (err) return showToast("Error", c.red);
     if (g.tipo === "aporte") {
-        const metaNombre = g.descripcion.replace("Aporte a ", "").replace("Aporte inicial a ", "").trim();
-        const metaEncontrada = listaMetas.find(m => m.nombre === metaNombre);
-        if (metaEncontrada) {
-            const nuevasMetas = listaMetas.map(m => m.id === metaEncontrada.id ? { ...m, aporteInicial: Math.max(0, m.aporteInicial - g.monto) } : m);
-            setListaMetas(nuevasMetas);
-            await supabase.from("config").upsert([{ user_id: usuario.id, key: `listaMetas`, value: JSON.stringify(nuevasMetas) }], { onConflict: "user_id, key" });
-        }
+      const metaNombre = g.descripcion.replace("Aporte a ", "").replace("Aporte inicial a ", "").trim();
+      const metaEncontrada = listaMetas.find(m => m.nombre === metaNombre);
+      if (metaEncontrada) {
+        const nuevasMetas = listaMetas.map(m => m.id === metaEncontrada.id ? { ...m, aporteInicial: Math.max(0, m.aporteInicial - g.monto) } : m);
+        setListaMetas(nuevasMetas);
+        await supabase.from("config").upsert([{ user_id: usuario.id, key: `listaMetas`, value: JSON.stringify(nuevasMetas) }], { onConflict: "user_id, key" });
+      }
     }
     setGastos(prev => prev.filter(item => item.id !== g.id));
     showToast("Eliminado", c.muted); setSwipedId(null); setCurrentSwipeX(0);
   };
 
-  const abrirEdicion = (g) => { 
-    setEditando(g); 
+  const abrirEdicion = (g) => {
+    setEditando(g);
     setEditForm({ monto: g.monto, descripcion: g.descripcion, categoria: g.categoria, tipo: g.tipo });
     setSwipedId(null); setCurrentSwipeX(0);
   };
@@ -327,14 +334,14 @@ export default function App() {
     const { error: err } = await supabase.from("gastos").update(updates).eq("id", editando.id);
     if (err) { showToast("Error", c.red); setSaving(false); return; }
     if (editando.tipo === "aporte") {
-        const metaNombre = editando.descripcion.replace("Aporte a ", "").replace("Aporte inicial a ", "").trim();
-        const metaEncontrada = listaMetas.find(m => m.nombre === metaNombre);
-        if (metaEncontrada) {
-            const diff = montoNuevo - editando.monto;
-            const nuevasMetas = listaMetas.map(m => m.id === metaEncontrada.id ? { ...m, aporteInicial: Math.max(0, m.aporteInicial + diff) } : m);
-            setListaMetas(nuevasMetas);
-            await supabase.from("config").upsert([{ user_id: usuario.id, key: `listaMetas`, value: JSON.stringify(nuevasMetas) }], { onConflict: "user_id, key" });
-        }
+      const metaNombre = editando.descripcion.replace("Aporte a ", "").replace("Aporte inicial a ", "").trim();
+      const metaEncontrada = listaMetas.find(m => m.nombre === metaNombre);
+      if (metaEncontrada) {
+        const diff = montoNuevo - editando.monto;
+        const nuevasMetas = listaMetas.map(m => m.id === metaEncontrada.id ? { ...m, aporteInicial: Math.max(0, m.aporteInicial + diff) } : m);
+        setListaMetas(nuevasMetas);
+        await supabase.from("config").upsert([{ user_id: usuario.id, key: `listaMetas`, value: JSON.stringify(nuevasMetas) }], { onConflict: "user_id, key" });
+      }
     }
     setGastos(prev => prev.map(g => g.id === editando.id ? { ...g, ...updates } : g));
     setEditando(null); showToast("Actualizado ✓"); setSaving(false);
@@ -423,7 +430,7 @@ export default function App() {
         @keyframes spin { to { transform: rotate(360deg) } } @keyframes slideInFromLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } } @keyframes slideOutToLeft { from { transform: translateX(0); } to { transform: translateX(-100%); } } @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } } @keyframes slideDown { from { transform: translate(-50%, -100%); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
       `}</style>
       {toast && (<div style={{ position: "fixed", top: 40, left: "50%", transform: "translateX(-50%)", background: toast.color || "#333", color: "#FFF", padding: "12px 24px", borderRadius: 30, zIndex: 999999, fontWeight: 600, fontSize: 14, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", animation: "slideDown 0.3s ease-out", whiteSpace: "nowrap" }}>{toast.msg}</div>)}
-      
+
       {viewAll ? (
         <>
           <div style={{ padding: "calc(12px + env(safe-area-inset-top, 0px)) 20px 12px", borderBottom: `1px solid ${c.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: c.bg, position: "fixed", top: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, zIndex: 110, boxSizing: "border-box" }}>
@@ -459,8 +466,8 @@ export default function App() {
               return (
                 <div key={g.id} style={{ position: "relative", marginBottom: 10, borderRadius: 16, overflow: "hidden", height: 72 }}>
                   <div style={{ position: "absolute", inset: 0, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div onClick={() => abrirEdicion(g)} style={{ flex: 1, height: "100%", background: "#10B981", color: "#FFF", display: "flex", alignItems: "center", paddingLeft: 24, cursor: "pointer" }}><Edit2 size={24} /></div>
-                      <div onClick={() => eliminar(g)} style={{ flex: 1, height: "100%", background: c.red, color: "#FFF", display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 24, cursor: "pointer" }}><Trash2 size={24} /></div>
+                    <div onClick={() => abrirEdicion(g)} style={{ flex: 1, height: "100%", background: "#10B981", color: "#FFF", display: "flex", alignItems: "center", paddingLeft: 24, cursor: "pointer" }}><Edit2 size={24} /></div>
+                    <div onClick={() => eliminar(g)} style={{ flex: 1, height: "100%", background: c.red, color: "#FFF", display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 24, cursor: "pointer" }}><Trash2 size={24} /></div>
                   </div>
                   <div onTouchStart={(e) => handleSwipeStart(g.id, e)} onTouchMove={(e) => handleSwipeMove(g.id, e)} onTouchEnd={handleSwipeEnd} style={{ position: "absolute", inset: 0, background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: "0 16px", display: "flex", alignItems: "center", justifyContent: "space-between", transform: isCurrentSwiped ? `translateX(${currentSwipeX}px)` : "translateX(0)", transition: isSwiping && isCurrentSwiped ? "none" : "transform 0.3s ease", zIndex: 2, touchAction: "pan-y" }} >
                     <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12 }}>
@@ -529,7 +536,7 @@ export default function App() {
       {showMenu && profileScreen === "exportar" && <ExportarReportes c={c} s={s} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} exportFechaDesde={exportFechaDesde} setExportFechaDesde={setExportFechaDesde} exportFechaHasta={exportFechaHasta} setExportFechaHasta={setExportFechaHasta} exportEmail={exportEmail} setExportEmail={setExportEmail} gastos={gastos} categorias={categorias} showToast={showToast} />}
       {showMenu && profileScreen === "categorias" && <ConfigCategorias c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} safeBase={safeBase} safeExtra={safeExtra} abrirEditarCat={abrirEditarCat} eliminarCat={eliminarCat} abrirCrearCat={abrirCrearCat} />}
       {showMenu && profileScreen === "logros" && <MisLogros c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} listaMetas={listaMetas} gastos={gastos} userName={userName} />}
-      
+
       {showMenu && profileScreen === "ayuda" && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'ayuda' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 24, marginTop: 16 }}><button onClick={() => cerrarPantalla('ayuda', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button><h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 800 }}>Centro de ayuda</h2></div>
@@ -539,7 +546,7 @@ export default function App() {
           <button style={{ width: "100%", padding: "16px", background: "transparent", border: `1.5px solid ${c.border}`, borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 10, cursor: "pointer", color: "#FF803C", fontSize: 16, fontWeight: 700, fontFamily: "inherit" }}><Headphones size={20} /> Contactar soporte</button>
         </div>
       )}
-      
+
       {showAporteModal && (
         <div style={s.overlay} onClick={e => { if (e.target === e.currentTarget) setShowAporteModal(false); }}>
           <div style={{ ...s.modal, animation: "slideUp 0.3s ease-out" }}>
