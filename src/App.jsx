@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   Home, PieChart, Calendar, X, Bell, Target, Wallet, Menu, Loader2, Edit2, Trash2, AlertTriangle, Plus, ChevronRight, CheckCircle2, MoreVertical, ArrowLeft,
-  Search, Lightbulb, ArrowLeftRight, FileText, Shield, Headphones, PiggyBank
+  Search, Lightbulb, ArrowLeftRight, FileText, Shield, Headphones, PiggyBank, Book
 } from "lucide-react";
 
 import { supabase } from "./supabaseClient";
@@ -523,12 +523,11 @@ export default function App() {
       {resumenMes && <ModalResumenMensual c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} mes={resumenMes} presupuestosMensuales={presupuestosMensuales} gastos={gastos} categorias={categorias} setResumenMes={setResumenMes} />}
       {showPresupAnual && <ModalPresupuestoAnual c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} presupuestosMensuales={presupuestosMensuales} gastos={gastos} setShowPresupAnual={setShowPresupAnual} />}
       {showNovedades && <Novedades c={c} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setShowNovedades={setShowNovedades} />}
+
+      {/* SECCIÓN CATEGORÍAS PASANDO LAS FUNCIONES CORRECTAS */}
       {(showMenu || showApariencia) && <MenuPrincipal c={c} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setShowMenu={setShowMenu} setProfileScreen={setProfileScreen} setShowApariencia={setShowApariencia} cerrarSesion={cerrarSesion} />}
       {showMenu && profileScreen === "exportar" && <ExportarReportes c={c} s={s} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} exportFechaDesde={exportFechaDesde} setExportFechaDesde={setExportFechaDesde} exportFechaHasta={exportFechaHasta} setExportFechaHasta={setExportFechaHasta} exportEmail={exportEmail} setExportEmail={setExportEmail} gastos={gastos} categorias={categorias} showToast={showToast} />}
-      
-      {/* SECCIÓN CATEGORÍAS PASANDO LAS FUNCIONES CORRECTAS */}
       {showMenu && profileScreen === "categorias" && <ConfigCategorias c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} safeBase={safeBase} safeExtra={safeExtra} abrirEditarCat={abrirEditarCat} eliminarCat={eliminarCat} abrirCrearCat={abrirCrearCat} />}
-      
       {showMenu && profileScreen === "logros" && <MisLogros c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} listaMetas={listaMetas} gastos={gastos} userName={userName} />}
       
       {showMenu && profileScreen === "ayuda" && (
@@ -599,19 +598,7 @@ export default function App() {
         </div>
       )}
 
-      {showApariencia && (
-        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: isClosing === 'apariencia' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
-          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}><button onClick={() => cerrarPantalla('apariencia', () => { setShowApariencia(false); setShowMenu(true); })} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button><h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: "700" }}>Pantalla y brillo</h2></div>
-          <div style={{ fontSize: 14, color: c.muted, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 12, fontWeight: 700 }}>Aspecto</div>
-          <div style={{ background: c.card, borderRadius: 16, padding: "20px 20px 0", marginBottom: 24, border: `1px solid ${c.border}`, boxShadow: c.shadow }}>
-            <div style={{ display: "flex", justifyContent: "space-around", paddingBottom: 24 }}>
-              <div onClick={async () => { setTheme("light"); localStorage.setItem("themePref", "light"); showToast("Tema Claro guardado ✓"); await supabase.from("config").upsert([{ user_id: usuario.id, key: `themePref`, value: "light" }], { onConflict: "user_id, key" }); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer" }}><div style={{ width: 66, height: 130, borderRadius: 12, background: "#FFF", border: theme === "light" ? "3px solid #34C759" : "1px solid #CCC", position: "relative", overflow: "hidden" }}><div style={{ position: "absolute", top: 12, left: 6, right: 6, height: 24, background: "#E5E5E5", borderRadius: 4 }} /><div style={{ position: "absolute", top: 44, left: 6, right: 6, height: 18, background: "#E5E5E5", borderRadius: 4 }} /></div><span style={{ fontSize: 16, fontWeight: 600 }}>Claro</span><div style={{ width: 22, height: 22, borderRadius: "50%", border: theme === "light" ? "none" : `1px solid ${c.muted}`, background: theme === "light" ? "#34C759" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>{theme === "light" && <span style={{ color: "#FFF", fontSize: 14 }}>✓</span>}</div></div>
-              <div onClick={async () => { setTheme("dark"); localStorage.setItem("themePref", "dark"); showToast("Tema Oscuro guardado ✓"); await supabase.from("config").upsert([{ user_id: usuario.id, key: `themePref`, value: "dark" }], { onConflict: "user_id, key" }); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer" }}><div style={{ width: 66, height: 130, borderRadius: 12, background: "#111", border: theme === "dark" ? "3px solid #34C759" : "1px solid #444", position: "relative", overflow: "hidden" }}><div style={{ position: "absolute", top: 12, left: 6, right: 6, height: 24, background: "#333", borderRadius: 4 }} /><div style={{ position: "absolute", top: 44, left: 6, right: 6, height: 18, background: "#333", borderRadius: 4 }} /></div><span style={{ fontSize: 16, fontWeight: 600 }}>Oscuro</span><div style={{ width: 22, height: 22, borderRadius: "50%", border: theme === "dark" ? "none" : `1px solid ${c.muted}`, background: theme === "dark" ? "#34C759" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>{theme === "dark" && <span style={{ color: "#FFF", fontSize: 14 }}>✓</span>}</div></div>
-            </div>
-          </div>
-        </div>
-      )}
-
+      {/* PANTALLA MIS DATOS */}
       {showMenu && profileScreen === "datos" && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'datos' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
@@ -620,7 +607,19 @@ export default function App() {
           </div>
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 32 }}><div style={{ width: 80, height: 80, borderRadius: "50%", background: "#FF803C", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, fontWeight: 700, color: "#FFF" }}>{userInitials}</div></div>
           <div style={{ marginBottom: 20 }}><div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Nombre completo</div><input style={s.input} value={userName} onChange={e => setUserName(e.target.value)} placeholder="Ej. Paul Flores" /></div>
-          <button style={s.btnPrimary} onClick={guardarPerfil} disabled={saving}>Guardar cambios</button>
+          <div style={{ marginBottom: 32 }}><div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Correo electrónico</div><input style={{ ...s.input, opacity: 0.6 }} value={usuario?.email || "Cargando..."} disabled /><div style={{ fontSize: 12, color: c.muted, marginTop: 8, fontWeight: 400 }}>El correo está enlazado a tu cuenta de acceso.</div></div>
+          <button style={s.btnPrimary} onClick={guardarPerfil} disabled={saving}>{saving ? "Guardando..." : "Guardar cambios"}</button>
+        </div>
+      )}
+
+      {/* PANTALLA CAMBIAR CLAVE */}
+      {showMenu && profileScreen === "clave" && (
+        <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'clave' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}><button onClick={() => cerrarPantalla('clave', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button><h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Cambiar mi clave</h2></div>
+          <div style={{ marginBottom: 20 }}><div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Contraseña actual</div><input type="password" style={s.input} placeholder="••••••••" /></div>
+          <div style={{ marginBottom: 20 }}><div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Nueva contraseña</div><input type="password" style={s.input} placeholder="••••••••" /></div>
+          <div style={{ marginBottom: 32 }}><div style={{ fontSize: 13, fontWeight: 600, color: c.muted, marginBottom: 8 }}>Repetir nueva contraseña</div><input type="password" style={s.input} placeholder="••••••••" /></div>
+          <button style={s.btnPrimary} onClick={() => { showToast("Clave actualizada ✓", c.green); cerrarPantalla('clave', () => setProfileScreen(null)); }}>Actualizar clave</button>
         </div>
       )}
     </div>
