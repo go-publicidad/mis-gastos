@@ -4,7 +4,6 @@ import {
   Search, Lightbulb, ArrowLeftRight, FileText, Shield, Headphones, PiggyBank, Book
 } from "lucide-react";
 
-import { supabase } from "./supabaseClient";
 import Auth from "./Auth";
 import MenuPrincipal from "./components/MenuPrincipal";
 import Novedades from "./components/Novedades";
@@ -26,56 +25,30 @@ import TabReportes from "./components/TabReportes";
 import TabPresupuesto from "./components/TabPresupuesto";
 import TabMetas from "./components/TabMetas";
 
-import {
-  INGRESOS_DEFAULT, GASTOS_DEFAULT, METAS_INICIALES,
-  COLORES_CUSTOM, PASTEL_COLORS, CAT_ICONS
-} from "./constants";
-import {
-  hoy, formatMoney, getIcono, getTexto, formatFecha, getUIFechaHora, diffDias, getFechaLocal
-} from "./utils";
+// 👇 AQUÍ CONECTAMOS EL CEREBRO 👇
+import useMisGastos from "./hooks/useMisGastos";
+
+import { COLORES_CUSTOM, PASTEL_COLORS, CAT_ICONS } from "./constants";
+import { hoy, formatMoney, getIcono, getTexto, formatFecha, getUIFechaHora, diffDias } from "./utils";
 
 const SAFE_COLORES = (COLORES_CUSTOM && COLORES_CUSTOM.length > 0) ? COLORES_CUSTOM : ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'];
 const SAFE_CAT_ICONS = (CAT_ICONS && CAT_ICONS.length > 0) ? CAT_ICONS : ['📌', '🛒', '🚗', '🏠', '🎮', '🏥', '🎓', '✈️'];
 const SAFE_PASTEL = (PASTEL_COLORS && PASTEL_COLORS.length > 0) ? PASTEL_COLORS : ['#F3E8FF', '#DBEAFE', '#D1FAE5', '#FEF3C7', '#FCE7F3'];
 
 export default function App() {
-  const [usuario, setUsuario] = useState(null);
-  const [verificandoSesion, setVerificandoSesion] = useState(true);
+  
+  // EXTRAEMOS LA LÓGICA DESDE EL CUSTOM HOOK
+  const {
+    usuario, verificandoSesion, loaded, saving, error,
+    gastos, categoriasBase, categoriasExtra, listaMetas, presupuestosMensuales, userName, theme, useBold,
+    setCategoriasBase, setCategoriasExtra, setListaMetas, setPresupuestosMensuales, setUserName, setTheme,
+    loadData, cerrarSesion, guardarConfig, agregarGastoBD, actualizarGastoBD, eliminarGastoBD
+  } = useMisGastos();
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUsuario(session?.user ?? null);
-      setVerificandoSesion(false);
-    });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setUsuario(session?.user ?? null));
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const cerrarSesion = async () => await supabase.auth.signOut();
-
-  const [gastos, setGastos] = useState([]);
-  const [categoriasBase, setCategoriasBase] = useState(INGRESOS_DEFAULT);
-  const [categoriasExtra, setCategoriasExtra] = useState(GASTOS_DEFAULT);
-  const [listaMetas, setListaMetas] = useState(METAS_INICIALES);
-
-  const [presupuestosMensuales, setPresupuestosMensuales] = useState({});
-  const [showCrearPresupuesto, setShowCrearPresupuesto] = useState(false);
-  const [presupForm, setPresupForm] = useState({ periodo: hoy().slice(0, 7), categorias: {} });
-
-  const [catPresupSelec, setCatPresupSelec] = useState(null);
-  const [showHistorial, setShowHistorial] = useState(false);
-  const [resumenMes, setResumenMes] = useState(null);
-  const [showPresupAnual, setShowPresupAnual] = useState(false);
-
+  // ESTADOS PURAMENTE VISUALES (El Cuerpo)
   const [tab, setTab] = useState("hoy");
-  const [form, setForm] = useState({ monto: "", descripcion: "", categoria: GASTOS_DEFAULT[0]?.id || "", tipo: "gasto" });
-  const [userName, setUserName] = useState("Usuario");
-
-  const [loaded, setLoaded] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ monto: "", descripcion: "", categoria: categoriasExtra[0]?.id || "", tipo: "gasto" });
   const [toast, setToast] = useState(null);
-  const [error, setError] = useState(null);
-
   const [editando, setEditando] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [catForm, setCatForm] = useState({ visible: false, id: null, tipo: 'ingreso', nombre: '', icono: '📌', color: SAFE_COLORES[0] });
@@ -104,6 +77,16 @@ export default function App() {
   const [metaSeleccionada, setMetaSeleccionada] = useState(null);
   const [showMetaMenu, setShowMetaMenu] = useState(false);
 
+  const [showCrearPresupuesto, setShowCrearPresupuesto] = useState(false);
+  const [presupForm, setPresupForm] = useState({ periodo: hoy().slice(0, 7), categorias: {} });
+  const [catPresupSelec, setCatPresupSelec] = useState(null);
+  const [showHistorial, setShowHistorial] = useState(false);
+  const [resumenMes, setResumenMes] = useState(null);
+  const [showPresupAnual, setShowPresupAnual] = useState(false);
+
+  const [isClosing, setIsClosing] = useState("");
+
+  // Deslizamiento Movimientos
   const [swipedId, setSwipedId] = useState(null);
   const [touchStartX, setTouchStartX] = useState(0);
   const [touchStartY, setTouchStartY] = useState(0);
@@ -135,6 +118,7 @@ export default function App() {
     else setCurrentSwipeX(0);
   };
 
+  // Pull to refresh
   const [pullDistance, setPullDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [startYGlobal, setStartYGlobal] = useState(0);
@@ -160,15 +144,10 @@ export default function App() {
     setPullDistance(0); setStartYGlobal(0);
   };
 
-  const [theme, setTheme] = useState(localStorage.getItem("themePref") || "dark");
-  const [useBold, setUseBold] = useState(false);
-  const [isClosing, setIsClosing] = useState("");
-
   const safeBase = categoriasBase || [];
   const safeExtra = categoriasExtra || [];
   const categorias = [...safeBase, ...safeExtra];
   const isDark = theme === "dark";
-  const isModalOpen = showAddModal || !!editando || showCrearMeta || !!metaSeleccionada || showAporteModal || catForm.visible || showNovedades || showCrearPresupuesto || !!catPresupSelec || showHistorial || !!resumenMes || showPresupAnual;
 
   const c = {
     bg: isDark ? "#0A0A0A" : "#F4F5F7", card: isDark ? "#111111" : "#FFFFFF", text: isDark ? "#E8E0D0" : "#1A1A1A",
@@ -216,44 +195,18 @@ export default function App() {
     }, 280);
   };
 
-  const loadData = async (isManual = false) => {
-    if (!usuario?.id) return;
-    try {
-      const { data: movimientos, error: err1 } = await supabase.from("gastos").select("*").eq("user_id", usuario.id).order("created_at", { ascending: false });
-      if (err1) throw err1;
-      setGastos((movimientos || []).map(m => ({ ...m, fecha: getFechaLocal(m.created_at) })));
-
-      const { data: cfg, error: err2 } = await supabase.from("config").select("*").eq("user_id", usuario.id);
-      if (err2) throw err2;
-
-      if (cfg) {
-        const getVal = (k) => cfg.find(item => item.key === k || item.key === `${usuario.id}_${k}`)?.value;
-        if (getVal("themePref")) { setTheme(getVal("themePref")); localStorage.setItem("themePref", getVal("themePref")); }
-        if (getVal("useBoldPref")) setUseBold(getVal("useBoldPref") === "true");
-        if (getVal("userName")) setUserName(getVal("userName"));
-        if (getVal("categoriasCustom")) { try { const p = JSON.parse(getVal("categoriasCustom")); if (Array.isArray(p)) setCategoriasExtra(p); } catch (_) { } }
-        if (getVal("categoriasBase")) { try { const p = JSON.parse(getVal("categoriasBase")); if (Array.isArray(p)) setCategoriasBase(p); } catch (_) { } }
-        if (getVal("listaMetas")) { try { const p = JSON.parse(getVal("listaMetas")); if (Array.isArray(p)) setListaMetas(p); } catch (_) { } }
-        if (getVal("presupuestosMensuales")) { try { const p = JSON.parse(getVal("presupuestosMensuales")); if (p) setPresupuestosMensuales(p); } catch (_) { } }
-      }
-      setError(null);
-      if (isManual) showToast("Datos actualizados ✓", c.green);
-    } catch (e) { setError("No se pudo conectar al servidor."); }
-    setLoaded(true);
-  };
-
   useEffect(() => {
     let viewportMeta = document.querySelector("meta[name=viewport]");
     if (!viewportMeta) { viewportMeta = document.createElement("meta"); viewportMeta.name = "viewport"; document.head.appendChild(viewportMeta); }
     viewportMeta.setAttribute("content", "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0");
   }, []);
 
-  useEffect(() => { if (usuario) loadData(); }, [usuario]);
   useEffect(() => { window.scrollTo(0, 0); }, [tab]);
 
   const abrirCrearCat = (tipo) => setCatForm({ visible: true, id: null, tipo, nombre: "", icono: "📌", color: SAFE_COLORES[0] });
   const abrirEditarCat = (cat, tipo) => setCatForm({ visible: true, id: cat.id, tipo, nombre: getTexto(cat.label), icono: getIcono(cat.label), color: cat.color || SAFE_COLORES[0] });
 
+  // HANDLERS LIMPIOS (Utilizan las funciones de useMisGastos)
   const guardarCatForm = async () => {
     const nombre = catForm.nombre.trim();
     if (!nombre) return showToast("Escribe un nombre", c.red);
@@ -261,10 +214,14 @@ export default function App() {
     const esIngreso = catForm.tipo === 'ingreso';
     const arrayActual = esIngreso ? safeBase : safeExtra;
     let nuevoArray = catForm.id ? arrayActual.map(c => c.id === catForm.id ? { ...c, label: labelFinal, color: catForm.color } : c) : [...arrayActual, { id: (esIngreso ? "base_" : "custom_") + Date.now(), label: labelFinal, color: catForm.color }];
+    
     if (esIngreso) setCategoriasBase(nuevoArray); else setCategoriasExtra(nuevoArray);
-    setSaving(true);
-    await supabase.from("config").upsert([{ user_id: usuario.id, key: esIngreso ? `categoriasBase` : `categoriasCustom`, value: JSON.stringify(nuevoArray) }], { onConflict: "user_id, key" });
-    setSaving(false); showToast(catForm.id ? "Categoría actualizada ✓" : "Categoría creada ✓", c.green); setCatForm({ ...catForm, visible: false });
+    
+    const { error } = await guardarConfig(esIngreso ? `categoriasBase` : `categoriasCustom`, nuevoArray);
+    if (error) return showToast("Error al guardar", c.red);
+    
+    showToast(catForm.id ? "Categoría actualizada ✓" : "Categoría creada ✓", c.green); 
+    setCatForm({ ...catForm, visible: false });
   };
 
   const eliminarCat = async (id, tipo) => {
@@ -272,44 +229,46 @@ export default function App() {
     const esIngreso = tipo === 'ingreso'; const arrayActual = esIngreso ? safeBase : safeExtra;
     const nuevoArray = arrayActual.filter(c => c.id !== id);
     if (esIngreso) setCategoriasBase(nuevoArray); else setCategoriasExtra(nuevoArray);
-    setSaving(true);
-    await supabase.from("config").upsert([{ user_id: usuario.id, key: esIngreso ? `categoriasBase` : `categoriasCustom`, value: JSON.stringify(nuevoArray) }], { onConflict: "user_id, key" });
-    setSaving(false); showToast("Categoría eliminada", c.muted);
+    await guardarConfig(esIngreso ? `categoriasBase` : `categoriasCustom`, nuevoArray);
+    showToast("Categoría eliminada", c.muted);
   };
 
   const guardarPerfil = async () => {
-    setSaving(true);
-    await supabase.from("config").upsert([{ user_id: usuario.id, key: `userName`, value: userName }], { onConflict: "user_id, key" });
-    setSaving(false); showToast("Datos actualizados ✓", c.green); cerrarPantalla('datos', () => setProfileScreen(null));
+    await guardarConfig("userName", userName);
+    showToast("Datos actualizados ✓", c.green); 
+    cerrarPantalla('datos', () => setProfileScreen(null));
   };
 
   const agregarMovimiento = async () => {
     const monto = parseFloat(form.monto);
     if (!monto || monto <= 0) return showToast("Ingresa un monto válido", c.red);
-    setSaving(true);
     const catObj = categorias.find(cat => cat.id === form.categoria);
     const defaultDesc = catObj ? getTexto(catObj.label) : "Movimiento";
-    const nuevo = { user_id: usuario.id, fecha: hoy(), monto, descripcion: form.descripcion || defaultDesc, categoria: form.categoria, tipo: form.tipo };
-    const { data, error: err } = await supabase.from("gastos").insert([nuevo]).select();
-    if (err) { showToast("Error al guardar", c.red); setSaving(false); return; }
-    setGastos(prev => [{ ...data[0], fecha: getFechaLocal(data[0].created_at) }, ...prev]);
-    setForm(f => ({ ...f, monto: "", descripcion: "" })); showToast(`Registrado ✓`); setSaving(false); setShowAddModal(false);
+    
+    const nuevo = { monto, descripcion: form.descripcion || defaultDesc, categoria: form.categoria, tipo: form.tipo };
+    
+    const { error: err } = await agregarGastoBD(nuevo);
+    if (err) return showToast("Error al guardar", c.red);
+    
+    setForm(f => ({ ...f, monto: "", descripcion: "" })); 
+    showToast(`Registrado ✓`); 
+    setShowAddModal(false);
   };
 
   const eliminar = async (g) => {
     if (!window.confirm("¿Seguro que deseas eliminar este movimiento?")) { setSwipedId(null); setCurrentSwipeX(0); return; }
-    const { error: err } = await supabase.from("gastos").delete().eq("id", g.id);
+    const { error: err } = await eliminarGastoBD(g.id);
     if (err) return showToast("Error", c.red);
+    
     if (g.tipo === "aporte") {
         const metaNombre = g.descripcion.replace("Aporte a ", "").replace("Aporte inicial a ", "").trim();
         const metaEncontrada = listaMetas.find(m => m.nombre === metaNombre);
         if (metaEncontrada) {
             const nuevasMetas = listaMetas.map(m => m.id === metaEncontrada.id ? { ...m, aporteInicial: Math.max(0, m.aporteInicial - g.monto) } : m);
             setListaMetas(nuevasMetas);
-            await supabase.from("config").upsert([{ user_id: usuario.id, key: `listaMetas`, value: JSON.stringify(nuevasMetas) }], { onConflict: "user_id, key" });
+            guardarConfig("listaMetas", nuevasMetas);
         }
     }
-    setGastos(prev => prev.filter(item => item.id !== g.id));
     showToast("Eliminado", c.muted); setSwipedId(null); setCurrentSwipeX(0);
   };
 
@@ -322,10 +281,11 @@ export default function App() {
   const guardarEdicion = async () => {
     const montoNuevo = parseFloat(editForm.monto);
     if (!montoNuevo || montoNuevo <= 0) return showToast("Monto inválido", c.red);
-    setSaving(true);
+    
     const updates = { monto: montoNuevo, descripcion: editForm.descripcion, categoria: editForm.categoria, tipo: editForm.tipo };
-    const { error: err } = await supabase.from("gastos").update(updates).eq("id", editando.id);
-    if (err) { showToast("Error", c.red); setSaving(false); return; }
+    const { error: err } = await actualizarGastoBD(editando.id, updates);
+    if (err) return showToast("Error", c.red);
+    
     if (editando.tipo === "aporte") {
         const metaNombre = editando.descripcion.replace("Aporte a ", "").replace("Aporte inicial a ", "").trim();
         const metaEncontrada = listaMetas.find(m => m.nombre === metaNombre);
@@ -333,21 +293,19 @@ export default function App() {
             const diff = montoNuevo - editando.monto;
             const nuevasMetas = listaMetas.map(m => m.id === metaEncontrada.id ? { ...m, aporteInicial: Math.max(0, m.aporteInicial + diff) } : m);
             setListaMetas(nuevasMetas);
-            await supabase.from("config").upsert([{ user_id: usuario.id, key: `listaMetas`, value: JSON.stringify(nuevasMetas) }], { onConflict: "user_id, key" });
+            guardarConfig("listaMetas", nuevasMetas);
         }
     }
-    setGastos(prev => prev.map(g => g.id === editando.id ? { ...g, ...updates } : g));
-    setEditando(null); showToast("Actualizado ✓"); setSaving(false);
+    setEditando(null); showToast("Actualizado ✓");
   };
 
   const guardarPresupuesto = async () => {
     const totalAsignado = Object.values(presupForm.categorias).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
     if (totalAsignado <= 0) return showToast("Asigna un monto a al menos una categoría", c.red);
-    setSaving(true);
     const nuevosPresupuestos = { ...presupuestosMensuales, [presupForm.periodo]: { total: totalAsignado, categorias: presupForm.categorias } };
     setPresupuestosMensuales(nuevosPresupuestos);
-    await supabase.from("config").upsert([{ user_id: usuario.id, key: `presupuestosMensuales`, value: JSON.stringify(nuevosPresupuestos) }], { onConflict: "user_id, key" });
-    setSaving(false); showToast("Presupuesto guardado ✓", c.green); cerrarPantalla('crearPresupuesto', () => setShowCrearPresupuesto(false));
+    await guardarConfig("presupuestosMensuales", nuevosPresupuestos);
+    showToast("Presupuesto guardado ✓", c.green); cerrarPantalla('crearPresupuesto', () => setShowCrearPresupuesto(false));
   };
 
   const procesarNuevaMeta = async () => {
@@ -364,35 +322,37 @@ export default function App() {
       const nuevaMeta = { id: "meta_" + Date.now(), nombre: metaForm.nombre.trim(), montoObjetivo: parseFloat(metaForm.montoObjetivo), aporteInicial: aporteInicialVal, fechaLimite: metaForm.fechaLimite, prioridad: metaForm.prioridad, tipo: metaForm.tipo, icono: metaForm.icono };
       nuevasMetas = [nuevaMeta, ...listaMetas];
       if (aporteInicialVal > 0) {
-        const nuevoAporte = { user_id: usuario.id, fecha: hoy(), monto: aporteInicialVal, descripcion: `Aporte inicial a ${nuevaMeta.nombre}`, categoria: "meta_aporte", tipo: "aporte" };
-        const { data: dataAporte } = await supabase.from("gastos").insert([nuevoAporte]).select();
-        if (dataAporte) setGastos(prev => [{ ...dataAporte[0], fecha: getFechaLocal(dataAporte[0].created_at) }, ...prev]);
+        const nuevoAporte = { monto: aporteInicialVal, descripcion: `Aporte inicial a ${nuevaMeta.nombre}`, categoria: "meta_aporte", tipo: "aporte" };
+        await agregarGastoBD(nuevoAporte);
       }
       showToast("Meta guardada con éxito ✓", c.green);
     }
-    setListaMetas(nuevasMetas); setSaving(true);
-    await supabase.from("config").upsert([{ user_id: usuario.id, key: `listaMetas`, value: JSON.stringify(nuevasMetas) }], { onConflict: "user_id, key" });
-    setSaving(false); cerrarPantalla('crearMeta', () => { setShowCrearMeta(false); setIsEditingMetaObj(false); setMetaForm({ id: "", nombre: "", montoObjetivo: "", aporteInicial: "", fechaLimite: "", prioridad: "alta", tipo: "libre", icono: "💻" }); });
+    setListaMetas(nuevasMetas); 
+    await guardarConfig("listaMetas", nuevasMetas);
+    cerrarPantalla('crearMeta', () => { setShowCrearMeta(false); setIsEditingMetaObj(false); setMetaForm({ id: "", nombre: "", montoObjetivo: "", aporteInicial: "", fechaLimite: "", prioridad: "alta", tipo: "libre", icono: "💻" }); });
   };
 
   const eliminarMeta = async (id) => {
     if (!window.confirm("¿Estás seguro que deseas eliminar esta meta? Todo el progreso se perderá.")) return;
-    const nuevasMetas = listaMetas.filter(m => m.id !== id); setListaMetas(nuevasMetas); setSaving(true);
-    await supabase.from("config").upsert([{ user_id: usuario.id, key: `listaMetas`, value: JSON.stringify(nuevasMetas) }], { onConflict: "user_id, key" });
-    setSaving(false); showToast("Meta eliminada con éxito", c.muted); setShowMetaMenu(false); cerrarPantalla('detalleMeta', () => setMetaSeleccionada(null));
+    const nuevasMetas = listaMetas.filter(m => m.id !== id); setListaMetas(nuevasMetas);
+    await guardarConfig("listaMetas", nuevasMetas);
+    showToast("Meta eliminada con éxito", c.muted); setShowMetaMenu(false); cerrarPantalla('detalleMeta', () => setMetaSeleccionada(null));
   };
 
   const procesarAporte = async () => {
-    const monto = parseFloat(aporteMonto); if (!monto || monto <= 0) return showToast("Ingresa un monto válido", c.red); setSaving(true);
+    const monto = parseFloat(aporteMonto); if (!monto || monto <= 0) return showToast("Ingresa un monto válido", c.red); 
     const metaDestino = listaMetas.find(m => m.id === aporteMetaId);
-    const nuevo = { user_id: usuario.id, fecha: hoy(), monto, descripcion: `Aporte a ${metaDestino.nombre}`, categoria: "meta_aporte", tipo: "aporte" };
-    const { data, error: err } = await supabase.from("gastos").insert([nuevo]).select();
-    if (err) { showToast("Error al guardar", c.red); setSaving(false); return; }
-    setGastos(prev => [{ ...data[0], fecha: getFechaLocal(data[0].created_at) }, ...prev]);
+    const nuevo = { monto, descripcion: `Aporte a ${metaDestino.nombre}`, categoria: "meta_aporte", tipo: "aporte" };
+    
+    const { error: err } = await agregarGastoBD(nuevo);
+    if (err) return showToast("Error al guardar", c.red);
+    
     const nuevasMetas = listaMetas.map(m => m.id === aporteMetaId ? { ...m, aporteInicial: m.aporteInicial + monto } : m);
     setListaMetas(nuevasMetas);
-    await supabase.from("config").upsert([{ user_id: usuario.id, key: `listaMetas`, value: JSON.stringify(nuevasMetas) }], { onConflict: "user_id, key" });
-    showToast(`¡S/ ${monto} aportados a tu meta! 🎉`, c.green); setSaving(false); setShowAporteModal(false); setAporteMonto(""); setAporteMetaId(null);
+    await guardarConfig("listaMetas", nuevasMetas);
+    
+    showToast(`¡S/ ${monto} aportados a tu meta! 🎉`, c.green); 
+    setShowAporteModal(false); setAporteMonto(""); setAporteMetaId(null);
   };
 
   const fechaHoy = hoy(); const mesActualStr = fechaHoy.slice(0, 7);
@@ -531,10 +491,8 @@ export default function App() {
       {showPresupAnual && <ModalPresupuestoAnual c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} presupuestosMensuales={presupuestosMensuales} gastos={gastos} setShowPresupAnual={setShowPresupAnual} />}
       {showNovedades && <Novedades c={c} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setShowNovedades={setShowNovedades} />}
 
-      {/* MENÚ PRINCIPAL: Solo se dibuja cuando showMenu es verdaderamente true */}
       {showMenu && <MenuPrincipal c={c} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setShowMenu={setShowMenu} setProfileScreen={setProfileScreen} setShowApariencia={setShowApariencia} cerrarSesion={cerrarSesion} />}
       
-      {/* PANTALLAS SECUNDARIAS DEL MENÚ */}
       {profileScreen === "exportar" && <ExportarReportes c={c} s={s} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} exportFechaDesde={exportFechaDesde} setExportFechaDesde={setExportFechaDesde} exportFechaHasta={exportFechaHasta} setExportFechaHasta={setExportFechaHasta} exportEmail={exportEmail} setExportEmail={setExportEmail} gastos={gastos} categorias={categorias} showToast={showToast} />}
       {profileScreen === "categorias" && <ConfigCategorias c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} safeBase={safeBase} safeExtra={safeExtra} abrirEditarCat={abrirEditarCat} eliminarCat={eliminarCat} abrirCrearCat={abrirCrearCat} />}
       {profileScreen === "logros" && <MisLogros c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} listaMetas={listaMetas} gastos={gastos} userName={userName} />}
@@ -555,12 +513,11 @@ export default function App() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}><h3 style={{ margin: 0, fontSize: 18, color: c.text, fontWeight: 700 }}>Aportar a la meta</h3><button onClick={() => setShowAporteModal(false)} style={{ background: "none", border: "none", color: c.muted, fontSize: 24, cursor: "pointer", padding: 0 }}>×</button></div>
             <div style={{ ...s.label, textAlign: "center", marginBottom: 12, color: c.muted }}>¿Cuánto deseas aportar?</div>
             <input autoFocus style={{ ...s.input, marginBottom: 24, fontSize: 36, textAlign: "center", fontWeight: 700, padding: "20px 10px", height: "auto", color: c.green }} type="number" placeholder="0.00" value={aporteMonto} onChange={e => setAporteMonto(e.target.value)} onKeyDown={e => e.key === "Enter" && procesarAporte()} />
-            <button style={{ ...s.btnPrimary, padding: "16px", background: c.green, boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)" }} onClick={procesarAporte} disabled={saving}>Confirmar Aporte</button>
+            <button style={{ ...s.btnPrimary, padding: "16px", background: c.green, boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)" }} onClick={procesarAporte} disabled={saving}>{saving ? "Aportando..." : "Confirmar Aporte"}</button>
           </div>
         </div>
       )}
 
-      {/* DETALLE DE META PARA EDITAR Y ELIMINAR */}
       {metaSeleccionada && (() => {
         const obj = parseFloat(metaSeleccionada.montoObjetivo) || 1; const ahorrado = parseFloat(metaSeleccionada.aporteInicial) || 0;
         const faltan = Math.max(0, obj - ahorrado); const pct = Math.min(100, Math.round((ahorrado / obj) * 100));
@@ -596,7 +553,6 @@ export default function App() {
         );
       })()}
 
-      {/* FORMULARIO DE CATEGORÍAS */}
       {catForm.visible && (
         <div className="hide-scroll" style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10001, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}><button onClick={() => setCatForm({ ...catForm, visible: false })} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button><h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>{catForm.id ? "Editar categoría" : "Crear categoría"}</h2></div>
@@ -607,7 +563,6 @@ export default function App() {
         </div>
       )}
 
-      {/* APARIENCIA */}
       {(showApariencia || profileScreen === "apariencia") && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: isClosing === 'apariencia' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
@@ -617,14 +572,13 @@ export default function App() {
           <div style={{ fontSize: 14, color: c.muted, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 12, fontWeight: 700 }}>Aspecto</div>
           <div style={{ background: c.card, borderRadius: 16, padding: "20px 20px 0", marginBottom: 24, border: `1px solid ${c.border}`, boxShadow: c.shadow }}>
             <div style={{ display: "flex", justifyContent: "space-around", paddingBottom: 24 }}>
-              <div onClick={async () => { setTheme("light"); localStorage.setItem("themePref", "light"); showToast("Tema Claro guardado ✓"); await supabase.from("config").upsert([{ user_id: usuario.id, key: `themePref`, value: "light" }], { onConflict: "user_id, key" }); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer" }}><div style={{ width: 66, height: 130, borderRadius: 12, background: "#FFF", border: theme === "light" ? "3px solid #34C759" : "1px solid #CCC", position: "relative", overflow: "hidden" }}><div style={{ position: "absolute", top: 12, left: 6, right: 6, height: 24, background: "#E5E5E5", borderRadius: 4 }} /><div style={{ position: "absolute", top: 44, left: 6, right: 6, height: 18, background: "#E5E5E5", borderRadius: 4 }} /></div><span style={{ fontSize: 16, fontWeight: 600 }}>Claro</span><div style={{ width: 22, height: 22, borderRadius: "50%", border: theme === "light" ? "none" : `1px solid ${c.muted}`, background: theme === "light" ? "#34C759" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>{theme === "light" && <span style={{ color: "#FFF", fontSize: 14 }}>✓</span>}</div></div>
-              <div onClick={async () => { setTheme("dark"); localStorage.setItem("themePref", "dark"); showToast("Tema Oscuro guardado ✓"); await supabase.from("config").upsert([{ user_id: usuario.id, key: `themePref`, value: "dark" }], { onConflict: "user_id, key" }); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer" }}><div style={{ width: 66, height: 130, borderRadius: 12, background: "#111", border: theme === "dark" ? "3px solid #34C759" : "1px solid #444", position: "relative", overflow: "hidden" }}><div style={{ position: "absolute", top: 12, left: 6, right: 6, height: 24, background: "#333", borderRadius: 4 }} /><div style={{ position: "absolute", top: 44, left: 6, right: 6, height: 18, background: "#333", borderRadius: 4 }} /></div><span style={{ fontSize: 16, fontWeight: 600 }}>Oscuro</span><div style={{ width: 22, height: 22, borderRadius: "50%", border: theme === "dark" ? "none" : `1px solid ${c.muted}`, background: theme === "dark" ? "#34C759" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>{theme === "dark" && <span style={{ color: "#FFF", fontSize: 14 }}>✓</span>}</div></div>
+              <div onClick={async () => { setTheme("light"); localStorage.setItem("themePref", "light"); showToast("Tema Claro guardado ✓"); await guardarConfig("themePref", "light"); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer" }}><div style={{ width: 66, height: 130, borderRadius: 12, background: "#FFF", border: theme === "light" ? "3px solid #34C759" : "1px solid #CCC", position: "relative", overflow: "hidden" }}><div style={{ position: "absolute", top: 12, left: 6, right: 6, height: 24, background: "#E5E5E5", borderRadius: 4 }} /><div style={{ position: "absolute", top: 44, left: 6, right: 6, height: 18, background: "#E5E5E5", borderRadius: 4 }} /></div><span style={{ fontSize: 16, fontWeight: 600 }}>Claro</span><div style={{ width: 22, height: 22, borderRadius: "50%", border: theme === "light" ? "none" : `1px solid ${c.muted}`, background: theme === "light" ? "#34C759" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>{theme === "light" && <span style={{ color: "#FFF", fontSize: 14 }}>✓</span>}</div></div>
+              <div onClick={async () => { setTheme("dark"); localStorage.setItem("themePref", "dark"); showToast("Tema Oscuro guardado ✓"); await guardarConfig("themePref", "dark"); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, cursor: "pointer" }}><div style={{ width: 66, height: 130, borderRadius: 12, background: "#111", border: theme === "dark" ? "3px solid #34C759" : "1px solid #444", position: "relative", overflow: "hidden" }}><div style={{ position: "absolute", top: 12, left: 6, right: 6, height: 24, background: "#333", borderRadius: 4 }} /><div style={{ position: "absolute", top: 44, left: 6, right: 6, height: 18, background: "#333", borderRadius: 4 }} /></div><span style={{ fontSize: 16, fontWeight: 600 }}>Oscuro</span><div style={{ width: 22, height: 22, borderRadius: "50%", border: theme === "dark" ? "none" : `1px solid ${c.muted}`, background: theme === "dark" ? "#34C759" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>{theme === "dark" && <span style={{ color: "#FFF", fontSize: 14 }}>✓</span>}</div></div>
             </div>
           </div>
         </div>
       )}
 
-      {/* PANTALLA MIS DATOS */}
       {profileScreen === "datos" && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'datos' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
@@ -638,7 +592,6 @@ export default function App() {
         </div>
       )}
 
-      {/* PANTALLA CAMBIAR CLAVE */}
       {profileScreen === "clave" && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'clave' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}><button onClick={() => cerrarPantalla('clave', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button><h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Cambiar mi clave</h2></div>
@@ -648,7 +601,6 @@ export default function App() {
           <button style={s.btnPrimary} onClick={() => { showToast("Clave actualizada ✓", c.green); cerrarPantalla('clave', () => setProfileScreen(null)); }}>Actualizar clave</button>
         </div>
       )}
-
     </div>
   );
 }
