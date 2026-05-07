@@ -36,7 +36,8 @@ export default function TabInicio({
         </div>
       ) : (
         <>
-          <div className="hide-scroll" style={{ display: "flex", overflowX: "auto", scrollSnapType: "x mandatory", gap: 16, paddingBottom: 8, marginTop: 4, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }} onScroll={handleScroll}>
+          {/* SE ELIMINÓ EL 'GAP' Y SE AJUSTÓ EL CONTENEDOR */}
+          <div className="hide-scroll" style={{ display: "flex", overflowX: "auto", scrollSnapType: "x mandatory", paddingBottom: 8, marginTop: 4, WebkitOverflowScrolling: "touch", msOverflowStyle: "none", scrollbarWidth: "none" }} onScroll={handleScroll}>
             {listaMetas.map((meta, i) => {
               const obj = parseFloat(meta.montoObjetivo) || 1;
               const ahorrado = parseFloat(meta.aporteInicial) || 0;
@@ -46,7 +47,8 @@ export default function TabInicio({
               if (meta.fechaLimite) { fechaStr = formatFecha(meta.fechaLimite); diasRestantes = diffDias(hoy(), meta.fechaLimite); }
 
               return (
-                <div key={meta.id} style={{ minWidth: "100%", scrollSnapAlign: "center", flexShrink: 0 }}>
+                // SE AÑADIÓ SCROLL-SNAP-STOP Y MÁRGENES MANUALES PARA UN IMÁN PERFECTO
+                <div key={meta.id} style={{ minWidth: "100%", scrollSnapAlign: "center", scrollSnapStop: "always", flexShrink: 0, marginRight: i === listaMetas.length - 1 ? 0 : 16 }}>
                   <div 
                     style={{ ...s.sliderCard, cursor: "pointer", overflow: "hidden" }}
                     onClick={() => setMetaSeleccionada && setMetaSeleccionada(meta)}
