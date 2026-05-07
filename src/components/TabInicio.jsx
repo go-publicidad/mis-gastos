@@ -48,18 +48,17 @@ export default function TabInicio({
               return (
                 <div key={meta.id} style={{ minWidth: "100%", scrollSnapAlign: "center", flexShrink: 0 }}>
                   <div 
-                    style={{ ...s.sliderCard, cursor: "pointer" }}
+                    style={{ ...s.sliderCard, cursor: "pointer", overflow: "hidden" }}
                     onClick={() => setMetaSeleccionada && setMetaSeleccionada(meta)}
                   >
                     <div style={{ position: "absolute", top: 16, left: 20, background: i === 0 ? "rgba(168,85,247,0.2)" : (isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)"), color: i === 0 ? "#D8B4FE" : (isDark ? "#AAA" : "#666"), padding: "4px 10px", borderRadius: 12, fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>{i === 0 ? "★ Meta principal" : "Meta secundaria"}</div>
                     
-                    {/* ESTA ES LA ZONA ARREGLADA PARA EVITAR QUE SE CORTE EL LADO DERECHO */}
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 28, marginBottom: 16 }}>
                       <div style={{ minWidth: 0, flex: 1, paddingRight: 12 }}>
                         <div style={{ fontSize: 20, fontWeight: 700, color: "#FFF", marginBottom: 4, display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                           {meta.nombre} <span style={{ fontSize: 24, flexShrink: 0 }}>{meta.icono}</span>
                         </div>
-                        <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: 6, flexWrap: "wrap" }}>
                           <span style={{ fontSize: 20, fontWeight: 700, color: "#FFF" }}>S/ {formatMoney(ahorrado).replace("S/ ", "")}</span>
                           <span style={{ fontSize: 14, color: "#999", fontWeight: 500 }}>de S/ {formatMoney(obj).replace("S/ ", "")}</span>
                         </div>
@@ -68,14 +67,33 @@ export default function TabInicio({
                         <div style={{ position: "absolute", inset: 5, background: "#111", borderRadius: "50%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}><span style={{ fontSize: 16, fontWeight: 700, color: "#FFF" }}>{pct}%</span></div>
                       </div>
                     </div>
-                    {/* FIN DE ZONA ARREGLADA */}
 
                     <div style={{ background: "#333", borderRadius: 4, height: 6, marginBottom: 20, overflow: "hidden" }}><div style={{ height: "100%", width: `${pct}%`, background: "#10B981", borderRadius: 4 }}></div></div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 24 }}>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}><span style={{ fontSize: 12, color: "#999", display: "flex", alignItems: "center", gap: 4 }}><TrendingDown size={14} color="#10B981" /> Te faltan</span><span style={{ fontSize: 14, fontWeight: 600, color: "#FFF", paddingLeft: 18 }}>S/ {formatMoney(faltan).replace("S/ ", "")}</span></div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}><span style={{ fontSize: 12, color: "#999", display: "flex", alignItems: "center", gap: 4 }}><Calendar size={14} color="#10B981" /> Fecha límite</span><span style={{ fontSize: 14, fontWeight: 600, color: "#FFF", paddingLeft: 18 }}>{fechaStr}</span></div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}><span style={{ fontSize: 12, color: "#999", display: "flex", alignItems: "center", gap: 4 }}><Clock size={14} color="#F59E0B" /> Llegarás en</span><span style={{ fontSize: 14, fontWeight: 600, color: "#FFF", paddingLeft: 18 }}>{diasRestantes > 0 ? `${diasRestantes} días` : "—"}</span></div>
+                    
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 24, gap: 8 }}>
+                      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
+                        <span style={{ fontSize: 11, color: "#999", display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          <TrendingDown size={14} color="#10B981" style={{flexShrink: 0}} /> 
+                          <span style={{overflow: "hidden", textOverflow: "ellipsis"}}>Te faltan</span>
+                        </span>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: "#FFF", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>S/ {formatMoney(faltan).replace("S/ ", "")}</span>
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
+                        <span style={{ fontSize: 11, color: "#999", display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          <Calendar size={14} color="#10B981" style={{flexShrink: 0}} /> 
+                          <span style={{overflow: "hidden", textOverflow: "ellipsis"}}>Fecha límite</span>
+                        </span>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: "#FFF", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{fechaStr}</span>
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
+                        <span style={{ fontSize: 11, color: "#999", display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          <Clock size={14} color="#F59E0B" style={{flexShrink: 0}} /> 
+                          <span style={{overflow: "hidden", textOverflow: "ellipsis"}}>Llegarás en</span>
+                        </span>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: "#FFF", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{diasRestantes > 0 ? `${diasRestantes} días` : "—"}</span>
+                      </div>
                     </div>
+                    
                     <button 
                       onClick={(e) => { e.stopPropagation(); setAporteMetaId(meta.id); setShowAporteModal(true); }} 
                       style={{ width: "100%", background: "#10B981", color: "#FFF", padding: "14px", borderRadius: 12, border: "none", fontSize: 15, fontWeight: 700, cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: 8, boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)" }}
