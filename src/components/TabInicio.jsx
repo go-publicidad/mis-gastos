@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { ArrowDownToLine, ArrowUpFromLine, PiggyBank, Target, Calendar, Clock, TrendingDown, PlusCircle, Edit2, Trash2 } from "lucide-react";
-import { formatMoney, getTexto, getIcono, formatFecha, diffDias, hoy, getUIFechaHora } from "../utils";
+import { ArrowDownToLine, ArrowUpFromLine, PiggyBank, Target, Calendar, Clock, TrendingDown, PlusCircle } from "lucide-react";
+import { formatMoney, formatFecha, diffDias, hoy, getUIFechaHora, getIcono, getTexto } from "../utils";
 
 const IconBadge = ({ emoji, bg, color }) => (
   <div style={{ width: 32, height: 32, borderRadius: "50%", background: bg, color: color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>{emoji}</div>
@@ -49,7 +49,7 @@ export default function TabInicio({
                 <div key={meta.id} style={{ minWidth: "100%", scrollSnapAlign: "center", flexShrink: 0 }}>
                   <div 
                     style={{ ...s.sliderCard, cursor: "pointer" }}
-                    onClick={() => setMetaSeleccionada(meta)}
+                    onClick={() => setMetaSeleccionada && setMetaSeleccionada(meta)}
                   >
                     <div style={{ position: "absolute", top: 16, left: 20, background: i === 0 ? "rgba(168,85,247,0.2)" : (isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)"), color: i === 0 ? "#D8B4FE" : (isDark ? "#AAA" : "#666"), padding: "4px 10px", borderRadius: 12, fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>{i === 0 ? "★ Meta principal" : "Meta secundaria"}</div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 28, marginBottom: 16 }}>
@@ -95,11 +95,11 @@ export default function TabInicio({
       <div style={s.grid2}>
         <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 0 }}><IconBadge emoji={<ArrowDownToLine size={18} />} bg={c.iconBgGreen} color={c.green} /><span style={{ fontSize: 13, fontWeight: 500, color: c.muted }}>Ingresos hoy</span></div>
-          <div style={{ fontSize: 20, fontWeight: 600, color: c.green, textAlign: "center", marginTop: 0 }}>{formatMoney(totalIngresosHoy)}</div>
+          <div style={{ ...s.greenNum, textAlign: "center", marginTop: 0 }}>{formatMoney(totalIngresosHoy)}</div>
         </div>
         <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 0 }}><IconBadge emoji={<ArrowUpFromLine size={18} />} bg={c.iconBgRed} color={c.red} /><span style={{ fontSize: 13, fontWeight: 500, color: c.muted }}>Gastos hoy</span></div>
-          <div style={{ fontSize: 20, fontWeight: 600, color: c.red, textAlign: "center", marginTop: 0 }}>{formatMoney(totalGastadoHoy)}</div>
+          <div style={{ ...s.redNum, textAlign: "center", marginTop: 0 }}>{formatMoney(totalGastadoHoy)}</div>
         </div>
         <div style={{ ...s.card, padding: "16px 12px", marginBottom: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 0 }}><IconBadge emoji={<PiggyBank size={18} />} bg={c.iconBgOrange} color="#FF803C" /><span style={{ fontSize: 13, fontWeight: 500, color: c.muted }}>Ahorro hoy</span></div>
