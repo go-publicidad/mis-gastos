@@ -35,7 +35,7 @@ const SAFE_CAT_ICONS = (CAT_ICONS && CAT_ICONS.length > 0) ? CAT_ICONS : ['📌'
 const SAFE_PASTEL = (PASTEL_COLORS && PASTEL_COLORS.length > 0) ? PASTEL_COLORS : ['#F3E8FF', '#DBEAFE', '#D1FAE5', '#FEF3C7', '#FCE7F3'];
 
 export default function App() {
-  
+
   const {
     usuario, verificandoSesion, loaded, saving, error,
     gastos, categoriasBase, categoriasExtra, listaMetas, presupuestosMensuales, userName, theme, useBold,
@@ -87,7 +87,7 @@ export default function App() {
   const [touchStartX, setTouchStartX] = useState(0);
   const [touchStartY, setTouchStartY] = useState(0);
   const [currentSwipeX, setCurrentSwipeX] = useState(0);
-  const [swipeBaseX, setSwipeBaseX] = useState(0); 
+  const [swipeBaseX, setSwipeBaseX] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
 
   const handleSwipeStart = (id, e) => {
@@ -100,11 +100,11 @@ export default function App() {
     const diffX = e.touches[0].clientX - touchStartX;
     const diffY = e.touches[0].clientY - touchStartY;
     if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
-        setSwipedId(id);
-        let newX = swipeBaseX + diffX;
-        if (swipeBaseX < 0) newX = Math.min(0, newX);
-        if (swipeBaseX > 0) newX = Math.max(0, newX);
-        setCurrentSwipeX(Math.max(-85, Math.min(85, newX)));
+      setSwipedId(id);
+      let newX = swipeBaseX + diffX;
+      if (swipeBaseX < 0) newX = Math.min(0, newX);
+      if (swipeBaseX > 0) newX = Math.max(0, newX);
+      setCurrentSwipeX(Math.max(-85, Math.min(85, newX)));
     }
   };
   const handleSwipeEnd = () => {
@@ -199,7 +199,7 @@ export default function App() {
   useEffect(() => { window.scrollTo(0, 0); }, [tab]);
 
   const abrirCrearCat = (tipo) => setCatForm({ visible: true, id: null, tipo, nombre: "", icono: "📌", color: SAFE_COLORES[0] });
-  
+
   const abrirEditarCat = (cat, tipo) => {
     let iconoExtraido = getIcono(cat.label);
     if (typeof iconoExtraido !== 'string') iconoExtraido = '📌';
@@ -213,13 +213,13 @@ export default function App() {
     const esIngreso = catForm.tipo === 'ingreso';
     const arrayActual = esIngreso ? safeBase : safeExtra;
     let nuevoArray = catForm.id ? arrayActual.map(c => c.id === catForm.id ? { ...c, label: labelFinal, color: catForm.color } : c) : [...arrayActual, { id: (esIngreso ? "base_" : "custom_") + Date.now(), label: labelFinal, color: catForm.color }];
-    
+
     if (esIngreso) setCategoriasBase(nuevoArray); else setCategoriasExtra(nuevoArray);
-    
+
     const { error } = await guardarConfig(esIngreso ? `categoriasBase` : `categoriasCustom`, nuevoArray);
     if (error) return showToast("Error al guardar", c.red);
-    
-    showToast(catForm.id ? "Categoría actualizada ✓" : "Categoría creada ✓", c.green); 
+
+    showToast(catForm.id ? "Categoría actualizada ✓" : "Categoría creada ✓", c.green);
     setCatForm({ ...catForm, visible: false });
   };
 
@@ -228,18 +228,18 @@ export default function App() {
     const esIngreso = tipo === 'ingreso'; const arrayActual = esIngreso ? safeBase : safeExtra;
     const nuevoArray = arrayActual.filter(c => c.id !== id);
     if (esIngreso) setCategoriasBase(nuevoArray); else setCategoriasExtra(nuevoArray);
-    
+
     const { error } = await guardarConfig(esIngreso ? `categoriasBase` : `categoriasCustom`, nuevoArray);
     if (error) return showToast("Error al eliminar", c.red);
-    
+
     showToast("Categoría eliminada", c.muted);
   };
 
   const guardarPerfil = async () => {
     const { error } = await guardarConfig("userName", userName);
     if (error) return showToast("Error al guardar", c.red);
-    
-    showToast("Datos actualizados ✓", c.green); 
+
+    showToast("Datos actualizados ✓", c.green);
     cerrarPantalla('datos', () => setProfileScreen(null));
   };
 
@@ -248,14 +248,14 @@ export default function App() {
     if (!monto || monto <= 0) return showToast("Ingresa un monto válido", c.red);
     const catObj = categorias.find(cat => cat.id === form.categoria);
     const defaultDesc = catObj ? getTexto(catObj.label) : "Movimiento";
-    
+
     const nuevo = { monto, descripcion: form.descripcion || defaultDesc, categoria: form.categoria, tipo: form.tipo };
-    
+
     const { error: err } = await agregarGastoBD(nuevo);
     if (err) return showToast("Error al guardar", c.red);
-    
-    setForm(f => ({ ...f, monto: "", descripcion: "" })); 
-    showToast(`Registrado ✓`); 
+
+    setForm(f => ({ ...f, monto: "", descripcion: "" }));
+    showToast(`Registrado ✓`);
     setShowAddModal(false);
   };
 
@@ -263,21 +263,21 @@ export default function App() {
     if (!window.confirm("¿Seguro que deseas eliminar este movimiento?")) { setSwipedId(null); setCurrentSwipeX(0); return; }
     const { error: err } = await eliminarGastoBD(g.id);
     if (err) return showToast("Error", c.red);
-    
+
     if (g.tipo === "aporte") {
-        const metaNombre = g.descripcion.replace("Aporte a ", "").replace("Aporte inicial a ", "").trim();
-        const metaEncontrada = listaMetas.find(m => m.nombre === metaNombre);
-        if (metaEncontrada) {
-            const nuevasMetas = listaMetas.map(m => m.id === metaEncontrada.id ? { ...m, aporteInicial: Math.max(0, m.aporteInicial - g.monto) } : m);
-            setListaMetas(nuevasMetas);
-            guardarConfig("listaMetas", nuevasMetas);
-        }
+      const metaNombre = g.descripcion.replace("Aporte a ", "").replace("Aporte inicial a ", "").trim();
+      const metaEncontrada = listaMetas.find(m => m.nombre === metaNombre);
+      if (metaEncontrada) {
+        const nuevasMetas = listaMetas.map(m => m.id === metaEncontrada.id ? { ...m, aporteInicial: Math.max(0, m.aporteInicial - g.monto) } : m);
+        setListaMetas(nuevasMetas);
+        guardarConfig("listaMetas", nuevasMetas);
+      }
     }
     showToast("Eliminado", c.muted); setSwipedId(null); setCurrentSwipeX(0);
   };
 
-  const abrirEdicion = (g) => { 
-    setEditando(g); 
+  const abrirEdicion = (g) => {
+    setEditando(g);
     setEditForm({ monto: g.monto, descripcion: g.descripcion, categoria: g.categoria, tipo: g.tipo });
     setSwipedId(null); setCurrentSwipeX(0);
   };
@@ -285,20 +285,20 @@ export default function App() {
   const guardarEdicion = async () => {
     const montoNuevo = parseFloat(editForm.monto);
     if (!montoNuevo || montoNuevo <= 0) return showToast("Monto inválido", c.red);
-    
+
     const updates = { monto: montoNuevo, descripcion: editForm.descripcion, categoria: editForm.categoria, tipo: editForm.tipo };
     const { error: err } = await actualizarGastoBD(editando.id, updates);
     if (err) return showToast("Error", c.red);
-    
+
     if (editando.tipo === "aporte") {
-        const metaNombre = editando.descripcion.replace("Aporte a ", "").replace("Aporte inicial a ", "").trim();
-        const metaEncontrada = listaMetas.find(m => m.nombre === metaNombre);
-        if (metaEncontrada) {
-            const diff = montoNuevo - editando.monto;
-            const nuevasMetas = listaMetas.map(m => m.id === metaEncontrada.id ? { ...m, aporteInicial: Math.max(0, m.aporteInicial + diff) } : m);
-            setListaMetas(nuevasMetas);
-            guardarConfig("listaMetas", nuevasMetas);
-        }
+      const metaNombre = editando.descripcion.replace("Aporte a ", "").replace("Aporte inicial a ", "").trim();
+      const metaEncontrada = listaMetas.find(m => m.nombre === metaNombre);
+      if (metaEncontrada) {
+        const diff = montoNuevo - editando.monto;
+        const nuevasMetas = listaMetas.map(m => m.id === metaEncontrada.id ? { ...m, aporteInicial: Math.max(0, m.aporteInicial + diff) } : m);
+        setListaMetas(nuevasMetas);
+        guardarConfig("listaMetas", nuevasMetas);
+      }
     }
     setEditando(null); showToast("Actualizado ✓");
   };
@@ -308,10 +308,10 @@ export default function App() {
     if (totalAsignado <= 0) return showToast("Asigna un monto a al menos una categoría", c.red);
     const nuevosPresupuestos = { ...presupuestosMensuales, [presupForm.periodo]: { total: totalAsignado, categorias: presupForm.categorias } };
     setPresupuestosMensuales(nuevosPresupuestos);
-    
+
     const { error } = await guardarConfig("presupuestosMensuales", nuevosPresupuestos);
     if (error) return showToast("Error al guardar", c.red);
-    
+
     showToast("Presupuesto guardado ✓", c.green); cerrarPantalla('crearPresupuesto', () => setShowCrearPresupuesto(false));
   };
 
@@ -334,39 +334,39 @@ export default function App() {
       }
       showToast("Meta guardada con éxito ✓", c.green);
     }
-    setListaMetas(nuevasMetas); 
-    
+    setListaMetas(nuevasMetas);
+
     const { error } = await guardarConfig("listaMetas", nuevasMetas);
     if (error) return showToast("Error al guardar", c.red);
-    
+
     cerrarPantalla('crearMeta', () => { setShowCrearMeta(false); setIsEditingMetaObj(false); setMetaForm({ id: "", nombre: "", montoObjetivo: "", aporteInicial: "", fechaLimite: "", prioridad: "alta", tipo: "libre", icono: "💻" }); });
   };
 
   const eliminarMeta = async (id) => {
     if (!window.confirm("¿Estás seguro que deseas eliminar esta meta? Todo el progreso se perderá.")) return;
     const nuevasMetas = listaMetas.filter(m => m.id !== id); setListaMetas(nuevasMetas);
-    
+
     const { error } = await guardarConfig("listaMetas", nuevasMetas);
     if (error) return showToast("Error al eliminar", c.red);
-    
+
     showToast("Meta eliminada con éxito", c.muted); setShowMetaMenu(false); cerrarPantalla('detalleMeta', () => setMetaSeleccionada(null));
   };
 
   const procesarAporte = async () => {
-    const monto = parseFloat(aporteMonto); if (!monto || monto <= 0) return showToast("Ingresa un monto válido", c.red); 
+    const monto = parseFloat(aporteMonto); if (!monto || monto <= 0) return showToast("Ingresa un monto válido", c.red);
     const metaDestino = listaMetas.find(m => m.id === aporteMetaId);
     const nuevo = { monto, descripcion: `Aporte a ${metaDestino.nombre}`, categoria: "meta_aporte", tipo: "aporte" };
-    
+
     const { error: err } = await agregarGastoBD(nuevo);
     if (err) return showToast("Error al guardar", c.red);
-    
+
     const nuevasMetas = listaMetas.map(m => m.id === aporteMetaId ? { ...m, aporteInicial: m.aporteInicial + monto } : m);
     setListaMetas(nuevasMetas);
-    
+
     const { error } = await guardarConfig("listaMetas", nuevasMetas);
     if (error) return showToast("Error al guardar", c.red);
-    
-    showToast(`¡S/ ${monto} aportados a tu meta! 🎉`, c.green); 
+
+    showToast(`¡S/ ${monto} aportados a tu meta! 🎉`, c.green);
     setShowAporteModal(false); setAporteMonto(""); setAporteMetaId(null);
   };
 
@@ -397,64 +397,20 @@ export default function App() {
         .hide-scroll::-webkit-scrollbar { display: none; } .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
         @keyframes spin { to { transform: rotate(360deg) } } @keyframes slideInFromLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } } @keyframes slideOutToLeft { from { transform: translateX(0); } to { transform: translateX(-100%); } } @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } } @keyframes slideDown { from { transform: translate(-50%, -100%); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
       `}</style>
-      
+
       {toast && (<div style={{ position: "fixed", top: 40, left: "50%", transform: "translateX(-50%)", background: toast.color || "#333", color: "#FFF", padding: "12px 24px", borderRadius: 30, zIndex: 999999, fontWeight: 600, fontSize: 14, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", animation: "slideDown 0.3s ease-out", whiteSpace: "nowrap" }}>{toast.msg}</div>)}
-      
+
       {viewAll ? (
-        <>
-          <div style={{ padding: "calc(12px + env(safe-area-inset-top, 0px)) 20px 12px", borderBottom: `1px solid ${c.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: c.bg, position: "fixed", top: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, zIndex: 110, boxSizing: "border-box" }}>
-            <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 24, cursor: "pointer", padding: 0 }} onClick={() => { setViewAll(false); window.scrollTo(0, 0); }}>←</button>
-            <h2 style={{ margin: 0, fontSize: 18, color: c.text, fontWeight: 600 }}>Movimientos</h2>
-            <button style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 20, cursor: "pointer", padding: 0 }} onClick={() => setShowVtFiltro(!showVtFiltro)}><Calendar size={20} /></button>
-          </div>
-          <div style={s.section}>
-            {showVtFiltro && (
-              <div style={{ padding: "16px 20px", background: c.card, borderBottom: `1px solid ${c.border}`, borderRadius: 16, marginBottom: 16 }}>
-                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                  <div style={{ flex: 1, position: "relative" }}>
-                    {!vtFechaDesde && <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: c.muted, fontSize: 15, fontWeight: 600, pointerEvents: "none", zIndex: 2 }}>Del</span>}
-                    <input type="date" value={vtFechaDesde} onChange={e => setVtFechaDesde(e.target.value)} style={{ ...s.input, textAlign: "center", color: vtFechaDesde ? c.text : "transparent", position: "relative", zIndex: 1 }} />
-                  </div>
-                  <div style={{ flex: 1, position: "relative" }}>
-                    {!vtFechaHasta && <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: c.muted, fontSize: 15, fontWeight: 600, pointerEvents: "none", zIndex: 2 }}>Al</span>}
-                    <input type="date" value={vtFechaHasta} onChange={e => setVtFechaHasta(e.target.value)} style={{ ...s.input, textAlign: "center", color: vtFechaHasta ? c.text : "transparent", position: "relative", zIndex: 1 }} />
-                  </div>
-                </div>
-                {(vtFechaDesde || vtFechaHasta) && (<button style={{ width: "100%", fontSize: 14, fontWeight: 600, color: c.red, backgroundColor: "transparent", WebkitAppearance: "none", border: "none", cursor: "pointer", padding: "12px 0 0", marginTop: 4, fontFamily: "inherit" }} onClick={() => { setVtFechaDesde(""); setVtFechaHasta(""); }}>Limpiar fechas</button>)}
-              </div>
-            )}
-            <div style={{ ...s.label, textAlign: "center", marginBottom: 12 }}>{gastosVerTodos.length} movimientos</div>
-            {gastosVerTodos.map(g => {
-              const isAporte = g.tipo === "aporte"; const cat = isAporte ? null : categorias.find(c => c.id === g.categoria);
-              const descAdicional = (!isAporte && g.descripcion && cat && g.descripcion !== getTexto(cat.label)) ? g.descripcion : "";
-              let iconBg = isDark ? "rgba(255,255,255,0.05)" : "#E5E7EB"; let montoColor = c.text; let iconColor = c.muted;
-              if (isAporte) { iconBg = isDark ? "rgba(16,185,129,0.15)" : "#D1FAE5"; montoColor = c.green; iconColor = c.green; }
-              else if (g.tipo === "gasto") { iconBg = isDark ? "rgba(239,68,68,0.15)" : "#FEE2E2"; montoColor = c.red; iconColor = c.red; }
-              else if (g.tipo === "ingreso") { iconBg = isDark ? "rgba(255,255,255,0.1)" : "#F3F4F6"; iconColor = isDark ? "#D1D5DB" : "#4B5563"; montoColor = c.text; }
-              const isCurrentSwiped = swipedId === g.id;
-              return (
-                <div key={g.id} style={{ position: "relative", marginBottom: 10, borderRadius: 16, overflow: "hidden", height: 72 }}>
-                  <div style={{ position: "absolute", inset: 0, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div onClick={() => abrirEdicion(g)} style={{ flex: 1, height: "100%", background: "#10B981", color: "#FFF", display: "flex", alignItems: "center", paddingLeft: 24, cursor: "pointer" }}><Edit2 size={24} /></div>
-                      <div onClick={() => eliminar(g)} style={{ flex: 1, height: "100%", background: c.red, color: "#FFF", display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 24, cursor: "pointer" }}><Trash2 size={24} /></div>
-                  </div>
-                  <div onTouchStart={(e) => handleSwipeStart(g.id, e)} onTouchMove={(e) => handleSwipeMove(g.id, e)} onTouchEnd={handleSwipeEnd} style={{ position: "absolute", inset: 0, background: c.card, border: `1px solid ${c.border}`, borderRadius: 16, padding: "0 16px", display: "flex", alignItems: "center", justifyContent: "space-between", transform: isCurrentSwiped ? `translateX(${currentSwipeX}px)` : "translateX(0)", transition: isSwiping && isCurrentSwiped ? "none" : "transform 0.3s ease", zIndex: 2, touchAction: "pan-y" }} >
-                    <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12 }}>
-                      <div style={{ width: 44, height: 44, borderRadius: 14, background: iconBg, color: iconColor, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        {isAporte ? <PiggyBank size={24} /> : getIcono(cat ? cat.label : (g.descripcion || "?"))}
-                      </div>
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2, color: c.text, textDecoration: (!cat && !isAporte) ? "line-through" : "none" }}>{isAporte ? g.descripcion : (cat ? getTexto(cat.label) : g.descripcion)}{cat && descAdicional && <span style={{ color: c.muted, fontSize: 13, marginLeft: 6, fontWeight: 500, textDecoration: "none" }}>{descAdicional}</span>}</div>
-                        <div style={{ fontSize: 12, fontWeight: 500, color: c.muted }}>{getUIFechaHora(g.created_at)}</div>
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center" }}><span style={{ fontSize: 16, fontWeight: 600, color: montoColor }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span></div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </>
+        <PantallaMovimientos
+          c={c} s={s} isDark={isDark} gastos={gastos} categorias={categorias}
+          vtFechaDesde={vtFechaDesde} setVtFechaDesde={setVtFechaDesde}
+          vtFechaHasta={vtFechaHasta} setVtFechaHasta={setVtFechaHasta}
+          showVtFiltro={showVtFiltro} setShowVtFiltro={setShowVtFiltro}
+          setViewAll={setViewAll} swipedId={swipedId} currentSwipeX={currentSwipeX}
+          isSwiping={isSwiping} handleSwipeStart={handleSwipeStart}
+          handleSwipeMove={handleSwipeMove} handleSwipeEnd={handleSwipeEnd}
+          abrirEdicion={abrirEdicion} eliminar={eliminar}
+        />
       ) : (
         <>
           <div style={{ padding: "calc(12px + env(safe-area-inset-top, 0px)) 20px 12px", background: tab === "hoy" ? c.bg : c.card, borderBottom: tab === "hoy" ? "none" : `1px solid ${c.border}`, position: "fixed", top: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, zIndex: 110, boxSizing: "border-box" }}>
@@ -465,9 +421,9 @@ export default function App() {
               ) : (<h1 style={{ fontSize: 18, fontWeight: 700, color: c.text, margin: 0, lineHeight: 1.1 }}>{tab === "metas" ? "Mis Metas" : tab === "resumen" ? "Reportes" : "Presupuesto"}</h1>)}
             </div>
           </div>
-          
+
           {error && <div style={{ ...s.errorCard, marginTop: 80, position: "relative", zIndex: 20 }}><AlertTriangle size={16} style={{ verticalAlign: "middle", marginRight: 8 }} /> {error}</div>}
-          
+
           {tab === "hoy" && (
             <>
               <div style={{ position: "fixed", top: "calc(52px + env(safe-area-inset-top, 0px))", left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, height: 60, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 10, color: "#10B981", opacity: (isRefreshing || pullDistance > 0) ? 1 : 0, visibility: (isRefreshing || pullDistance > 0) ? "visible" : "hidden", pointerEvents: "none" }}>
@@ -477,11 +433,11 @@ export default function App() {
               <TabInicio c={c} s={s} isDark={isDark} listaMetas={listaMetas} setAporteMetaId={setAporteMetaId} setShowAporteModal={setShowAporteModal} setIsEditingMetaObj={setIsEditingMetaObj} setMetaForm={setMetaForm} setShowCrearMeta={setShowCrearMeta} setViewAll={setViewAll} movimientosHoy={movimientosHoy} totalIngresosHoy={totalIngresosHoy} totalGastadoHoy={totalGastadoHoy} presupuestoDiario={presupuestoDiario} categorias={categorias} setMetaSeleccionada={setMetaSeleccionada} isRefreshing={isRefreshing} pullDistance={pullDistance} handleTouchStart={handleTouchStartGlobal} handleTouchMove={handleTouchMoveGlobal} handleTouchEnd={handleTouchEndGlobal} />
             </>
           )}
-          
+
           {tab === "resumen" && <TabReportes c={c} s={s} isDark={isDark} gastos={gastos} categoriasBase={categoriasBase} categoriasExtra={categoriasExtra} categorias={categorias} listaMetas={listaMetas} />}
           {tab === "presupuesto" && <TabPresupuesto c={c} s={s} isDark={isDark} presupuestosMensuales={presupuestosMensuales} setPresupForm={setPresupForm} setShowCrearPresupuesto={setShowCrearPresupuesto} gastos={gastos} categorias={categorias} setCatPresupSelec={setCatPresupSelec} setShowHistorial={setShowHistorial} setShowPresupAnual={setShowPresupAnual} />}
           {tab === "metas" && <TabMetas c={c} s={s} isDark={isDark} listaMetas={listaMetas} setMetaSeleccionada={setMetaSeleccionada} setIsEditingMetaObj={setIsEditingMetaObj} setMetaForm={setMetaForm} setShowCrearMeta={setShowCrearMeta} />}
-          
+
           <div style={s.navBar}>
             {[{ id: "hoy", icon: <Home size={24} strokeWidth={2.5} />, label: "Inicio" }, { id: "resumen", icon: <PieChart size={24} strokeWidth={2.5} />, label: "Reportes" }].map(n => (
               <button key={n.id} style={s.navBtn(tab === n.id)} onClick={() => setTab(n.id)}>{tab === n.id && <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 44, height: 3, background: "#FF803C", borderRadius: "0 0 4px 4px" }} />}<div style={{ marginBottom: -2 }}>{n.icon}</div><span style={{ fontFamily: "'Montserrat', sans-serif" }}>{n.label}</span></button>
@@ -499,7 +455,7 @@ export default function App() {
       {editando && <ModalEditarMovimiento s={s} c={c} editForm={editForm} setEditForm={setEditForm} safeBase={safeBase} safeExtra={safeExtra} guardarEdicion={guardarEdicion} setEditando={setEditando} saving={saving} />}
       {showCrearMeta && <ModalCrearMeta c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setShowCrearMeta={setShowCrearMeta} setIsEditingMetaObj={setIsEditingMetaObj} isEditingMetaObj={isEditingMetaObj} metaForm={metaForm} setMetaForm={setMetaForm} procesarNuevaMeta={procesarNuevaMeta} />}
       {showCrearPresupuesto && <ModalCrearPresupuesto c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setShowCrearPresupuesto={setShowCrearPresupuesto} presupForm={presupForm} setPresupForm={setPresupForm} safeExtra={safeExtra} setProfileScreen={setProfileScreen} setShowMenu={setShowMenu} guardarPresupuesto={guardarPresupuesto} saving={saving} />}
-      
+
       {catPresupSelec && <ModalDetalleCategoria c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} catId={catPresupSelec} categorias={categorias} gastos={gastos} presupuestoActual={presupuestosMensuales[hoy().slice(0, 7)]} />}
       {showHistorial && <ModalHistorialPresupuestos c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} presupuestosMensuales={presupuestosMensuales} setShowHistorial={setShowHistorial} setResumenMes={setResumenMes} />}
       {resumenMes && <ModalResumenMensual c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} mes={resumenMes} presupuestosMensuales={presupuestosMensuales} gastos={gastos} categorias={categorias} setResumenMes={setResumenMes} />}
@@ -508,12 +464,12 @@ export default function App() {
 
       {/* MENÚ PRINCIPAL */}
       {showMenu && <MenuPrincipal c={c} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setShowMenu={setShowMenu} setProfileScreen={setProfileScreen} setShowApariencia={setShowApariencia} cerrarSesion={cerrarSesion} />}
-      
+
       {/* PANTALLAS SECUNDARIAS */}
       {profileScreen === "exportar" && <ExportarReportes c={c} s={s} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} exportFechaDesde={exportFechaDesde} setExportFechaDesde={setExportFechaDesde} exportFechaHasta={exportFechaHasta} setExportFechaHasta={setExportFechaHasta} exportEmail={exportEmail} setExportEmail={setExportEmail} gastos={gastos} categorias={categorias} showToast={showToast} />}
       {profileScreen === "categorias" && <ConfigCategorias c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} safeBase={safeBase} safeExtra={safeExtra} abrirEditarCat={abrirEditarCat} eliminarCat={eliminarCat} abrirCrearCat={abrirCrearCat} />}
       {profileScreen === "logros" && <MisLogros c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} listaMetas={listaMetas} gastos={gastos} userName={userName} />}
-      
+
       {profileScreen === "ayuda" && (
         <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'ayuda' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 24, marginTop: 16 }}><button onClick={() => cerrarPantalla('ayuda', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button><h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 800 }}>Centro de ayuda</h2></div>
@@ -587,13 +543,13 @@ export default function App() {
 
       {/* AQUÍ ESTÁ EL CÓDIGO QUE BORRÉ POR ACCIDENTE PARA EDITAR METAS */}
       {metaSeleccionada && (() => {
-        const obj = parseFloat(metaSeleccionada.montoObjetivo) || 1; 
+        const obj = parseFloat(metaSeleccionada.montoObjetivo) || 1;
         const ahorrado = parseFloat(metaSeleccionada.aporteInicial) || 0;
-        const faltan = Math.max(0, obj - ahorrado); 
+        const faltan = Math.max(0, obj - ahorrado);
         const pct = Math.min(100, Math.round((ahorrado / obj) * 100));
         let fechaStr = "Sin fecha límite"; let diasRestantes = 0;
         if (metaSeleccionada.fechaLimite) { fechaStr = formatFecha(metaSeleccionada.fechaLimite); diasRestantes = diffDias(hoy(), metaSeleccionada.fechaLimite); }
-        const ahorroDiarioVal = diasRestantes > 0 ? (faltan / diasRestantes) : 0; 
+        const ahorroDiarioVal = diasRestantes > 0 ? (faltan / diasRestantes) : 0;
         const bgIconColor = SAFE_PASTEL[Math.abs((metaSeleccionada.nombre || "").length) % SAFE_PASTEL.length];
 
         return (
