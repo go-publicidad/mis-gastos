@@ -53,9 +53,9 @@ export default function CarruselMetas({
             setSwipeDir(0); setDragOffset(0); setAnimating(false);
         }, 300);
     } else {
-        setSwipeDir(0);
-        setAnimating(true);
-        setTimeout(() => { setDragOffset(0); setAnimating(false); }, 300);
+        // SOLUCIÓN: Si soltaste el dedo y no se movió casi nada (un simple clic), 
+        // solo reseteamos pero NO animamos para no tragarnos el toque del botón.
+        setDragOffset(0); 
     }
   };
 
