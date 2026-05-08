@@ -18,7 +18,7 @@ export default function TabInicio({
   const SAFE_PASTEL = ['#F3E8FF', '#DBEAFE', '#D1FAE5', '#FEF3C7', '#FCE7F3'];
 
   return (
-    <div 
+    <div
       style={{ ...s.section, background: "transparent", minHeight: "100vh", position: "relative", zIndex: 20, transform: `translateY(${isRefreshing ? 60 : pullDistance}px)`, transition: pullDistance === 0 || isRefreshing ? "transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)" : "none" }}
       onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
     >
@@ -30,9 +30,9 @@ export default function TabInicio({
           <button onClick={() => { setIsEditingMetaObj(false); setMetaForm({ id: "", nombre: "", montoObjetivo: "", aporteInicial: "", fechaLimite: "", prioridad: "alta", tipo: "libre", icono: "💻" }); setShowCrearMeta(true); }} style={{ background: c.green, color: "#FFF", padding: "14px 24px", borderRadius: 30, border: "none", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>+ Crea tu primera meta</button>
         </div>
       ) : (
-        <CarruselMetas 
-          listaMetas={listaMetas} c={c} s={s} isDark={isDark} 
-          setAporteMetaId={setAporteMetaId} setShowAporteModal={setShowAporteModal} 
+        <CarruselMetas
+          listaMetas={listaMetas} c={c} s={s} isDark={isDark}
+          setAporteMetaId={setAporteMetaId} setShowAporteModal={setShowAporteModal}
           setMetaSeleccionada={setMetaSeleccionada} SAFE_PASTEL={SAFE_PASTEL}
         />
       )}
@@ -70,11 +70,27 @@ export default function TabInicio({
           {movimientosHoy.map((g, i, arr) => {
             const isAporte = g.tipo === "aporte";
             const cat = isAporte ? null : categorias.find(c => c.id === g.categoria);
-            let iconBg = isAporte ? c.iconBgGreen : (g.tipo === "gasto" ? c.iconBgRed : "rgba(255,255,255,0.05)");
-            let iconColor = isAporte ? c.green : (g.tipo === "gasto" ? c.red : c.muted);
+
+            let iconBg = isDark ? "rgba(255,255,255,0.05)" : "#E5E7EB";
+            let montoColor = c.text;
+            let iconColor = c.muted;
+
+            if (isAporte) {
+              iconBg = isDark ? "rgba(16,185,129,0.15)" : "#D1FAE5";
+              montoColor = c.green;
+              iconColor = c.green;
+            } else if (g.tipo === "gasto") {
+              iconBg = isDark ? "rgba(239,68,68,0.15)" : "#FEE2E2";
+              montoColor = c.red;
+              iconColor = c.red;
+            } else if (g.tipo === "ingreso") {
+              iconBg = isDark ? "rgba(255,255,255,0.1)" : "#F3F4F6";
+              iconColor = isDark ? "#D1D5DB" : "#4B5563";
+              montoColor = c.text;
+            }
 
             return (
-              <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: i === arr.length - 1 ? "none" : `1px solid ${c.border}`, height: 72 }}>
+              <div key={g.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: i === arr.length - 1 ? "none" : `1px solid ${c.border}` }}>
                 <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 14 }}>
                   <div style={{ width: 44, height: 44, borderRadius: 14, background: iconBg, color: iconColor, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     {isAporte ? <PiggyBank size={24} /> : getIcono(cat ? cat.label : (g.descripcion || "?"))}
@@ -84,7 +100,7 @@ export default function TabInicio({
                     <div style={{ fontSize: 12, color: c.muted }}>{getUIFechaHora(g.created_at)}</div>
                   </div>
                 </div>
-                <span style={{ fontSize: 16, fontWeight: 600, color: g.tipo === "gasto" ? c.red : c.green }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
+                <span style={{ fontSize: 16, fontWeight: 600, color: montoColor }}>{g.tipo === "gasto" ? "-" : "+"}{formatMoney(g.monto)}</span>
               </div>
             );
           })}
