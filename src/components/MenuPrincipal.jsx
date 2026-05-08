@@ -1,6 +1,6 @@
 import React from "react";
-import { 
-  UserCircle, Lock, Trophy, Palette, Download, Headphones, 
+import {
+  UserCircle, Lock, Trophy, Palette, Download, Headphones,
   LogOut, Trash2, Settings, ChevronRight
 } from "lucide-react";
 
@@ -13,16 +13,16 @@ const MenuItem = ({ icon, text, color, bgColor, border, showArrow = true, onClic
   </button>
 );
 
-export default function MenuPrincipal({ 
-  c, 
-  isClosing, 
-  cerrarPantalla, 
-  setShowMenu, 
-  setProfileScreen, 
-  setShowApariencia, 
-  cerrarSesion 
+export default function MenuPrincipal({
+  c,
+  isClosing,
+  cerrarPantalla,
+  setShowMenu,
+  setProfileScreen,
+  setShowApariencia,
+  cerrarSesion
 }) {
-  
+
   const menuGroupHeader = { fontSize: 13, color: c.muted, textTransform: "uppercase", letterSpacing: "1px", fontWeight: 700, padding: "16px 20px 8px", margin: 0 };
 
   return (
@@ -31,7 +31,7 @@ export default function MenuPrincipal({
         <button onClick={() => cerrarPantalla('menu', () => setShowMenu(false))} style={{ backgroundColor: "transparent", WebkitAppearance: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
         <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 700 }}>Menú Principal</h2>
       </div>
-      
+
       <div style={{ marginBottom: 24 }}>
         <div style={menuGroupHeader}>MI CUENTA</div>
         <div style={{ borderTop: `1px solid ${c.border}`, borderBottom: `1px solid ${c.border}` }}>
@@ -40,21 +40,21 @@ export default function MenuPrincipal({
           <MenuItem bgColor={c.card} icon={<Trophy size={20} color="#FF803C" />} text="Mis logros / Insignias" color={c.text} border={"transparent"} onClick={() => setProfileScreen("logros")} />
         </div>
       </div>
-      
+
       <div style={{ marginBottom: 24 }}>
         <div style={menuGroupHeader}>AJUSTES</div>
         <div style={{ borderTop: `1px solid ${c.border}`, borderBottom: `1px solid ${c.border}` }}>
           <MenuItem bgColor={c.card} icon={<Settings size={20} color="#FF803C" />} text="Configuración de categorías" color={c.text} border={c.border} onClick={() => setProfileScreen("categorias")} />
-          <MenuItem bgColor={c.card} icon={<Palette size={20} color="#FF803C" />} text="Apariencia (Tema Claro/Oscuro)" color={c.text} border={c.border} onClick={() => { setShowApariencia(true); setShowMenu(false); }} />
+          <MenuItem bgColor={c.card} icon={<Palette size={20} color="#FF803C" />} text="Apariencia (Tema Claro/Oscuro)" color={c.text} border={c.border} onClick={() => setShowApariencia(true)} />
           <MenuItem bgColor={c.card} icon={<Download size={20} color="#FF803C" />} text="Exportar Reportes" color={c.text} border={c.border} onClick={() => setProfileScreen("exportar")} />
           <MenuItem bgColor={c.card} icon={<Headphones size={20} color="#FF803C" />} text="Centro de ayuda" color={c.text} border={"transparent"} onClick={() => setProfileScreen("ayuda")} />
         </div>
       </div>
-      
+
       <div style={{ marginTop: "auto", paddingTop: 32, paddingBottom: 20 }}>
         <div style={{ borderTop: `1px solid ${c.border}`, borderBottom: `1px solid ${c.border}` }}>
-          <MenuItem bgColor={c.card} icon={<LogOut size={20}/>} text="Cerrar sesión" color={c.red} border={c.border} showArrow={false} onClick={cerrarSesion} />
-          <MenuItem bgColor={c.card} icon={<Trash2 size={20}/>} text="Eliminar mi cuenta" color={c.red} border={"transparent"} showArrow={false} />
+          <MenuItem bgColor={c.card} icon={<LogOut size={20} />} text="Cerrar sesión" color={c.red} border={c.border} showArrow={false} onClick={cerrarSesion} />
+          <MenuItem bgColor={c.card} icon={<Trash2 size={20} />} text="Eliminar mi cuenta" color={c.red} border={"transparent"} showArrow={false} />
         </div>
       </div>
     </div>
