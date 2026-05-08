@@ -1,8 +1,8 @@
 import React from "react";
 
-export default function PantallaApariencia({ c, s, theme, setTheme, guardarConfig, showToast, cerrarPantalla, setProfileScreen, setShowApariencia, setShowMenu }) {
+export default function PantallaApariencia({ c, s, theme, setTheme, guardarConfig, showToast, cerrarPantalla, setProfileScreen, setShowApariencia, setShowMenu, isClosing }) {
   return (
-    <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column" }}>
+    <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", animation: isClosing === 'apariencia' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
       <div style={{ display: "flex", alignItems: "center", marginBottom: 30, borderBottom: `1px solid ${c.border}`, paddingBottom: 16, marginTop: 16 }}>
         <button onClick={() => cerrarPantalla('apariencia', () => { setShowApariencia(false); setProfileScreen(null); setShowMenu(true); })} style={{ backgroundColor: "transparent", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
         <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: "700" }}>Pantalla y brillo</h2>

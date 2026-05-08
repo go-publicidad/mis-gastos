@@ -477,9 +477,7 @@ export default function App() {
       {profileScreen === "categorias" && <ConfigCategorias c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} safeBase={safeBase} safeExtra={safeExtra} abrirEditarCat={abrirEditarCat} eliminarCat={eliminarCat} abrirCrearCat={abrirCrearCat} />}
       {profileScreen === "logros" && <MisLogros c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} listaMetas={listaMetas} gastos={gastos} userName={userName} />}
 
-      {profileScreen === "ayuda" && (
-        <PantallaAyuda c={c} s={s} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} />
-      )}
+
 
       {/* FORMULARIO DE CATEGORÍAS */}
       {catForm.visible && (
@@ -492,16 +490,21 @@ export default function App() {
         </div>
       )}
 
+      {/* PANTALLAS DE AJUSTES REFACTORIZADAS */}
       {(showApariencia || profileScreen === "apariencia") && (
-        <PantallaApariencia c={c} s={s} theme={theme} setTheme={setTheme} guardarConfig={guardarConfig} showToast={showToast} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} setShowApariencia={setShowApariencia} setShowMenu={setShowMenu} />
+        <PantallaApariencia c={c} s={s} theme={theme} setTheme={setTheme} guardarConfig={guardarConfig} showToast={showToast} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} setShowApariencia={setShowApariencia} setShowMenu={setShowMenu} isClosing={isClosing} />
       )}
 
       {profileScreen === "datos" && (
-        <PantallaDatos c={c} s={s} userName={userName} setUserName={setUserName} usuario={usuario} guardarPerfil={guardarPerfil} saving={saving} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} userInitials={userInitials} />
+        <PantallaDatos c={c} s={s} userName={userName} setUserName={setUserName} usuario={usuario} guardarPerfil={guardarPerfil} saving={saving} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} userInitials={userInitials} isClosing={isClosing} />
       )}
 
       {profileScreen === "clave" && (
-        <PantallaClave c={c} s={s} showToast={showToast} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} />
+        <PantallaClave c={c} s={s} showToast={showToast} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} isClosing={isClosing} />
+      )}
+
+      {profileScreen === "ayuda" && (
+        <PantallaAyuda c={c} s={s} cerrarPantalla={cerrarPantalla} setProfileScreen={setProfileScreen} isClosing={isClosing} />
       )}
 
       {showAporteModal && (

@@ -1,9 +1,9 @@
 import React from "react";
 import { Search, Target, Book, ChevronRight, Headphones } from "lucide-react";
 
-export default function PantallaAyuda({ c, s, cerrarPantalla, setProfileScreen }) {
+export default function PantallaAyuda({ c, s, cerrarPantalla, setProfileScreen, isClosing }) {
   return (
-    <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden" }}>
+    <div style={{ position: "fixed", inset: 0, background: c.bg, zIndex: 10000, padding: "env(safe-area-inset-top, 20px) 20px 20px", overflowY: "auto", overflowX: "hidden", animation: isClosing === 'ayuda' ? "slideOutToLeft 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" : "slideInFromLeft 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards" }}>
       <div style={{ display: "flex", alignItems: "center", marginBottom: 24, marginTop: 16 }}>
         <button onClick={() => cerrarPantalla('ayuda', () => setProfileScreen(null))} style={{ background: "none", border: "none", color: "#FF803C", fontSize: 28, cursor: "pointer", padding: 0, marginRight: 16 }}>←</button>
         <h2 style={{ margin: 0, fontSize: 20, color: c.text, fontWeight: 800 }}>Centro de ayuda</h2>
