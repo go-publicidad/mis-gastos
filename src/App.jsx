@@ -286,15 +286,36 @@ const guardarEdicion = async () => {
 };
 
 const guardarPresupuesto = async () => {
-  const totalAsignado = Object.values(presupForm.categorias).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+  // 1. Filtramos para guardar SOLO las categorías que aún existen en la app
+  const categoriasLimpias = {};
+  let totalAsignado = 0;
+
+  Object.entries(presupForm.categorias).forEach(([catId, monto]) => {
+    const categoriaExiste = categorias.find(c => c.id === catId);
+    const valor = parseFloat(monto) || 0;
+
+    // Si la categoría existe actualmente y tiene dinero asignado, la guardamos
+    if (categoriaExiste && valor > 0) {
+      categoriasLimpias[catId] = valor;
+      totalAsignado += valor;
+    }
+  });
+
   if (totalAsignado <= 0) return showToast("Asigna un monto a al menos una categoría", c.red);
-  const nuevosPresupuestos = { ...presupuestosMensuales, [presupForm.periodo]: { total: totalAsignado, categorias: presupForm.categorias } };
+
+  // 2. Guardamos el objeto limpio sin las categorías "fantasmas"
+  const nuevosPresupuestos = {
+    ...presupuestosMensuales,
+    [presupForm.periodo]: { total: totalAsignado, categorias: categoriasLimpias }
+  };
+
   setPresupuestosMensuales(nuevosPresupuestos);
 
   const { error } = await guardarConfig("presupuestosMensuales", nuevosPresupuestos);
   if (error) return showToast("Error al guardar", c.red);
 
-  showToast("Presupuesto guardado ✓", c.green); cerrarPantalla('crearPresupuesto', () => setShowCrearPresupuesto(false));
+  showToast("Presupuesto guardado ✓", c.green);
+  cerrarPantalla('crearPresupuesto', () => setShowCrearPresupuesto(false));
 };
 
 const procesarNuevaMeta = async () => {
