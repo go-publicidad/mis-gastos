@@ -6,17 +6,17 @@ import { hoy, getFechaLocal } from "../utils";
 export default function useMisGastos() {
   const [usuario, setUsuario] = useState(null);
   const [verificandoSesion, setVerificandoSesion] = useState(true);
-  
+
   const [gastos, setGastos] = useState([]);
   const [categoriasBase, setCategoriasBase] = useState(INGRESOS_DEFAULT);
   const [categoriasExtra, setCategoriasExtra] = useState(GASTOS_DEFAULT);
   const [listaMetas, setListaMetas] = useState(METAS_INICIALES);
   const [presupuestosMensuales, setPresupuestosMensuales] = useState({});
-  
+
   const [userName, setUserName] = useState("Usuario");
   const [theme, setTheme] = useState(localStorage.getItem("themePref") || "dark");
   const [useBold, setUseBold] = useState(false);
-  
+
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -30,7 +30,24 @@ export default function useMisGastos() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const cerrarSesion = async () => await supabase.auth.signOut();
+  const cerrarSesion = async () => {
+    // 1. Le decimos a Supabase que cierre la conexión de esta cuenta
+    await supabase.auth.signOut();
+
+    // 2. LA MAGIA: Borramos TODA la memoria guardada en el navegador
+    localStorage.clear();
+
+    // 3. Limpiamos los estados principales 
+    setUsuario(null);
+    setUserName("");
+    setListaMetas([]);
+    setPresupuestosMensuales({});
+    setCategoriasBase([]);
+    setCategoriasExtra([]);
+
+    // 4. Forzamos una recarga limpia de la página
+    window.location.reload();
+  };
 
   const loadData = async () => {
     if (!usuario?.id) return;
@@ -51,7 +68,7 @@ export default function useMisGastos() {
           const valTemporal = cfg.find(item => item.key === k);
           return valTemporal?.value;
         };
-        
+
         if (getVal("themePref")) { setTheme(getVal("themePref")); localStorage.setItem("themePref", getVal("themePref")); }
         if (getVal("useBoldPref")) setUseBold(getVal("useBoldPref") === "true");
         if (getVal("userName")) setUserName(getVal("userName"));
@@ -72,7 +89,7 @@ export default function useMisGastos() {
     // SOLUCIÓN: Guardamos siempre usando el ID de usuario como candado de seguridad
     const llaveSegura = `${usuario.id}_${key}`;
     const { error } = await supabase.from("config").upsert(
-      [{ user_id: usuario.id, key: llaveSegura, value: typeof value === 'string' ? value : JSON.stringify(value) }], 
+      [{ user_id: usuario.id, key: llaveSegura, value: typeof value === 'string' ? value : JSON.stringify(value) }],
       { onConflict: "key" }
     );
     setSaving(false);
