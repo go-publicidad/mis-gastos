@@ -319,6 +319,21 @@ export default function App() {
     showToast("Presupuesto guardado ✓", c.green);
     cerrarPantalla('crearPresupuesto', () => setShowCrearPresupuesto(false));
   };
+  const eliminarPresupuesto = async (periodo) => {
+    if (!window.confirm(`¿Seguro que deseas eliminar el presupuesto de ${periodo}? Tus gastos registrados no se borrarán.`)) return;
+
+    const nuevosPresupuestos = { ...presupuestosMensuales };
+    delete nuevosPresupuestos[periodo];
+
+    setPresupuestosMensuales(nuevosPresupuestos);
+    const { error } = await guardarConfig("presupuestosMensuales", nuevosPresupuestos);
+    
+    if (error) return showToast("Error al eliminar", c.red);
+    
+    showToast("Presupuesto eliminado", c.muted);
+    // Cerramos el modal automáticamente tras eliminar
+    cerrarPantalla('crearPresupuesto', () => setShowCrearPresupuesto(false));
+  };
 
   const procesarNuevaMeta = async () => {
     if (!metaForm.nombre.trim()) return showToast("⚠️ Ingresa el nombre de la meta", c.red);
@@ -470,7 +485,7 @@ export default function App() {
       {showAddModal && <ModalRegistrarMovimiento s={s} c={c} form={form} setForm={setForm} safeBase={safeBase} safeExtra={safeExtra} agregarMovimiento={agregarMovimiento} setShowAddModal={setShowAddModal} saving={saving} />}
       {editando && <ModalEditarMovimiento s={s} c={c} editForm={editForm} setEditForm={setEditForm} safeBase={safeBase} safeExtra={safeExtra} guardarEdicion={guardarEdicion} setEditando={setEditando} saving={saving} />}
       {showCrearMeta && <ModalCrearMeta c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setShowCrearMeta={setShowCrearMeta} setIsEditingMetaObj={setIsEditingMetaObj} isEditingMetaObj={isEditingMetaObj} metaForm={metaForm} setMetaForm={setMetaForm} procesarNuevaMeta={procesarNuevaMeta} />}
-      {showCrearPresupuesto && <ModalCrearPresupuesto c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setShowCrearPresupuesto={setShowCrearPresupuesto} presupForm={presupForm} setPresupForm={setPresupForm} safeExtra={safeExtra} setProfileScreen={setProfileScreen} setShowMenu={setShowMenu} guardarPresupuesto={guardarPresupuesto} saving={saving} />}
+      {showCrearPresupuesto && <ModalCrearPresupuesto c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} setShowCrearPresupuesto={setShowCrearPresupuesto} presupForm={presupForm} setPresupForm={setPresupForm} safeExtra={safeExtra} setProfileScreen={setProfileScreen} setShowMenu={setShowMenu} guardarPresupuesto={guardarPresupuesto} saving={saving} eliminarPresupuesto={eliminarPresupuesto} />}
 
       {catPresupSelec && <ModalDetalleCategoria c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} catId={catPresupSelec} categorias={categorias} gastos={gastos} presupuestoActual={presupuestosMensuales[hoy().slice(0, 7)]} />}
       {showHistorial && <ModalHistorialPresupuestos c={c} s={s} isDark={isDark} isClosing={isClosing} cerrarPantalla={cerrarPantalla} presupuestosMensuales={presupuestosMensuales} setShowHistorial={setShowHistorial} setResumenMes={setResumenMes} />}

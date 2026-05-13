@@ -1,10 +1,11 @@
 import React from "react";
 import { formatMoney, getIcono, getTexto } from "../utils";
+import { Trash2 } from "lucide-react";
 
 export default function ModalCrearPresupuesto({
   c, s, isDark, isClosing, cerrarPantalla, setShowCrearPresupuesto, 
   presupForm, setPresupForm, safeExtra, setProfileScreen, setShowMenu, 
-  guardarPresupuesto, saving
+  guardarPresupuesto, saving, eliminarPresupuesto
 }) {
   const totalCalculado = Object.values(presupForm.categorias).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
   
@@ -51,6 +52,29 @@ export default function ModalCrearPresupuesto({
       <button onClick={guardarPresupuesto} disabled={saving} style={{ ...s.btnPrimary, background: c.brandBlue, boxShadow: "0 8px 24px rgba(74, 58, 255, 0.3)", padding: 16, fontSize: 16, borderRadius: 16 }}>
          {saving ? "Guardando..." : "Guardar presupuesto"}
       </button>
+      {/* BOTÓN ELIMINAR */}
+        <button 
+          onClick={() => eliminarPresupuesto(presupForm.periodo)}
+          style={{ 
+            marginTop: "16px", 
+            background: "none", 
+            border: `1px solid ${c.red}`, 
+            color: c.red, 
+            padding: "12px", 
+            borderRadius: "12px", 
+            width: "100%", 
+            fontSize: "14px", 
+            fontWeight: "600",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px"
+          }}
+        >
+          <Trash2 size={18} />
+          Eliminar presupuesto del mes
+        </button>
     </div>
   );
 }
