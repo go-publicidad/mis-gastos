@@ -14,7 +14,7 @@ export default function useMisGastos() {
   const [presupuestosMensuales, setPresupuestosMensuales] = useState({});
 
   const [userName, setUserName] = useState("Usuario");
-  const [theme, setTheme] = useState(localStorage.getItem("themePref") || "dark");
+  const [theme, setTheme] = useState(localStorage.getItem("themePref") || "light");
   const [useBold, setUseBold] = useState(false);
 
   const [loaded, setLoaded] = useState(false);

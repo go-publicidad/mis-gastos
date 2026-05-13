@@ -51,7 +51,7 @@ export default function App() {
     loadData, cerrarSesion, guardarConfig, agregarGastoBD, actualizarGastoBD, eliminarGastoBD
   } = useMisGastos();
 
-  const [tab, setTab] = useState("hoy");
+  const [tab, setTab] = useState("inicio");
   const [form, setForm] = useState({ monto: "", descripcion: "", categoria: categoriasExtra[0]?.id || "", tipo: "gasto" });
   const [toast, setToast] = useState(null);
   const [editando, setEditando] = useState(null);
