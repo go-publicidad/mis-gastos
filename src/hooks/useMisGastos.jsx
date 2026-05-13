@@ -46,7 +46,7 @@ export default function useMisGastos() {
     setCategoriasExtra([]);
 
     // 4. Forzamos una recarga limpia de la página
-    window.location.reload();
+    window.location.replace("/");
   };
 
   const loadData = async () => {
